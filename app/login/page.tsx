@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+const handleLogin = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // 폼 제출 시 새로고침 방지
     setErrorMsg("");
     setIsLoading(true);
