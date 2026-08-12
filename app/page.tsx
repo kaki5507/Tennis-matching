@@ -80,12 +80,16 @@ export default function HomePage() {
         
         {user ? (
           <div className="flex gap-4">
-            <Button className="h-12 px-8 text-lg bg-green-600 hover:bg-green-700">
-              매칭 방 찾기
-            </Button>
-            <Button variant="outline" className="h-12 px-8 text-lg border-green-600 text-green-600 hover:bg-green-50">
-              방 만들기
-            </Button>
+            <Link href="/matches">
+              <Button className="h-12 px-8 text-lg bg-green-600 hover:bg-green-700">
+                매칭 방 찾기
+              </Button>
+            </Link>
+            <Link href="/matches/create">
+              <Button variant="outline" className="h-12 px-8 text-lg border-green-600 text-green-600 hover:bg-green-50">
+                방 만들기
+              </Button>
+            </Link>
           </div>
         ) : (
           <Link href="/signup">
