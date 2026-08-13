@@ -1,9 +1,10 @@
 // app/matches/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, MatchStatus } from "@prisma/client"
 import { Button } from "@/components/ui/button";
 import JoinButton from "./JoinButton";
+import HostDashboard from "./HostDashboard";
 
 const prisma = new PrismaClient();
 
@@ -15,11 +16,12 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   
   const match = await prisma.match.findUnique({
     where: { 
-      id: resolvedParams.id // 3. 이제 안전하게 꺼내 씁니다.
-    },
+      id: resolvedParams.id 
+    }, 
     include: {
       court: true,
       host: true,
+      participants: true, // 👈 [추가] 이 방에 신청한 사람들의 정보도 다 가져와!
     },
   });
 
@@ -83,6 +85,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               {match.description || "상세 설명이 없습니다."}
             </div>
           </div>
+
+          {/* 👈 [추가] 여기에 방장 대시보드를 끼워 넣습니다. (방장이 아니면 알아서 안 보임) */}
+          <HostDashboard 
+            matchId={match.id} 
+            hostId={match.hostId} 
+            status={match.status} 
+            participants={match.participants || []} 
+          />
 
           {/* 하단 액션 버튼 */}
           <div className="flex gap-4">
