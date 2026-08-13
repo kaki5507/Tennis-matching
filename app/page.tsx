@@ -47,9 +47,14 @@ export default function HomePage() {
             {/* 유저가 있으면(로그인 상태) 로그아웃 버튼을, 없으면 로그인/가입 버튼을 보여줍니다. */}
             {user ? (
               <>
-                <span className="text-sm text-slate-600 font-medium">
+                <span className="text-sm text-slate-600 font-medium hidden sm:inline-block">
                   환영합니다!
                 </span>
+                <Link href="/mypage">
+                  <Button variant="ghost" className="h-9 text-green-700 font-medium hover:bg-green-50">
+                    마이페이지
+                  </Button>
+                </Link>
                 <Button onClick={handleLogout} variant="outline" className="h-9">
                   로그아웃
                 </Button>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import JoinButton from "./JoinButton";
 
 const prisma = new PrismaClient();
 
@@ -90,9 +91,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                 목록으로
               </Button>
             </Link>
-            <Button className="flex-1 h-14 text-lg bg-green-600 hover:bg-green-700">
-              참여 신청하기 🎾
-            </Button>
+            {/* 👈 가짜 버튼을 지우고 진짜 버튼 부품을 끼워 넣습니다 */}
+            <JoinButton matchId={match.id} />
           </div>
         </div>
 

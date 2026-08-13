@@ -194,3 +194,13 @@ model Message {
 
   @@map("messages")
 }
+
+model MatchParticipant {
+  id        String   @id @default(uuid())
+  matchId   String
+  userId    String   // 참여자(Supabase 유저 ID)
+  createdAt DateTime @default(now())
+
+  // 관계 설정 (선택사항, 필요에 따라 추가)
+  match     Match    @relation(fields: [matchId], references: [id])
+}

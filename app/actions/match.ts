@@ -58,3 +58,43 @@ export async function createMatchRoom(data: CreateMatchInput) {
     return { success: false, error: "방 생성에 실패했습니다." };
   }
 }
+
+// app/actions/match.ts 파일의 맨 아래에 추가합니다.
+
+export async function joinMatchRoom(matchId: string, userId: string) {
+  try {
+    // 1. 방이 존재하는지, 모집 중인지 확인
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match || match.status !== "OPEN") {
+      return { success: false, error: "모집이 마감되었거나 존재하지 않는 방입니다." };
+    }
+
+    // 2. 방장은 신청할 필요 없음 (방지)
+    if (match.hostId === userId) {
+      return { success: false, error: "방장 본인은 이미 참여 중입니다." };
+    }
+
+    // 3. 이미 신청한 사람인지 중복 확인
+    // (⚠️ 주의: schema.prisma에 MatchParticipant 테이블이 있어야 합니다.)
+    const existing = await prisma.matchParticipant.findFirst({
+      where: { matchId: matchId, userId: userId }
+    });
+    
+    if (existing) {
+      return { success: false, error: "이미 참여 신청한 방입니다." };
+    }
+
+    // 4. 참여자 목록에 등록
+    await prisma.matchParticipant.create({
+      data: {
+        matchId: matchId,
+        userId: userId
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("참여 신청 에러:", error);
+    return { success: false, error: "참여 신청 중 오류가 발생했습니다." };
+  }
+}
