@@ -1,6 +1,5 @@
 "use server"
-
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient, MatchStatus } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
@@ -96,5 +95,39 @@ export async function joinMatchRoom(matchId: string, userId: string) {
   } catch (error) {
     console.error("참여 신청 에러:", error);
     return { success: false, error: "참여 신청 중 오류가 발생했습니다." };
+  }
+}
+
+// 🟢 1. 신청자 수락/거절 상태 변경 함수
+export async function updateParticipantStatus(participantId: string, status: 'ACCEPTED' | 'REJECTED') {
+  try {
+    await prisma.matchParticipant.update({
+      where: { id: participantId },
+      data: { status }
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("참여자 상태 업데이트 에러:", error);
+    return { success: false, error: "상태 변경에 실패했습니다." };
+  }
+}
+
+// 🔴 2. 모집 마감 처리 함수
+export async function closeMatch(matchId: string, userId: string) {
+  try {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match || match.hostId !== userId) {
+      return { success: false, error: "방장만 마감할 수 있습니다." };
+    }
+
+    await prisma.match.update({
+      where: { id: matchId },
+      // 👇 CLOSED 대신 스키마에 정의된 FULL(또는 COMPLETED)을 사용합니다!
+      data: { status: MatchStatus.FULL } 
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("매칭 마감 에러:", error);
+    return { success: false, error: "마감 처리에 실패했습니다." };
   }
 }

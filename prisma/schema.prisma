@@ -107,6 +107,7 @@ model Match {
   matchDate   DateTime    @map("match_date") @db.Date
   startTime   DateTime    @map("start_time") @db.Time
   targetLevel String      @map("target_level")
+  status      String      @default("OPEN")
   
   // [NEW] 상세 모집 조건 및 결제/N빵 정보
   gameType          String  @map("game_type") // 단식, 복식, 혼합복식, 랠리
@@ -199,6 +200,7 @@ model MatchParticipant {
   id        String   @id @default(uuid())
   matchId   String
   userId    String   // 참여자(Supabase 유저 ID)
+  status    String   @default("PENDING") // PENDING(대기중), ACCEPTED(수락), REJECTED(거절)
   createdAt DateTime @default(now())
 
   // 관계 설정 (선택사항, 필요에 따라 추가)
