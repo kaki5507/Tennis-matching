@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getMyMatches } from "@/app/actions/user";
-import { getProfile } from "@/app/actions/profile"; // 👈 [추가] 프로필 가져오는 함수
+import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 
 interface CourtData {
@@ -22,17 +22,19 @@ interface MatchData {
   court?: CourtData | null;
 }
 
-// 💡 [NEW] 프로필 정보 타입 설계도
+// 💡 [수정] 진짜 NTRP 관련 필드(ntrpScore, ntrpCount)를 타입에 추가합니다.
 interface UserProfile {
   nickname?: string | null;
   tennisLevel?: string | null;
   preferredPos?: string | null;
+  ntrpScore?: number | string | null; // Prisma의 Decimal 타입 대응
+  ntrpCount?: number;
 }
 
 export default function MyPage() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
-  const [profile, setProfile] = useState<UserProfile | null>(null); // 프로필 상태 추가
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   
   const [hosted, setHosted] = useState<MatchData[]>([]);
   const [joined, setJoined] = useState<MatchData[]>([]);
@@ -40,7 +42,6 @@ export default function MyPage() {
 
   useEffect(() => {
     const fetchMyData = async () => {
-      // 1. 현재 로그인한 유저 확인
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         alert("로그인이 필요합니다.");
@@ -50,17 +51,18 @@ export default function MyPage() {
       
       setUserEmail(data.user.email || "테니스인");
 
-      // 2. 🌟 [추가] 내 프로필 정보 DB에서 가져오기
       const profileResult = await getProfile(data.user.id);
       if (profileResult.success && profileResult.user) {
         setProfile({
           nickname: profileResult.user.nickname,
           tennisLevel: profileResult.user.tennisLevel,
           preferredPos: profileResult.user.preferredPos,
+          // 💡 [추가] DB에서 계산된 NTRP 점수와 횟수를 상태에 저장합니다.
+          ntrpScore: profileResult.user.ntrpScore?.toString(), 
+          ntrpCount: profileResult.user.ntrpCount || 0,
         });
       }
 
-      // 3. 내가 만든 방 / 참여한 방 데이터 불러오기
       const matchResult = await getMyMatches(data.user.id);
       if (matchResult.success) {
         setHosted(matchResult.hostedMatches || []);
@@ -101,14 +103,14 @@ export default function MyPage() {
     </div>
   );
 
-  // 화면에 보여줄 닉네임 결정 (프로필 닉네임이 없으면 이메일 앞부분 사용)
   const displayNickname = profile?.nickname || userEmail.split('@')[0];
+  const evalCount = profile?.ntrpCount || 0;
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-10">
         
-        {/* 🌟 [수정] 프로필 헤더 (닉네임, 구력 뱃지, 프로필 수정 버튼 추가) */}
+        {/* 프로필 헤더 */}
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
@@ -117,19 +119,32 @@ export default function MyPage() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">{displayNickname} 님</h1>
               
-              {/* 구력 & 포지션 뱃지 */}
+              {/* 💡 [수정] 뱃지 영역: 자가 평가와 동료 평가(진짜 실력)를 나란히 배치 */}
               <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="bg-blue-50 text-blue-600 text-sm px-3 py-1 rounded-full font-medium border border-blue-100">
-                  🎾 {profile?.tennisLevel || "구력 미입력"}
+                {/* 1. 자가 입력 구력 */}
+                <span className="bg-slate-100 text-slate-600 text-sm px-3 py-1 rounded-full font-medium border border-slate-200">
+                  🙋‍♂️ 자칭: {profile?.tennisLevel || "미입력"}
                 </span>
+                
+                {/* 2. 동료 평가 기반 진짜 NTRP (3회 이상이면 점수 공개, 아니면 분석 중 표시) */}
+                {evalCount >= 3 ? (
+                  <span className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full font-bold border border-indigo-200 shadow-sm">
+                    🏆 검증된 NTRP: {Number(profile?.ntrpScore).toFixed(1)}
+                  </span>
+                ) : (
+                  <span className="bg-slate-100 text-slate-500 text-sm px-3 py-1 rounded-full font-medium border border-dashed border-slate-300">
+                    🔍 실력 분석 중 ({evalCount}/3)
+                  </span>
+                )}
+
+                {/* 3. 포지션 뱃지 */}
                 <span className="bg-orange-50 text-orange-600 text-sm px-3 py-1 rounded-full font-medium border border-orange-100">
-                  🏸 {profile?.preferredPos === "ANY" ? "올라운더" : profile?.preferredPos || "포지션 미입력"}
+                  🏸 {profile?.preferredPos === "ANY" ? "올라운더" : profile?.preferredPos || "미입력"}
                 </span>
               </div>
             </div>
           </div>
           
-          {/* 프로필 수정 버튼 */}
           <Link href="/mypage/profile" className="w-full sm:w-auto mt-4 sm:mt-0">
             <Button variant="outline" className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-slate-50">
               프로필 수정
@@ -137,7 +152,7 @@ export default function MyPage() {
           </Link>
         </div>
 
-        {/* 내가 만든 방 영역 */}
+        {/* ... (내가 만든 방, 참여한 방 영역 유지) ... */}
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
             👑 내가 방장인 매칭
@@ -148,13 +163,10 @@ export default function MyPage() {
               아직 만든 방이 없습니다.
             </div>
           ) : (
-            <div className="space-y-4">
-              {hosted.map(renderMatchCard)}
-            </div>
+            <div className="space-y-4">{hosted.map(renderMatchCard)}</div>
           )}
         </section>
 
-        {/* 내가 참여한 방 영역 */}
         <section>
           <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
             🏃‍♂️ 참여 신청한 매칭
@@ -165,9 +177,7 @@ export default function MyPage() {
               아직 참여 신청한 방이 없습니다.
             </div>
           ) : (
-            <div className="space-y-4">
-              {joined.map(renderMatchCard)}
-            </div>
+            <div className="space-y-4">{joined.map(renderMatchCard)}</div>
           )}
         </section>
 

@@ -7,6 +7,7 @@ import JoinButton from "./JoinButton";
 import HostDashboard from "./HostDashboard";
 import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
+import { supabase } from "@/lib/supabase"; // 👈 [추가] 로그인 정보 가져오기 위한 도구
 
 const prisma = new PrismaClient();
 
@@ -16,6 +17,10 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   // 2. params 값이 완전히 넘어올 때까지 기다려(await) 줍니다!
   const resolvedParams = await params;
   
+  // 🌟 [추가] 서버에서 현재 로그인한 유저가 누구인지 확인합니다.
+  const { data: authData } = await supabase.auth.getUser();
+  const currentUserId = authData.user?.id || null;
+  
   const match = await prisma.match.findUnique({
     where: { 
       id: resolvedParams.id 
@@ -23,7 +28,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     include: {
       court: true,
       host: true,
-      participants: true, // 👈 [추가] 이 방에 신청한 사람들의 정보도 다 가져와!
+      participants: true, // 이 방에 신청한 사람들의 정보도 다 가져와!
     },
   });
 
@@ -40,7 +45,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         <div className="bg-gradient-to-r from-green-600 to-green-500 px-8 py-10 text-white">
           <div className="flex justify-between items-start mb-4">
             <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
-              {match.status === "OPEN" ? "🟢 모집중" : "🔴 마감됨"}
+              {match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : "🔴 마감됨"}
             </span>
             <span className="font-medium bg-black/10 px-3 py-1 rounded-full text-sm">
               {match.gameType}
@@ -82,40 +87,35 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           {/* 방장이 쓴 상세 설명 영역 */}
           <div className="mb-12">
             <h3 className="text-lg font-bold text-slate-900 mb-4">상세 안내 및 공지사항</h3>
-            {/* whitespace-pre-wrap 속성이 방장이 엔터 친 줄바꿈을 그대로 살려줍니다. */}
             <div className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-white p-6 rounded-xl border border-slate-200 min-h-[120px]">
               {match.description || "상세 설명이 없습니다."}
             </div>
           </div>
 
-          {/* 👈 [추가] 여기에 방장 대시보드를 끼워 넣습니다. (방장이 아니면 알아서 안 보임) */}
-          <HostDashboard 
-            matchId={match.id} 
-            hostId={match.hostId} 
-            status={match.status} 
-            participants={match.participants || []} 
-          />
+          {/* 방장 대시보드 (방장에게만 보임) */}
+          {currentUserId === match.hostId && (
+            <HostDashboard matchId={match.id} currentStatus={match.status} />
+          )}
 
           {/* 하단 액션 버튼 */}
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-10">
             <Link href="/matches" className="flex-1">
               <Button variant="outline" className="w-full h-14 text-lg border-slate-300 text-slate-700">
                 목록으로
               </Button>
             </Link>
-            {/* 👈 가짜 버튼을 지우고 진짜 버튼 부품을 끼워 넣습니다 */}
             <JoinButton matchId={match.id} />
-            
-            {/* 🌟 [추가] 경기가 'COMPLETED' 상태일 때만 평가 화면을 띄웁니다 */}
-            {match.status === "COMPLETED" && (
-              <MatchEvaluation matchId={match.id} />
-            )}
-
-            {/* 👈 [추가] 하단 액션 버튼 바로 밑에 Q&A 댓글 영역 추가 */}
-            <MatchComments matchId={match.id} />
           </div>
-        </div>
 
+          {/* 🌟 경기가 'COMPLETED' 상태일 때만 평가 화면을 띄웁니다 */}
+          {match.status === "COMPLETED" && (
+            <MatchEvaluation matchId={match.id} />
+          )}
+
+          {/* 하단 액션 버튼 바로 밑에 Q&A 댓글 영역 추가 */}
+          <MatchComments matchId={match.id} />
+          
+        </div>
       </div>
     </div>
   );

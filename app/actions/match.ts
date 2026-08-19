@@ -1,9 +1,10 @@
+// app/actions/match.ts
 "use server"
 import { PrismaClient, MatchStatus } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-// 💡 [NEW] 폼에서 넘어오는 데이터들의 '타입 설계도'를 만들어 줍니다.
+// 💡 폼에서 넘어오는 데이터들의 '타입 설계도'를 만들어 줍니다.
 interface CreateMatchInput {
   hostId: string;
   matchDate: string;
@@ -58,8 +59,6 @@ export async function createMatchRoom(data: CreateMatchInput) {
   }
 }
 
-// app/actions/match.ts 파일의 맨 아래에 추가합니다.
-
 export async function joinMatchRoom(matchId: string, userId: string) {
   try {
     // 1. 방이 존재하는지, 모집 중인지 확인
@@ -74,7 +73,6 @@ export async function joinMatchRoom(matchId: string, userId: string) {
     }
 
     // 3. 이미 신청한 사람인지 중복 확인
-    // (⚠️ 주의: schema.prisma에 MatchParticipant 테이블이 있어야 합니다.)
     const existing = await prisma.matchParticipant.findFirst({
       where: { matchId: matchId, userId: userId }
     });
@@ -122,12 +120,35 @@ export async function closeMatch(matchId: string, userId: string) {
 
     await prisma.match.update({
       where: { id: matchId },
-      // 👇 CLOSED 대신 스키마에 정의된 FULL(또는 COMPLETED)을 사용합니다!
       data: { status: MatchStatus.FULL } 
     });
     return { success: true };
   } catch (error) {
     console.error("매칭 마감 에러:", error);
     return { success: false, error: "마감 처리에 실패했습니다." };
+  }
+}
+
+// 🌟 3. [NEW] 경기 완료 처리 함수 (동료 평가 시작용)
+export async function completeMatchAction(matchId: string, hostId: string) {
+  try {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: { hostId: true }
+    });
+
+    if (!match || match.hostId !== hostId) {
+      return { success: false, error: "권한이 없습니다. (방장만 가능)" };
+    }
+
+    await prisma.match.update({
+      where: { id: matchId },
+      data: { status: MatchStatus.COMPLETED } // Prisma의 MatchStatus Enum 사용
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("경기 완료 처리 에러:", error);
+    return { success: false, error: "경기 상태 업데이트에 실패했습니다." };
   }
 }
