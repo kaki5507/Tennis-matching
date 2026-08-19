@@ -75,6 +75,11 @@ model User {
   evaluationsReceived Evaluation[]       @relation("Evaluatee")
   messages            Message[]          // [NEW] 내가 쓴 채팅들
 
+  matchComments MatchComment[] // 내가 쓴 댓글들
+
+  ntrpScore    Decimal?  @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
+  ntrpCount    Int       @default(0) @map("ntrp_count")       // 이 유저가 평가받은 총 횟수
+
   @@map("users") // 실제 DB 생성되는 테이블명
 }
 
@@ -107,7 +112,6 @@ model Match {
   matchDate   DateTime    @map("match_date") @db.Date
   startTime   DateTime    @map("start_time") @db.Time
   targetLevel String      @map("target_level")
-  status      String      @default("OPEN")
   
   // [NEW] 상세 모집 조건 및 결제/N빵 정보
   gameType          String  @map("game_type") // 단식, 복식, 혼합복식, 랠리
@@ -128,6 +132,8 @@ model Match {
   participants MatchParticipant[]
   evaluations  Evaluation[]
   messages     Message[]          // [NEW] 이 방에서 생성된 채팅들
+
+  comments      MatchComment[] // 이 방에 달린 댓글들
 
   @@map("matches")
 }
@@ -158,11 +164,12 @@ model Evaluation {
   matchId     String   @map("match_id") @db.Uuid
   evaluatorId String   @map("evaluator_id") @db.Uuid // 평가 한 사람
   evaluateeId String   @map("evaluatee_id") @db.Uuid // 평가 받는 사람
-  mannerRating Int     @map("manner_rating") // 예: 1~5점
-  skillRating  Int     @map("skill_rating")  // 예: -1(구력뻥튀기), 0(적당함), 1(더잘함)
+  
+  // 💡 [수정] NTRP 기반 평가 시스템 적용 (기존 skillRating 대체)
+  mannerRating Int      @map("manner_rating") // 매너 평가는 1~5점 유지
+  ntrpRating   Decimal  @map("ntrp_rating") @db.Decimal(3, 1) // 상대방의 진짜 NTRP 평가 (예: 2.5)
   winLoss      WinLoss? @map("win_loss")
   
-  // [NEW] 노쇼 신고 플래그 (true면 매너점수 강하 로직에 사용)
   isNoShow    Boolean  @default(false) @map("is_noshow")
   
   createdAt   DateTime @default(now()) @map("created_at")
@@ -173,7 +180,6 @@ model Evaluation {
   evaluator   User  @relation("Evaluator", fields: [evaluatorId], references: [id])
   evaluatee   User  @relation("Evaluatee", fields: [evaluateeId], references: [id])
 
-  // 한 사람이 같은 매칭에서 동일인을 두 번 평가할 수 없도록 설정
   @@unique([matchId, evaluatorId, evaluateeId])
   @@map("evaluations")
 }
@@ -196,13 +202,18 @@ model Message {
   @@map("messages")
 }
 
-model MatchParticipant {
-  id        String   @id @default(uuid())
-  matchId   String
-  userId    String   // 참여자(Supabase 유저 ID)
-  status    String   @default("PENDING") // PENDING(대기중), ACCEPTED(수락), REJECTED(거절)
-  createdAt DateTime @default(now())
+model MatchComment {
+  id        String   @id @default(uuid()) @db.Uuid // 👈 [@db.Uuid 추가]
+  content   String   // 댓글 내용
+  createdAt DateTime @default(now()) @map("created_at")
 
-  // 관계 설정 (선택사항, 필요에 따라 추가)
-  match     Match    @relation(fields: [matchId], references: [id])
+  // 어떤 매칭 방에 달린 댓글인지 연결
+  matchId   String   @map("match_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  // 누가 쓴 댓글인지 연결
+  userId    String   @map("user_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("match_comments")
 }

@@ -5,6 +5,8 @@ import { PrismaClient, MatchStatus } from "@prisma/client"
 import { Button } from "@/components/ui/button";
 import JoinButton from "./JoinButton";
 import HostDashboard from "./HostDashboard";
+import MatchComments from "./MatchComments";
+import MatchEvaluation from "./MatchEvaluation";
 
 const prisma = new PrismaClient();
 
@@ -103,6 +105,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             </Link>
             {/* 👈 가짜 버튼을 지우고 진짜 버튼 부품을 끼워 넣습니다 */}
             <JoinButton matchId={match.id} />
+            
+            {/* 🌟 [추가] 경기가 'COMPLETED' 상태일 때만 평가 화면을 띄웁니다 */}
+            {match.status === "COMPLETED" && (
+              <MatchEvaluation matchId={match.id} />
+            )}
+
+            {/* 👈 [추가] 하단 액션 버튼 바로 밑에 Q&A 댓글 영역 추가 */}
+            <MatchComments matchId={match.id} />
           </div>
         </div>
 
