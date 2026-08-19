@@ -8,20 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getProfile, updateProfile } from "@/app/actions/profile";
+import { Position } from "@prisma/client"; // 💡 [추가] any 대신 사용할 정확한 스키마 타입
 
 export default function ProfileEditPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // DB 스키마에 맞춘 폼 데이터 상태
-  // (enum이나 정해진 문자열 제약조건에 맞춰 초기값을 설정합니다)
+  // 💡 [수정] preferredPos에 as Position을 선언하여 TypeScript에게 타입을 확실히 알려줍니다.
   const [formData, setFormData] = useState({
     email: "",
     nickname: "",
-    gender: "MALE",        // 스키마 주석: 'MALE' or 'FEMALE'
-    tennisLevel: "테린이",  // 자유 입력 또는 정해진 값
-    preferredPos: "ANY",   // 스키마 기본값: ANY (FOREHAND, BACKHAND 등)
+    gender: "MALE",
+    tennisLevel: "테린이",
+    preferredPos: "ANY" as Position, 
   });
 
   useEffect(() => {
@@ -44,8 +44,8 @@ export default function ProfileEditPage() {
           nickname: result.user.nickname || "",
           gender: result.user.gender || "MALE",
           tennisLevel: result.user.tennisLevel || "테린이",
-          // DB에 있는 enum 값을 그대로 클라이언트에 세팅합니다.
-          preferredPos: result.user.preferredPos || "ANY",
+          // 불러온 값도 안전하게 Position 타입으로 지정
+          preferredPos: (result.user.preferredPos as Position) || "ANY",
         });
       }
     };
@@ -60,11 +60,18 @@ export default function ProfileEditPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // 클라이언트 컴포넌트에서는 타입 단언(as any)을 살짝 활용해 enum 타입 충돌을 방지합니다.
-    const result = await updateProfile(userId, formData as any);
+    // 💡 [수정] 밉상이었던 as any를 완전히 제거하고, 정확한 형태의 객체를 넘겨줍니다.
+    const result = await updateProfile(userId, {
+      email: formData.email,
+      nickname: formData.nickname,
+      gender: formData.gender,
+      tennisLevel: formData.tennisLevel,
+      preferredPos: formData.preferredPos as Position,
+    });
+    
     if (result.success) {
       alert("프로필이 성공적으로 저장되었습니다! 🎾");
-      router.push("/mypage"); // 저장 후 마이페이지로 이동
+      router.push("/mypage");
       router.refresh();
     } else {
       alert(result.error);
@@ -92,7 +99,6 @@ export default function ProfileEditPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>성별</Label>
-              {/* 스키마의 'MALE' or 'FEMALE' 정책에 맞춤 */}
               <select name="gender" value={formData.gender} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
                 <option value="MALE">남성 (MALE)</option>
                 <option value="FEMALE">여성 (FEMALE)</option>
@@ -101,7 +107,6 @@ export default function ProfileEditPage() {
             
             <div className="space-y-2">
               <Label>선호 포지션 (특기)</Label>
-              {/* 스키마의 Position Enum 에 맞춤 (필요시 FOREHAND, BACKHAND 등으로 수정 가능) */}
               <select name="preferredPos" value={formData.preferredPos} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
                 <option value="ANY">상관없음 (ANY)</option>
                 <option value="FOREHAND">포핸드 (FOREHAND)</option>
