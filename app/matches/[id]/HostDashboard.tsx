@@ -164,7 +164,9 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
                 <div className="text-sm text-slate-600 mt-1 flex gap-3">
                   <span>🎾 구력: {applicant.user.tennisLevel}</span>
                   {applicant.user.ntrpScore && (
-                    <span className="font-bold text-indigo-600">🏆 NTRP: {Number(applicant.user.ntrpScore).toFixed(1)}</span>
+                    <span className="font-bold text-indigo-600">
+                      🏆 NTRP: {(Math.round(Number(applicant.user.ntrpScore) * 2) / 2).toFixed(1)}
+                    </span>
                   )}
                   <span>🌡️ 매너: {Number(applicant.user.mannerScore).toFixed(1)}도</span>
                 </div>

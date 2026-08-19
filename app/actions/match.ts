@@ -61,18 +61,15 @@ export async function createMatchRoom(data: CreateMatchInput) {
 
 export async function joinMatchRoom(matchId: string, userId: string) {
   try {
-    // 1. 방이 존재하는지, 모집 중인지 확인
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match || match.status !== "OPEN") {
       return { success: false, error: "모집이 마감되었거나 존재하지 않는 방입니다." };
     }
 
-    // 2. 방장은 신청할 필요 없음 (방지)
     if (match.hostId === userId) {
       return { success: false, error: "방장 본인은 이미 참여 중입니다." };
     }
 
-    // 3. 이미 신청한 사람인지 중복 확인
     const existing = await prisma.matchParticipant.findFirst({
       where: { matchId: matchId, userId: userId }
     });
@@ -81,12 +78,38 @@ export async function joinMatchRoom(matchId: string, userId: string) {
       return { success: false, error: "이미 참여 신청한 방입니다." };
     }
 
-    // 4. 참여자 목록에 등록
-    await prisma.matchParticipant.create({
-      data: {
-        matchId: matchId,
-        userId: userId
+    // 🌟 [NEW] 레벨 제한 검사 로직 (방의 targetLevel이 "ANY"나 "누구나"가 아닐 때만 검사)
+    if (match.targetLevel !== "ANY" && match.targetLevel !== "누구나") {
+      
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      
+      // 방의 targetLevel이 "1.5-2.5" 같은 형태라고 가정하고 숫자를 추출
+      const levels = match.targetLevel.match(/[\d\.]+/g); 
+      
+      if (levels && levels.length >= 2 && user) {
+        const minLevel = parseFloat(levels[0]); // 예: 1.5
+        const maxLevel = parseFloat(levels[1]); // 예: 2.5
+        
+        // 내 점수 가져오기 (평가 3회 미만이라 점수가 없으면 가입 불가로 막거나, 기본 2.0으로 쳐줌)
+        // 여기서는 평가 3회 이상인 '진짜 점수'만 인정하는 빡빡한 룰을 적용해 봅니다.
+        if (user.ntrpCount < 3 || !user.ntrpScore) {
+           return { success: false, error: "레벨 제한이 있는 방은 NTRP 검증(평가 3회 이상)이 완료된 후 참여할 수 있습니다." };
+        }
+
+        // 비교할 때도 남들에게 보여지는 '0.5 단위 반올림 점수'를 기준으로 비교합니다.
+        const myDisplayScore = Math.round(Number(user.ntrpScore) * 2) / 2;
+
+        if (myDisplayScore < minLevel || myDisplayScore > maxLevel) {
+          return { 
+            success: false, 
+            error: `이 방은 NTRP ${minLevel.toFixed(1)} ~ ${maxLevel.toFixed(1)} 레벨만 참여 가능합니다.\n(현재 내 레벨: ${myDisplayScore.toFixed(1)})` 
+          };
+        }
       }
+    }
+
+    await prisma.matchParticipant.create({
+      data: { matchId, userId }
     });
 
     return { success: true };

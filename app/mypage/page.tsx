@@ -127,9 +127,10 @@ export default function MyPage() {
                 </span>
                 
                 {/* 2. 동료 평가 기반 진짜 NTRP (3회 이상이면 점수 공개, 아니면 분석 중 표시) */}
+                {/* 🌟 [수정 후] 0.5 단위 반올림 적용 */}
                 {evalCount >= 3 ? (
                   <span className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full font-bold border border-indigo-200 shadow-sm">
-                    🏆 검증된 NTRP: {Number(profile?.ntrpScore).toFixed(1)}
+                    🏆 검증된 NTRP: {(Math.round(Number(profile?.ntrpScore) * 2) / 2).toFixed(1)}
                   </span>
                 ) : (
                   <span className="bg-slate-100 text-slate-500 text-sm px-3 py-1 rounded-full font-medium border border-dashed border-slate-300">
