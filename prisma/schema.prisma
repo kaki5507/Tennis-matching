@@ -19,18 +19,18 @@ enum Position {
 }
 
 enum MatchStatus {
-  OPEN       // 모집중
-  FULL       // 모집마감
-  COMPLETED  // 경기완료
-  CANCELED   // 취소됨
+  OPEN // 모집중
+  FULL // 모집마감
+  COMPLETED // 경기완료
+  CANCELED // 취소됨
 }
 
 enum ParticipantStatus {
-  PENDING    // 대기중
-  ACCEPTED   // 수락됨
-  REJECTED   // 거절됨
-  NO_SHOW    // [NEW] 노쇼 발생
-  CANCELED   // [NEW] 참가자 자진 취소
+  PENDING // 대기중
+  ACCEPTED // 수락됨
+  REJECTED // 거절됨
+  NO_SHOW // [NEW] 노쇼 발생
+  CANCELED // [NEW] 참가자 자진 취소
 }
 
 enum Team {
@@ -50,135 +50,137 @@ enum WinLoss {
 
 // [1] 회원 정보 (users)
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  ciDi         String    @unique @map("ci_di") // 본인인증 고유 해시값
-  email        String    @unique
+  id           String   @id @default(uuid()) @db.Uuid
+  ciDi         String   @unique @map("ci_di") // 본인인증 고유 해시값
+  email        String   @unique
   nickname     String
-  tennisLevel  String    @map("tennis_level")
-  preferredPos Position  @default(ANY) @map("preferred_pos")
-  mannerScore  Decimal   @default(36.5) @map("manner_score") @db.Decimal(4, 1)
-  isBanned     Boolean   @default(false) @map("is_banned")
-  
+  tennisLevel  String   @map("tennis_level")
+  preferredPos Position @default(ANY) @map("preferred_pos")
+  mannerScore  Decimal  @default(36.5) @map("manner_score") @db.Decimal(4, 1)
+  isBanned     Boolean  @default(false) @map("is_banned")
+
   // [NEW] 고도화된 프로필 정보
-  profileUrl   String?   @map("profile_url")
-  gender       String?   // 'MALE' or 'FEMALE'
-  birthYear    Int?      @map("birth_year")  // 나이 제한 계산용
-  
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  deletedAt    DateTime? @map("deleted_at") // 소프트 딜리트용
+  profileUrl String? @map("profile_url")
+  gender     String? // 'MALE' or 'FEMALE'
+  birthYear  Int?    @map("birth_year") // 나이 제한 계산용
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at") // 소프트 딜리트용
 
   // [Relations - 관계 설정]
   hostedMatches       Match[]            @relation("MatchHost")
   participations      MatchParticipant[]
   evaluationsGiven    Evaluation[]       @relation("Evaluator")
   evaluationsReceived Evaluation[]       @relation("Evaluatee")
-  messages            Message[]          // [NEW] 내가 쓴 채팅들
+  messages            Message[] // [NEW] 내가 쓴 채팅들
 
   matchComments MatchComment[] // 내가 쓴 댓글들
 
-  ntrpScore    Decimal?  @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
-  ntrpCount    Int       @default(0) @map("ntrp_count")       // 이 유저가 평가받은 총 횟수
+  ntrpScore  Decimal?    @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
+  ntrpCount  Int         @default(0) @map("ntrp_count") // 이 유저가 평가받은 총 횟수
+  matchChats MatchChat[]
 
   @@map("users") // 실제 DB 생성되는 테이블명
 }
 
 // [2] 테니스장 정보 (courts)
 model Court {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String  @id @default(uuid()) @db.Uuid
   name      String
   address   String
-  latitude  Decimal  @db.Decimal(10, 7) // 지도 마커용 위도
-  longitude Decimal  @db.Decimal(10, 7) // 지도 마커용 경도
-  
+  latitude  Decimal @db.Decimal(10, 7) // 지도 마커용 위도
+  longitude Decimal @db.Decimal(10, 7) // 지도 마커용 경도
+
   // [NEW] 편의시설 배지용 데이터
   hasParking Boolean @default(false) @map("has_parking")
   hasShower  Boolean @default(false) @map("has_shower")
-  
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // [Relations]
-  matches   Match[]
+  matches Match[]
 
   @@map("courts")
 }
 
 // [3] 매칭 방 (matches)
 model Match {
-  id          String      @id @default(uuid()) @db.Uuid
-  hostId      String      @map("host_id") @db.Uuid
-  courtId     String      @map("court_id") @db.Uuid
-  matchDate   DateTime    @map("match_date") @db.Date
-  startTime   DateTime    @map("start_time") @db.Time
-  targetLevel String      @map("target_level")
-  
+  id          String   @id @default(uuid()) @db.Uuid
+  hostId      String   @map("host_id") @db.Uuid
+  courtId     String   @map("court_id") @db.Uuid
+  matchDate   DateTime @map("match_date") @db.Date
+  startTime   DateTime @map("start_time") @db.Time
+  targetLevel String   @map("target_level")
+
   // [NEW] 상세 모집 조건 및 결제/N빵 정보
   gameType          String  @map("game_type") // 단식, 복식, 혼합복식, 랠리
   genderRequirement String  @default("ANY") @map("gender_requirement") // 성별 제한
-  ageRequirement    String  @default("ANY") @map("age_requirement")    // 연령 제한
-  costPerPerson     Int     @default(0) @map("cost_per_person")        // 1인당 참가비
-  description       String? @db.Text                                   // 상세 설명, 공지사항
-  
-  status      MatchStatus @default(OPEN)
-  
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
-  deletedAt   DateTime?   @map("deleted_at")
+  ageRequirement    String  @default("ANY") @map("age_requirement") // 연령 제한
+  costPerPerson     Int     @default(0) @map("cost_per_person") // 1인당 참가비
+  description       String? @db.Text // 상세 설명, 공지사항
+
+  status MatchStatus @default(OPEN)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   // [Relations]
   host         User               @relation("MatchHost", fields: [hostId], references: [id])
   court        Court              @relation(fields: [courtId], references: [id])
   participants MatchParticipant[]
   evaluations  Evaluation[]
-  messages     Message[]          // [NEW] 이 방에서 생성된 채팅들
+  messages     Message[] // [NEW] 이 방에서 생성된 채팅들
 
-  comments      MatchComment[] // 이 방에 달린 댓글들
+  comments   MatchComment[] // 이 방에 달린 댓글들
+  matchChats MatchChat[]
 
   @@map("matches")
 }
 
 // [4] 참여자 및 히스토리 (match_participants)
 model MatchParticipant {
-  id        String            @id @default(uuid()) @db.Uuid
-  matchId   String            @map("match_id") @db.Uuid
-  userId    String            @map("user_id") @db.Uuid
-  team      Team?             // 복식일 경우 A/B팀 배정
-  status    ParticipantStatus @default(PENDING) // [NEW] Enum에 노쇼(NO_SHOW) 추가됨
-  
-  createdAt DateTime          @default(now()) @map("created_at")
-  updatedAt DateTime          @updatedAt @map("updated_at")
+  id      String            @id @default(uuid()) @db.Uuid
+  matchId String            @map("match_id") @db.Uuid
+  userId  String            @map("user_id") @db.Uuid
+  team    Team? // 복식일 경우 A/B팀 배정
+  status  ParticipantStatus @default(PENDING) // [NEW] Enum에 노쇼(NO_SHOW) 추가됨
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // [Relations]
-  match     Match @relation(fields: [matchId], references: [id])
-  user      User  @relation(fields: [userId], references: [id])
+  match Match @relation(fields: [matchId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 
   // 유저가 한 매칭에 중복으로 참여신청을 넣지 못하도록 설정
-  @@unique([matchId, userId]) 
+  @@unique([matchId, userId])
   @@map("match_participants")
 }
 
 // [5] 블라인드 평가 (evaluations)
 model Evaluation {
-  id          String   @id @default(uuid()) @db.Uuid
-  matchId     String   @map("match_id") @db.Uuid
-  evaluatorId String   @map("evaluator_id") @db.Uuid // 평가 한 사람
-  evaluateeId String   @map("evaluatee_id") @db.Uuid // 평가 받는 사람
-  
+  id          String @id @default(uuid()) @db.Uuid
+  matchId     String @map("match_id") @db.Uuid
+  evaluatorId String @map("evaluator_id") @db.Uuid // 평가 한 사람
+  evaluateeId String @map("evaluatee_id") @db.Uuid // 평가 받는 사람
+
   // 💡 [수정] NTRP 기반 평가 시스템 적용 (기존 skillRating 대체)
   mannerRating Int      @map("manner_rating") // 매너 평가는 1~5점 유지
   ntrpRating   Decimal  @map("ntrp_rating") @db.Decimal(3, 1) // 상대방의 진짜 NTRP 평가 (예: 2.5)
   winLoss      WinLoss? @map("win_loss")
-  
-  isNoShow    Boolean  @default(false) @map("is_noshow")
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  isNoShow Boolean @default(false) @map("is_noshow")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // [Relations]
-  match       Match @relation(fields: [matchId], references: [id])
-  evaluator   User  @relation("Evaluator", fields: [evaluatorId], references: [id])
-  evaluatee   User  @relation("Evaluatee", fields: [evaluateeId], references: [id])
+  match     Match @relation(fields: [matchId], references: [id])
+  evaluator User  @relation("Evaluator", fields: [evaluatorId], references: [id])
+  evaluatee User  @relation("Evaluatee", fields: [evaluateeId], references: [id])
 
   @@unique([matchId, evaluatorId, evaluateeId])
   @@map("evaluations")
@@ -186,34 +188,49 @@ model Evaluation {
 
 // [6] [NEW] 실시간 채팅 메시지 (messages)
 model Message {
-  id        String    @id @default(uuid()) @db.Uuid
-  matchId   String    @map("match_id") @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  content   String    @db.Text
-  
+  id      String @id @default(uuid()) @db.Uuid
+  matchId String @map("match_id") @db.Uuid
+  userId  String @map("user_id") @db.Uuid
+  content String @db.Text
+
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at") // 메시지 삭제/가리기 기능 대비
 
   // [Relations]
-  match     Match @relation(fields: [matchId], references: [id])
-  user      User  @relation(fields: [userId], references: [id])
+  match Match @relation(fields: [matchId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 
   @@map("messages")
 }
 
 model MatchComment {
   id        String   @id @default(uuid()) @db.Uuid // 👈 [@db.Uuid 추가]
-  content   String   // 댓글 내용
+  content   String // 댓글 내용
   createdAt DateTime @default(now()) @map("created_at")
 
   // 어떤 매칭 방에 달린 댓글인지 연결
-  matchId   String   @map("match_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId String @map("match_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
+  match   Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   // 누가 쓴 댓글인지 연결
-  userId    String   @map("user_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id") @db.Uuid // 👈 [@db.Uuid 및 @map 추가]
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("match_comments")
+}
+
+// 수락된 인원들끼리 대화하는 프라이빗 채팅 테이블
+model MatchChat {
+  id        String   @id @default(uuid()) @db.Uuid
+  matchId   String   @db.Uuid
+  userId    String   @db.Uuid
+  message   String
+  createdAt DateTime @default(now())
+
+  // 관계 설정 (방이 지워지거나 유저가 탈퇴하면 채팅도 삭제)
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
 }

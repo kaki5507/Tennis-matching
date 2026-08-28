@@ -8,6 +8,7 @@ import HostDashboard from "./HostDashboard";
 import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
 import { supabase } from "@/lib/supabase"; // 👈 [추가] 로그인 정보 가져오기 위한 도구
+import MatchChatWrapper from "./MatchChatWrapper";
 
 const prisma = new PrismaClient();
 
@@ -115,6 +116,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           {/* 하단 액션 버튼 바로 밑에 Q&A 댓글 영역 추가 */}
           <MatchComments matchId={match.id} />
           
+          {/* 프라이빗 채팅방 (권한 없는 사람에겐 자동으로 숨겨짐) */}
+          <MatchChatWrapper matchId={match.id} />
         </div>
       </div>
     </div>
