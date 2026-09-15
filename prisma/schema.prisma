@@ -220,6 +220,18 @@ model MatchComment {
   @@map("match_comments")
 }
 
+// [7] [NEW] 재가입 방지용 CI/DI 블랙리스트
+// 밴(isBanned)된 유저가 탈퇴하면 이 테이블에 CI/DI가 영구 기록되어,
+// 이메일/닉네임을 바꿔서 재가입을 시도해도 본인인증 단계에서 원천 차단됩니다.
+model BannedIdentity {
+  id        String   @id @default(uuid()) @db.Uuid
+  ciDi      String   @unique @map("ci_di")
+  reason    String? // 밴 사유 (예: "비매너 신고 누적", "허위 구력 적발")
+  bannedAt  DateTime @default(now()) @map("banned_at")
+
+  @@map("banned_identities")
+}
+
 // 수락된 인원들끼리 대화하는 프라이빗 채팅 테이블
 model MatchChat {
   id        String   @id @default(uuid()) @db.Uuid
