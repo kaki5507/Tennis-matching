@@ -1,6 +1,7 @@
 // app/actions/match.ts
 "use server"
 import { PrismaClient, MatchStatus } from "@prisma/client"
+import { sendPushToUser, sendPushToUsers } from "@/app/actions/notification"
 
 const prisma = new PrismaClient()
 
@@ -122,10 +123,25 @@ export async function joinMatchRoom(matchId: string, userId: string) {
 // 🟢 1. 신청자 수락/거절 상태 변경 함수
 export async function updateParticipantStatus(participantId: string, status: 'ACCEPTED' | 'REJECTED') {
   try {
-    await prisma.matchParticipant.update({
+    const participant = await prisma.matchParticipant.update({
       where: { id: participantId },
-      data: { status }
+      data: { status },
     });
+
+    // 신청자에게 결과 알림 (알림 수신 동의한 유저에게만 실제 푸시가 나가고,
+    // 동의 여부와 무관하게 인앱 알림함엔 항상 남습니다)
+    const title = status === 'ACCEPTED' ? '매칭이 수락됐어요! 🎾' : '매칭 신청 결과 안내';
+    const body =
+      status === 'ACCEPTED'
+        ? '신청하신 매칭에 참여가 확정됐습니다. 상세 페이지에서 확인해보세요.'
+        : '아쉽게도 이번 매칭엔 참여가 어렵게 됐어요. 다른 매칭을 찾아보세요.';
+
+    await sendPushToUser(participant.userId, {
+      title,
+      body,
+      url: `/matches/${participant.matchId}`,
+    });
+
     return { success: true };
   } catch (error) {
     console.error("참여자 상태 업데이트 에러:", error);
@@ -168,6 +184,21 @@ export async function completeMatchAction(matchId: string, hostId: string) {
       where: { id: matchId },
       data: { status: MatchStatus.COMPLETED } // Prisma의 MatchStatus Enum 사용
     });
+
+    // 수락된 참여자 전원에게 "이제 서로 평가해주세요" 알림 발송
+    const acceptedParticipants = await prisma.matchParticipant.findMany({
+      where: { matchId, status: 'ACCEPTED' },
+      select: { userId: true },
+    });
+
+    await sendPushToUsers(
+      acceptedParticipants.map((p) => p.userId),
+      {
+        title: '경기가 종료됐어요! 평가를 남겨주세요 📝',
+        body: '함께 경기한 분들에 대한 블라인드 평가를 남기면 매너 온도에 반영돼요.',
+        url: `/matches/${matchId}`,
+      }
+    );
 
     return { success: true };
   } catch (error) {

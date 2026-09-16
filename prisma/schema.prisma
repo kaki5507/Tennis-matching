@@ -237,6 +237,33 @@ model BannedIdentity {
   @@map("banned_identities")
 }
 
+// [8] [NEW] 웹 푸시(FCM) 디바이스 토큰
+// 한 유저가 여러 기기/브라우저에서 로그인할 수 있으므로 유저당 여러 개 저장됩니다.
+model DeviceToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique // FCM이 발급하는 브라우저별 고유 토큰
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("device_tokens")
+  @@index([userId])
+}
+
+// [9] [NEW] 발송된 알림 이력 (인앱 알림함 + 발송 로그 겸용)
+model Notification {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  body      String
+  url       String? // 클릭 시 이동할 경로 (예: /matches/xxx)
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+  @@index([userId])
+}
+
 // 수락된 인원들끼리 대화하는 프라이빗 채팅 테이블
 model MatchChat {
   id        String   @id @default(uuid()) @db.Uuid

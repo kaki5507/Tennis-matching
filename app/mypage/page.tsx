@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { getMyMatches } from "@/app/actions/user";
 import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
+import NotificationOptIn from "./NotificationOptIn";
 
 interface CourtData {
   name: string;
@@ -34,8 +35,10 @@ interface UserProfile {
 export default function MyPage() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
+  const [userId, setUserId] = useState(""); // [NEW] 알림 토큰 등록 시 필요
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  
+  const [marketingAgreed, setMarketingAgreed] = useState(false); // [NEW] 알림 수신 동의 여부
+
   const [hosted, setHosted] = useState<MatchData[]>([]);
   const [joined, setJoined] = useState<MatchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +53,7 @@ export default function MyPage() {
       }
       
       setUserEmail(data.user.email || "테니스인");
+      setUserId(data.user.id);
 
       const profileResult = await getProfile(data.user.id);
       if (profileResult.success && profileResult.user) {
@@ -61,6 +65,7 @@ export default function MyPage() {
           ntrpScore: profileResult.user.ntrpScore?.toString(), 
           ntrpCount: profileResult.user.ntrpCount || 0,
         });
+        setMarketingAgreed(!!profileResult.user.marketingAgreedAt);
       }
 
       const matchResult = await getMyMatches(data.user.id);
@@ -151,6 +156,12 @@ export default function MyPage() {
               프로필 수정
             </Button>
           </Link>
+        </div>
+
+        {/* [NEW] 알림 설정 카드 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <h2 className="text-lg font-bold text-slate-900 mb-3">🔔 알림 설정</h2>
+          {userId && <NotificationOptIn userId={userId} marketingAgreed={marketingAgreed} />}
         </div>
 
         {/* ... (내가 만든 방, 참여한 방 영역 유지) ... */}
