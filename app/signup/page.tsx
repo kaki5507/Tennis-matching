@@ -25,6 +25,19 @@ export default function SignupPage() {
   const [verifiedCiDi, setVerifiedCiDi] = useState<string | null>(null);
   const [verifiedName, setVerifiedName] = useState<string | null>(null);
 
+  // [NEW] 약관/개인정보처리방침 동의 상태
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [marketingAgreed, setMarketingAgreed] = useState(false);
+  const allRequiredAgreed = termsAgreed && privacyAgreed;
+  const allAgreed = allRequiredAgreed && marketingAgreed;
+
+  const handleToggleAll = (checked: boolean) => {
+    setTermsAgreed(checked);
+    setPrivacyAgreed(checked);
+    setMarketingAgreed(checked);
+  };
+
   // 로딩 상태 및 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -90,6 +103,11 @@ export default function SignupPage() {
       return setErrorMsg("먼저 본인인증을 완료해주세요.");
     }
 
+    // 0-1. 필수 약관 동의 확인
+    if (!allRequiredAgreed) {
+      return setErrorMsg("이용약관과 개인정보처리방침에 동의해야 가입할 수 있습니다.");
+    }
+
     // 1. 비밀번호 확인 검사
     if (password !== passwordConfirm) {
       return setErrorMsg("비밀번호가 서로 다릅니다.");
@@ -114,6 +132,9 @@ export default function SignupPage() {
         email: data.user.email!,
         nickname,
         ciDi: verifiedCiDi,
+        termsAgreed,
+        privacyAgreed,
+        marketingAgreed,
       });
 
       if (!dbResult.success) {
@@ -171,6 +192,59 @@ export default function SignupPage() {
           )}
         </div>
 
+        {/* [NEW] 약관/개인정보처리방침 동의 섹션 */}
+        <div className="mb-6 border border-slate-200 rounded-lg p-4 space-y-3">
+          <label className="flex items-center gap-2 font-semibold text-slate-900 cursor-pointer pb-2 border-b border-slate-100">
+            <input
+              type="checkbox"
+              checked={allAgreed}
+              onChange={(e) => handleToggleAll(e.target.checked)}
+              className="w-4 h-4 accent-green-600"
+            />
+            전체 동의합니다
+          </label>
+
+          <label className="flex items-center justify-between text-sm text-slate-700 cursor-pointer">
+            <span className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                className="w-4 h-4 accent-green-600"
+              />
+              (필수) 이용약관 동의
+            </span>
+            <Link href="/terms" target="_blank" className="text-slate-400 underline text-xs shrink-0">
+              보기
+            </Link>
+          </label>
+
+          <label className="flex items-center justify-between text-sm text-slate-700 cursor-pointer">
+            <span className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={privacyAgreed}
+                onChange={(e) => setPrivacyAgreed(e.target.checked)}
+                className="w-4 h-4 accent-green-600"
+              />
+              (필수) 개인정보처리방침 동의
+            </span>
+            <Link href="/privacy" target="_blank" className="text-slate-400 underline text-xs shrink-0">
+              보기
+            </Link>
+          </label>
+
+          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={marketingAgreed}
+              onChange={(e) => setMarketingAgreed(e.target.checked)}
+              className="w-4 h-4 accent-green-600"
+            />
+            (선택) 매칭/입금/대회 알림 수신 동의
+          </label>
+        </div>
+
         <form onSubmit={handleSignup} className="space-y-6">
           <fieldset disabled={!verifiedCiDi} className="space-y-6 disabled:opacity-50">
             <div className="space-y-2">
@@ -194,7 +268,7 @@ export default function SignupPage() {
             </div>
           </fieldset>
 
-          <Button type="submit" disabled={isLoading || !verifiedCiDi} className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
+          <Button type="submit" disabled={isLoading || !verifiedCiDi || !allRequiredAgreed} className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
             {isLoading ? "가입 처리 중..." : "가입하기"}
           </Button>
         </form>
