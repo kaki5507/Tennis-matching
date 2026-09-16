@@ -68,6 +68,11 @@ model User {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at") // 소프트 딜리트용
 
+  // [NEW] 약관/개인정보처리방침 동의 이력 (법적 증빙용 - 동의 "여부"가 아니라 "시점"을 남겨야 함)
+  termsAgreedAt   DateTime @map("terms_agreed_at")
+  privacyAgreedAt DateTime @map("privacy_agreed_at")
+  marketingAgreedAt DateTime? @map("marketing_agreed_at") // 선택 동의 (알림/마케팅 수신용, Phase 2 알림 기능에서 사용)
+
   // [Relations - 관계 설정]
   hostedMatches       Match[]            @relation("MatchHost")
   participations      MatchParticipant[]
