@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { getMatchApplications } from "@/app/actions/participant";
 import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
+import Link from "next/link";
 
 // 💡 1. 완벽한 타입 설계 (any 절대 금지!)
 interface Applicant {
@@ -150,9 +151,12 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
             <div key={applicant.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900 text-lg">
+                  <Link
+                    href={`/users/${applicant.userId}`}
+                    className="font-bold text-slate-900 text-lg hover:text-green-600 hover:underline"
+                  >
                     {applicant.user.nickname || applicant.user.email.split('@')[0]}
-                  </span>
+                  </Link>
                   <span className={`text-xs px-2 py-1 rounded-full font-bold ${
                     applicant.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
                     applicant.status === "REJECTED" ? "bg-red-100 text-red-700" :

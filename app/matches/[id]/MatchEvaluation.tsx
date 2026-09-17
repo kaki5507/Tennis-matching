@@ -19,6 +19,7 @@ interface EvalFormData {
     mannerRating: number;
     ntrpRating: number;
     isNoShow: boolean;
+    winLoss: "WIN" | "LOSS" | "DRAW"; // [NEW]
   };
 }
 
@@ -49,7 +50,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
         // (매너: 5점 만점, NTRP: 2.0 기본값)
         const initialData: EvalFormData = {};
         result.evaluatees.forEach((user) => {
-          initialData[user.id] = { mannerRating: 5, ntrpRating: 2.0, isNoShow: false };
+          initialData[user.id] = { mannerRating: 5, ntrpRating: 2.0, isNoShow: false, winLoss: "WIN" };
         });
         setEvalData(initialData);
       }
@@ -61,7 +62,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
   }, [matchId]);
 
   // 특정 유저의 점수를 변경할 때 실행되는 함수
-  const handleEvalChange = (userId: string, field: string, value: number | boolean) => {
+  const handleEvalChange = (userId: string, field: string, value: number | boolean | string) => {
     setEvalData((prev) => ({
       ...prev,
       [userId]: {
@@ -83,6 +84,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
       mannerRating: evalData[evaluateeId].mannerRating,
       ntrpRating: evalData[evaluateeId].ntrpRating,
       isNoShow: evalData[evaluateeId].isNoShow,
+      winLoss: evalData[evaluateeId].winLoss,
     }));
 
     const result = await submitEvaluations(matchId, currentUserId, evaluationsPayload);
@@ -130,8 +132,22 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
             </div>
 
             {/* 평가 입력 영역 */}
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-              
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              {/* [NEW] 승패 평가 */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500">이 사람의 승패</label>
+                <select
+                  value={evalData[user.id]?.winLoss || "WIN"}
+                  onChange={(e) => handleEvalChange(user.id, "winLoss", e.target.value)}
+                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus:border-green-600 outline-none"
+                >
+                  <option value="WIN">🏆 승리</option>
+                  <option value="LOSS">😢 패배</option>
+                  <option value="DRAW">🤝 무승부/랠리</option>
+                </select>
+              </div>
+
               {/* NTRP 실력 평가 */}
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500">NTRP 평가 (1.0 ~ 5.0+)</label>

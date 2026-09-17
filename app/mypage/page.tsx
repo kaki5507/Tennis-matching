@@ -156,6 +156,13 @@ export default function MyPage() {
               프로필 수정
             </Button>
           </Link>
+          {userId && (
+            <Link href={`/users/${userId}`} className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-2">
+              <Button variant="outline" className="w-full sm:w-auto border-slate-300 text-slate-700 hover:bg-slate-50">
+                📊 내 전적 보기
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* [NEW] 알림 설정 카드 */}

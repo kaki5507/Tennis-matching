@@ -10,6 +10,7 @@ interface EvaluationInput {
   mannerRating: number;
   ntrpRating: number;
   isNoShow?: boolean;
+  winLoss?: "WIN" | "LOSS" | "DRAW"; // [NEW] 이 사람이 이 경기에서 이겼는지 여부 (평가자 관점에서 기록)
 }
 
 export async function getEvaluatees(matchId: string, currentUserId: string) {
@@ -69,6 +70,7 @@ export async function submitEvaluations(
           mannerRating: evalData.mannerRating,
           ntrpRating: evalData.ntrpRating,
           isNoShow: evalData.isNoShow || false,
+          winLoss: evalData.winLoss,
         },
         create: {
           matchId,
@@ -77,6 +79,7 @@ export async function submitEvaluations(
           mannerRating: evalData.mannerRating,
           ntrpRating: evalData.ntrpRating,
           isNoShow: evalData.isNoShow || false,
+          winLoss: evalData.winLoss,
         }
       });
 
