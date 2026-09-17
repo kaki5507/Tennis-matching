@@ -8,7 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { createMatchRoom } from "@/app/actions/match";
+import { findOrCreateCourt } from "@/app/actions/court";
 import { getProfile } from "@/app/actions/profile"; // 👈 유저 진짜 점수 가져오기용
+import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
 
 export default function CreateMatchPage() {
   const router = useRouter();
@@ -20,6 +22,9 @@ export default function CreateMatchPage() {
   // 🌟 내 진짜 NTRP를 저장할 상태
   const [myRoundedNtrp, setMyRoundedNtrp] = useState<number>(2.0); 
   const [isVerified, setIsVerified] = useState(false);
+
+  // [NEW] 검색해서 선택한 테니스장
+  const [selectedCourt, setSelectedCourt] = useState<SelectedCourt | null>(null);
 
   // 폼에 입력할 데이터들 상태 관리
   const [formData, setFormData] = useState({
@@ -69,9 +74,24 @@ export default function CreateMatchPage() {
   // 등록 버튼 눌렀을 때 실행
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+
+    // [NEW] 테니스장 선택 필수
+    if (!selectedCourt || !selectedCourt.address) {
+      alert("테니스장을 검색해서 선택해주세요.");
+      return;
+    }
+
     setIsLoading(true);
 
-    const result = await createMatchRoom({ ...formData, hostId });
+    // [NEW] 선택한 장소를 courts 테이블에서 찾거나 새로 생성
+    const courtResult = await findOrCreateCourt(selectedCourt);
+    if (!courtResult.success || !courtResult.courtId) {
+      alert(courtResult.error ?? "테니스장 정보를 저장하지 못했습니다.");
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await createMatchRoom({ ...formData, hostId, courtId: courtResult.courtId });
 
     if (result.success) {
       alert("매칭 방이 성공적으로 만들어졌습니다! 🎾");
@@ -102,6 +122,12 @@ export default function CreateMatchPage() {
         <h1 className="text-2xl font-bold text-slate-900 mb-6">새로운 매칭 방 만들기</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* [NEW] 테니스장 검색 */}
+          <div className="space-y-2">
+            <Label>테니스장</Label>
+            <CourtSearch selected={selectedCourt} onSelect={setSelectedCourt} />
+          </div>
+
           {/* 1. 날짜 및 시간 */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

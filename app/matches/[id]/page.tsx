@@ -9,6 +9,7 @@ import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
 import { supabase } from "@/lib/supabase"; // 👈 [추가] 로그인 정보 가져오기 위한 도구
 import MatchChatWrapper from "./MatchChatWrapper";
+import CourtMap from "@/components/CourtMap";
 
 const prisma = new PrismaClient();
 
@@ -84,6 +85,19 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               <p className="font-bold text-slate-900">{match.host?.nickname || "알 수 없음"}</p>
             </div>
           </div>
+
+          {/* [NEW] 테니스장 위치 지도 */}
+          {match.court && (
+            <div className="mb-12">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">📍 테니스장 위치</h3>
+              <CourtMap
+                latitude={Number(match.court.latitude)}
+                longitude={Number(match.court.longitude)}
+                name={match.court.name}
+              />
+              <p className="text-sm text-slate-500 mt-2">{match.court.address}</p>
+            </div>
+          )}
 
           {/* 방장이 쓴 상세 설명 영역 */}
           <div className="mb-12">

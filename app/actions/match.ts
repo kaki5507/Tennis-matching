@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 // 💡 폼에서 넘어오는 데이터들의 '타입 설계도'를 만들어 줍니다.
 interface CreateMatchInput {
   hostId: string;
+  courtId: string; // [변경] 더 이상 자동으로 첫 코트를 쓰지 않고, 검색해서 선택한 코트를 받습니다.
   matchDate: string;
   startTime: string;
   targetLevel: string;
@@ -20,19 +21,10 @@ interface CreateMatchInput {
 
 export async function createMatchRoom(data: CreateMatchInput) {
   try {
-    // 1. 임시 코트장 확인 및 생성 (외래키 연결 에러 방지용)
-    let court = await prisma.court.findFirst();
+    // 1. 코트 존재 여부 확인 (프론트에서 findOrCreateCourt로 미리 만들어서 넘겨주지만, 방어적으로 한 번 더 확인)
+    const court = await prisma.court.findUnique({ where: { id: data.courtId } });
     if (!court) {
-      court = await prisma.court.create({
-        data: {
-          name: "올림픽공원 메인 테니스장",
-          address: "서울시 송파구 올림픽로 424",
-          latitude: 37.518,
-          longitude: 127.123,
-          hasParking: true,
-          hasShower: true
-        }
-      });
+      return { success: false, error: "선택한 테니스장 정보를 찾을 수 없습니다. 다시 검색해주세요." };
     }
 
     // 2. 사용자가 입력한 데이터로 매칭 방(Match) 생성
