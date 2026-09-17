@@ -84,6 +84,7 @@ model User {
 
   ntrpScore  Decimal?    @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
   ntrpCount  Int         @default(0) @map("ntrp_count") // 이 유저가 평가받은 총 횟수
+  levelMismatchCount Int @default(0) @map("level_mismatch_count") // [NEW] 자기신고 구력과 실제 평가가 크게 어긋나 자동조정된 횟수
   matchChats MatchChat[]
 
   @@map("users") // 실제 DB 생성되는 테이블명

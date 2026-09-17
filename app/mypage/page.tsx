@@ -30,6 +30,7 @@ interface UserProfile {
   preferredPos?: string | null;
   ntrpScore?: number | string | null; // Prisma의 Decimal 타입 대응
   ntrpCount?: number;
+  levelMismatchCount?: number; // [NEW] 허위구력 자동조정 이력
 }
 
 export default function MyPage() {
@@ -64,6 +65,7 @@ export default function MyPage() {
           // 💡 [추가] DB에서 계산된 NTRP 점수와 횟수를 상태에 저장합니다.
           ntrpScore: profileResult.user.ntrpScore?.toString(), 
           ntrpCount: profileResult.user.ntrpCount || 0,
+          levelMismatchCount: profileResult.user.levelMismatchCount || 0,
         });
         setMarketingAgreed(!!profileResult.user.marketingAgreedAt);
       }
@@ -170,6 +172,14 @@ export default function MyPage() {
           <h2 className="text-lg font-bold text-slate-900 mb-3">🔔 알림 설정</h2>
           {userId && <NotificationOptIn userId={userId} marketingAgreed={marketingAgreed} />}
         </div>
+
+        {/* [NEW] 허위구력 자동조정 이력 안내 (본인에게만 표시) */}
+        {profile && (profile.levelMismatchCount ?? 0) > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6 text-sm text-amber-800">
+            ⚠️ 동료 평가 결과를 바탕으로 구력 정보가 자동 조정된 이력이 {profile.levelMismatchCount}회 있어요.
+            신고하신 구력과 동료들의 평가가 반복해서 크게 다르면, 서비스 이용이 제한될 수 있습니다.
+          </div>
+        )}
 
         {/* ... (내가 만든 방, 참여한 방 영역 유지) ... */}
         <section>

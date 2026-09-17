@@ -2,6 +2,7 @@
 "use server"
 
 import { PrismaClient } from "@prisma/client"
+import { checkLevelIntegrity } from "@/app/actions/levelIntegrity"
 
 const prisma = new PrismaClient()
 
@@ -120,6 +121,9 @@ export async function submitEvaluations(
           mannerScore: finalMannerScore, // 👈 [추가] 계산된 매너 온도를 반영합니다!
         }
       });
+
+      // 5. [NEW] 허위 구력 자동 적발 검사 (신고구력 vs 실제 평가 비교)
+      await checkLevelIntegrity(evalData.evaluateeId, averageNtrp, ntrpCount);
     }
 
     return { success: true };
