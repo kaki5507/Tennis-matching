@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { createUserInDB } from "@/app/actions/auth";
-import { completeIdentityVerification } from "@/app/actions/verification";
+import { completeIdentityVerification, devBypassIdentityVerification } from "@/app/actions/verification";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
@@ -55,8 +55,10 @@ export default function SignupPage() {
       const channelKey = process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY;
 
       if (!storeId || !channelKey) {
+        // 개발 환경에서 PG 계약 전이라면, 본인인증 버튼 자체를 우회 버튼으로 대체합니다.
+        // (아래 handleDevBypass 참고 — 이 분기는 프로덕션에서는 절대 안 그려집니다)
         setErrorMsg(
-          "본인인증 서비스가 아직 설정되지 않았습니다. (.env에 NEXT_PUBLIC_PORTONE_STORE_ID / NEXT_PUBLIC_PORTONE_CHANNEL_KEY 필요)"
+          "본인인증 서비스가 아직 설정되지 않았습니다. 아래 개발용 버튼을 이용해주세요."
         );
         setIsVerifying(false);
         return;
@@ -92,6 +94,23 @@ export default function SignupPage() {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  // ⚠️ [DEV ONLY] 포트원 PG 계약 전, 회원가입 플로우 테스트용 우회 버튼 핸들러.
+  // 서버 액션(devBypassIdentityVerification) 자체가 production에서는 항상 실패를
+  // 반환하도록 이중으로 막혀있어서, 실수로 배포돼도 실제로 우회되지 않습니다.
+  const handleDevBypass = async () => {
+    setErrorMsg("");
+    setIsVerifying(true);
+    const result = await devBypassIdentityVerification();
+    if (!result.success || !result.ciDi) {
+      setErrorMsg(result.error ?? "개발용 우회에 실패했습니다.");
+      setIsVerifying(false);
+      return;
+    }
+    setVerifiedCiDi(result.ciDi);
+    setVerifiedName(result.name ?? null);
+    setIsVerifying(false);
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -189,6 +208,20 @@ export default function SignupPage() {
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               본인인증이 완료되었습니다{verifiedName ? ` (${verifiedName}님)` : ""}.
             </div>
+          )}
+
+          {/* ⚠️ 개발 환경(NODE_ENV !== production)에서만 노출됩니다.
+              프로덕션 빌드에서는 이 블록 자체가 렌더링되지 않고,
+              혹시 남아있어도 서버 액션이 production에서 항상 실패를 반환합니다. */}
+          {!verifiedCiDi && process.env.NODE_ENV !== "production" && (
+            <button
+              type="button"
+              onClick={handleDevBypass}
+              disabled={isVerifying}
+              className="w-full mt-2 text-xs text-amber-700 bg-amber-50 border border-dashed border-amber-300 rounded-lg py-2 hover:bg-amber-100"
+            >
+              🛠️ [개발용] 포트원 PG 계약 전 — 본인인증 건너뛰고 테스트하기
+            </button>
           )}
         </div>
 

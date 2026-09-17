@@ -37,7 +37,6 @@ export async function completeIdentityVerification(
       error: "본인인증 서비스가 아직 설정되지 않았습니다. 관리자에게 문의해주세요.",
     }
   }
-
   try {
     const res = await fetch(
       `${PORTONE_API_BASE}/identity-verifications/${encodeURIComponent(
@@ -93,5 +92,36 @@ export async function completeIdentityVerification(
   } catch (error) {
     console.error("본인인증 검증 에러:", error)
     return { success: false, error: "본인인증 처리 중 오류가 발생했습니다." }
+  }
+}
+
+/**
+ * ⚠️ 개발 환경 전용 — 포트원 PG 계약이 완료되기 전, 회원가입 플로우 전체를
+ * 테스트할 수 있도록 본인인증을 건너뛰는 함수입니다.
+ *
+ * 이중 안전장치:
+ * 1) NODE_ENV가 production이면 무조건 차단
+ * 2) PORTONE_API_SECRET이 이미 설정되어 있다면(=실연동 준비 완료) 이것도 차단
+ *    (실연동 키가 있는데 우회를 쓰는 건 의미가 없고, 실수로 우회가 남아있는
+ *     상태로 오픈하는 사고를 막기 위함)
+ *
+ * PG 계약이 끝나면 이 함수는 더 이상 호출되지 않게 되고(프론트에서 버튼이
+ * 사라짐), 그대로 코드에 남겨둬도 안전하지만 정리하고 싶다면 지워도 됩니다.
+ */
+export async function devBypassIdentityVerification(): Promise<VerificationResult> {
+  if (process.env.NODE_ENV === "production") {
+    return { success: false, error: "이 기능은 개발 환경에서만 사용할 수 있습니다." }
+  }
+  if (process.env.PORTONE_API_SECRET) {
+    return { success: false, error: "실연동 키가 설정되어 있어 우회 기능을 사용할 수 없습니다." }
+  }
+
+  // 랜덤 CI/DI를 만들어서, 매번 새로운 "가짜 사람"으로 가입 테스트가 가능하게 함
+  const fakeCiDi = `dev_bypass_${crypto.randomUUID()}`
+
+  return {
+    success: true,
+    ciDi: fakeCiDi,
+    name: "테스트유저",
   }
 }
