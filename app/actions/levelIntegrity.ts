@@ -16,14 +16,13 @@ const LEVEL_BUCKETS: { label: string; value: number }[] = [
 ]
 
 // 최소 이만큼 평가가 쌓여야 "믿을 만한 실력 데이터"로 보고 자동조정을 검토합니다.
-// (참여 시 레벨 제한 검증은 3회 기준이지만, 레벨을 강제로 바꾸는 건 더 신중해야 하므로 5회로 잡음)
-const MIN_EVAL_COUNT_FOR_PENALTY = 5
+const MIN_EVAL_COUNT_FOR_PENALTY = 20
 
 // 이 이상 차이나면 "허위 구력"으로 판단합니다. (NTRP 1.0점 차이 = 한 체급 이상 차이)
 const MISMATCH_THRESHOLD = 1.0
 
 // 자동조정이 이 횟수만큼 누적되면, 반복적인 허위신고로 보고 계정을 정지합니다.
-const BAN_AFTER_MISMATCH_COUNT = 3
+const BAN_AFTER_MISMATCH_COUNT = 5
 
 function selfDeclaredValue(tennisLevel: string): number | null {
   const bucket = LEVEL_BUCKETS.find((b) => b.label === tennisLevel)
