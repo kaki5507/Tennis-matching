@@ -74,6 +74,12 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               <p className="text-sm text-slate-500 mb-1">요구 실력</p>
               <p className="font-bold text-slate-900">{match.targetLevel}</p>
             </div>
+            {match.minMannerScore !== null && (
+              <div>
+                <p className="text-sm text-slate-500 mb-1">매너 온도 기준</p>
+                <p className="font-bold text-slate-900">🌡️ {Number(match.minMannerScore).toFixed(1)}도 이상</p>
+              </div>
+            )}
             <div>
               <p className="text-sm text-slate-500 mb-1">참가비</p>
               <p className="font-bold text-slate-900">

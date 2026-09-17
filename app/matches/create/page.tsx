@@ -36,6 +36,7 @@ export default function CreateMatchPage() {
     ageRequirement: "제한없음",
     costPerPerson: "",
     description: "",
+    minMannerScore: "", // [NEW] 빈 값 = 제한없음
   });
 
   // 화면이 켜지면 로그인 상태 확인 + 프로필(NTRP 점수) 불러오기
@@ -180,6 +181,29 @@ export default function CreateMatchPage() {
           <div className="space-y-2">
             <Label htmlFor="costPerPerson">1인당 참가비 (원)</Label>
             <Input type="number" id="costPerPerson" name="costPerPerson" value={formData.costPerPerson} onChange={handleChange} placeholder="예: 6000 (코트비+공값 1/N)" />
+          </div>
+
+          {/* [NEW] 매너 온도 최소기준 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="minMannerScore">참여 최소 매너 온도</Label>
+              <span className="text-xs text-slate-400">(선택)</span>
+            </div>
+            <select
+              id="minMannerScore"
+              name="minMannerScore"
+              value={formData.minMannerScore}
+              onChange={handleChange}
+              className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600"
+            >
+              <option value="">🌡️ 제한없음 (누구나 참여 가능)</option>
+              <option value="33.0">33.0도 이상</option>
+              <option value="35.0">35.0도 이상 (평균 이상)</option>
+              <option value="36.5">36.5도 이상 (기본값 이상)</option>
+            </select>
+            <p className="text-xs text-slate-400">
+              비매너 평가를 많이 받아 온도가 낮은 유저의 참여를 제한할 수 있어요.
+            </p>
           </div>
 
           {/* 4. 상세 설명 */}

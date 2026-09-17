@@ -17,6 +17,7 @@ interface CreateMatchInput {
   ageRequirement: string;
   costPerPerson: string | number; // 문자로 올 수도 있고 숫자로 올 수도 있음
   description: string;
+  minMannerScore?: string | number | null; // [NEW] 참여 최소 매너온도, 빈 값이면 제한없음
 }
 
 export async function createMatchRoom(data: CreateMatchInput) {
@@ -41,7 +42,13 @@ export async function createMatchRoom(data: CreateMatchInput) {
         genderRequirement: data.genderRequirement,
         ageRequirement: data.ageRequirement,
         costPerPerson: typeof data.costPerPerson === 'string' ? parseInt(data.costPerPerson) || 0 : data.costPerPerson, 
-        description: data.description
+        description: data.description,
+        minMannerScore:
+          data.minMannerScore === undefined || data.minMannerScore === null || data.minMannerScore === ""
+            ? null
+            : typeof data.minMannerScore === "string"
+              ? parseFloat(data.minMannerScore)
+              : data.minMannerScore,
       }
     });
 
@@ -98,6 +105,19 @@ export async function joinMatchRoom(matchId: string, userId: string) {
             error: `이 방은 NTRP ${minLevel.toFixed(1)} ~ ${maxLevel.toFixed(1)} 레벨만 참여 가능합니다.\n(현재 내 레벨: ${myDisplayScore.toFixed(1)})` 
           };
         }
+      }
+    }
+
+    // 🌟 [NEW] 매너 온도 최소기준 검사 (레벨 검사와 별개로, 방장이 설정한 경우에만)
+    if (match.minMannerScore !== null) {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      const myMannerScore = user ? Number(user.mannerScore) : 36.5;
+
+      if (myMannerScore < Number(match.minMannerScore)) {
+        return {
+          success: false,
+          error: `이 방은 매너 온도 ${Number(match.minMannerScore).toFixed(1)}도 이상만 참여 가능합니다.\n(현재 내 매너 온도: ${myMannerScore.toFixed(1)}도)`,
+        };
       }
     }
 
