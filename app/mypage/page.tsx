@@ -9,6 +9,7 @@ import { getMyMatches } from "@/app/actions/user";
 import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import NotificationOptIn from "./NotificationOptIn";
+import CourtWatchList from "./CourtWatchList";
 
 interface CourtData {
   name: string;
@@ -171,6 +172,12 @@ export default function MyPage() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <h2 className="text-lg font-bold text-slate-900 mb-3">🔔 알림 설정</h2>
           {userId && <NotificationOptIn userId={userId} marketingAgreed={marketingAgreed} />}
+        </div>
+
+        {/* [NEW] 관심 테니스장 예약 알림 */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+          <h2 className="text-lg font-bold text-slate-900 mb-3">📅 테니스장 예약 오픈 알림</h2>
+          {userId && <CourtWatchList userId={userId} />}
         </div>
 
         {/* [NEW] 허위구력 자동조정 이력 안내 (본인에게만 표시) */}

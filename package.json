@@ -12,6 +12,7 @@
     "@portone/browser-sdk": "^0.1.10",
     "@prisma/client": "^6.19.3",
     "@supabase/supabase-js": "^2.112.2",
+    "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",

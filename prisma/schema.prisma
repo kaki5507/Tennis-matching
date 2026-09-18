@@ -266,6 +266,28 @@ model Notification {
   @@index([userId])
 }
 
+// [10] [NEW] 부천시 공공예약 테니스장 예약 알림 - 관심 등록
+model CourtWatch {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  facilityId   String   @map("facility_id") // 외부 사이트(부천 공공예약)의 lending_info_seq
+  facilityName String   @map("facility_name") // 표시용 이름 (예: 오정레포츠센터 테니스장)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, facilityId])
+  @@map("court_watches")
+}
+
+// [11] [NEW] 마지막으로 확인한 예약가능 슬롯 스냅샷 (같은 슬롯 중복알림 방지용)
+model CourtAvailabilitySnapshot {
+  id            String   @id @default(uuid()) @db.Uuid
+  facilityId    String   @unique @map("facility_id")
+  availableKeys String[] @map("available_keys") // 예: ["2026-10-03_10:00~12:00"]
+  checkedAt     DateTime @updatedAt @map("checked_at")
+
+  @@map("court_availability_snapshots")
+}
+
 // 수락된 인원들끼리 대화하는 프라이빗 채팅 테이블
 model MatchChat {
   id        String   @id @default(uuid()) @db.Uuid
