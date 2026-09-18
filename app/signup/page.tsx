@@ -28,6 +28,10 @@ export default function SignupPage() {
   // [NEW] 약관/개인정보처리방침 동의 상태
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
+
+  // [NEW] 관리자 가입 (초대코드가 맞아야만 실제로 관리자가 됨 — 서버에서 검증)
+  const [wantsAdmin, setWantsAdmin] = useState(false);
+  const [adminCode, setAdminCode] = useState("");
   const [marketingAgreed, setMarketingAgreed] = useState(false);
   const allRequiredAgreed = termsAgreed && privacyAgreed;
   const allAgreed = allRequiredAgreed && marketingAgreed;
@@ -154,6 +158,7 @@ export default function SignupPage() {
         termsAgreed,
         privacyAgreed,
         marketingAgreed,
+        adminCode: wantsAdmin ? adminCode : undefined,
       });
 
       if (!dbResult.success) {
@@ -276,6 +281,28 @@ export default function SignupPage() {
             />
             (선택) 매칭/입금/대회 알림 수신 동의
           </label>
+        </div>
+
+        {/* [NEW] 관리자 가입 (초대코드 보유자만) */}
+        <div className="mb-6">
+          <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={wantsAdmin}
+              onChange={(e) => setWantsAdmin(e.target.checked)}
+              className="w-3.5 h-3.5"
+            />
+            관리자 초대코드가 있어요
+          </label>
+          {wantsAdmin && (
+            <Input
+              type="password"
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value)}
+              placeholder="관리자 초대코드"
+              className="mt-2"
+            />
+          )}
         </div>
 
         <form onSubmit={handleSignup} className="space-y-6">

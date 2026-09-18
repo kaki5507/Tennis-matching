@@ -18,6 +18,11 @@ enum Position {
   ANY
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum MatchStatus {
   OPEN // 모집중
   FULL // 모집마감
@@ -85,6 +90,7 @@ model User {
   ntrpScore  Decimal?    @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
   ntrpCount  Int         @default(0) @map("ntrp_count") // 이 유저가 평가받은 총 횟수
   levelMismatchCount Int @default(0) @map("level_mismatch_count") // [NEW] 자기신고 구력과 실제 평가가 크게 어긋나 자동조정된 횟수
+  role       Role        @default(USER) // [NEW] 관리자 여부
   matchChats MatchChat[]
 
   @@map("users") // 실제 DB 생성되는 테이블명
@@ -286,6 +292,19 @@ model CourtAvailabilitySnapshot {
   checkedAt     DateTime @updatedAt @map("checked_at")
 
   @@map("court_availability_snapshots")
+}
+
+// [12] [NEW] 페이지 방문 로그 (관리자 통계용 - 어떤 메뉴/기기로 많이 접속하는지)
+model PageView {
+  id        String   @id @default(uuid()) @db.Uuid
+  path      String // 방문한 경로 (예: /matches, /matches/[id])
+  device    String // "mobile" | "desktop"
+  userId    String?  @db.Uuid // 로그인 안 했으면 null
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([path])
+  @@index([createdAt])
+  @@map("page_views")
 }
 
 // 수락된 인원들끼리 대화하는 프라이빗 채팅 테이블
