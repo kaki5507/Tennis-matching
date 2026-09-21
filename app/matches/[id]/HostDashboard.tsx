@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
 import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
 import Link from "next/link";
+import TennisMascot from "@/components/TennisMascot";
 
 // 💡 1. 완벽한 타입 설계 (any 절대 금지!)
 interface Applicant {
@@ -168,6 +169,7 @@ export default function HostDashboard({
       <div className="space-y-3">
         {applicants.length === 0 ? (
           <div className="text-center py-6 text-slate-500 bg-slate-50 rounded-lg">
+            <TennisMascot pose="sad" className="w-16 h-16 mx-auto mb-2" />
             아직 참여 신청자가 없습니다.
           </div>
         ) : (

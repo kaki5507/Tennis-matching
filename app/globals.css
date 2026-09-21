@@ -4,6 +4,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* [NEW] 테니스 매칭 서비스 전용 컬러 팔레트 — 실제 코트/공/클레이 색감에서 추출 */
+:root {
+  --clay: #c1512f;      /* 클레이코트 브릭오렌지 — CTA, 강조 */
+  --court: #2f4a33;     /* 짙은 코트그린 — 헤더, 진한 텍스트 */
+  --ball: #d7de23;      /* 테니스공 연두 — 마스코트, 하이라이트 */
+  --chalk: #fbf8f1;     /* 라인화이트 — 카드 배경 */
+  --mist: #eef1e4;      /* 옅은 세이지 — 페이지 배경 */
+  --ink: #24301f;       /* 웜톤 다크 — 본문 텍스트 */
+  --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

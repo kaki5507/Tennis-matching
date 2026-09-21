@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
+import TennisMascot from "@/components/TennisMascot";
+import CourtLines from "@/components/CourtLines";
 
 export default function HomePage() {
   // 현재 로그인한 유저 정보를 담을 공간
@@ -35,23 +37,25 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* 🟢 헤더 (상단 네비게이션) */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="font-bold text-xl text-green-600">
-            🎾 TennisMatch
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--mist)" }}>
+      {/* 헤더 */}
+      <header className="border-b sticky top-0 z-10" style={{ background: "var(--chalk)", borderColor: "#dfe3d4" }}>
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TennisMascot pose="wave" className="w-9 h-9" />
+            <span className="font-display text-xl" style={{ color: "var(--court)" }}>
+              테니스매칭
+            </span>
           </div>
-          
-          <div className="flex items-center gap-4">
-            {/* 유저가 있으면(로그인 상태) 로그아웃 버튼을, 없으면 로그인/가입 버튼을 보여줍니다. */}
+
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <span className="text-sm text-slate-600 font-medium hidden sm:inline-block">
+                <span className="text-sm font-medium hidden sm:inline-block" style={{ color: "var(--ink)" }}>
                   환영합니다!
                 </span>
                 <Link href="/mypage">
-                  <Button variant="ghost" className="h-9 text-green-700 font-medium hover:bg-green-50">
+                  <Button variant="ghost" className="h-9 font-medium" style={{ color: "var(--court)" }}>
                     마이페이지
                   </Button>
                 </Link>
@@ -65,7 +69,9 @@ export default function HomePage() {
                   <Button variant="ghost" className="h-9">로그인</Button>
                 </Link>
                 <Link href="/signup">
-                  <Button className="h-9 bg-green-600 hover:bg-green-700">회원가입</Button>
+                  <Button className="h-9 text-white hover:opacity-90" style={{ background: "var(--clay)" }}>
+                    회원가입
+                  </Button>
                 </Link>
               </>
             )}
@@ -73,36 +79,92 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 🟢 메인 콘텐츠 영역 (히어로 섹션) */}
-      <main className="flex-1 flex flex-col items-center justify-center text-center px-4">
-        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
-          나에게 딱 맞는 <br className="md:hidden" />
-          <span className="text-green-600">테니스 파트너</span>를 찾아보세요
-        </h1>
-        <p className="text-lg text-slate-600 mb-10 max-w-lg">
-          실력, 연령, 성별 조건에 맞는 매칭 방을 찾거나 직접 만들어보세요. 매너 온도로 쾌적한 경기를 보장합니다.
-        </p>
-        
-        {user ? (
-          <div className="flex gap-4">
-            <Link href="/matches">
-              <Button className="h-12 px-8 text-lg bg-green-600 hover:bg-green-700">
-                매칭 방 찾기
-              </Button>
-            </Link>
-            <Link href="/matches/create">
-              <Button variant="outline" className="h-12 px-8 text-lg border-green-600 text-green-600 hover:bg-green-50">
-                방 만들기
-              </Button>
-            </Link>
+      {/* 히어로 섹션 */}
+      <main className="flex-1">
+        <section className="relative overflow-hidden">
+          {/* 배경 코트라인 장식 (우측에 크게, 옅게) */}
+          <CourtLines
+            className="absolute -right-32 -top-10 w-[720px] h-[500px] opacity-[0.07] pointer-events-none hidden md:block"
+            style={{ color: "var(--court)" }}
+          />
+
+          <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center relative">
+            {/* 왼쪽: 카피 */}
+            <div className="text-center md:text-left">
+              <h1 className="font-display text-4xl md:text-6xl leading-tight mb-6" style={{ color: "var(--ink)" }}>
+                오늘도 코트에서
+                <br />
+                만나요
+              </h1>
+              <p className="text-lg mb-10 max-w-md mx-auto md:mx-0" style={{ color: "var(--ink)", opacity: 0.75 }}>
+                실력, 연령, 성별 조건에 맞는 매칭 방을 찾거나 직접 만들어보세요.
+                매너 온도로 쾌적한 경기를 보장합니다.
+              </p>
+
+              {user ? (
+                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                  <Link href="/matches">
+                    <Button
+                      className="h-12 px-8 text-lg w-full sm:w-auto text-white hover:opacity-90"
+                      style={{ background: "var(--clay)" }}
+                    >
+                      매칭 방 찾기
+                    </Button>
+                  </Link>
+                  <Link href="/matches/create">
+                    <Button
+                      variant="outline"
+                      className="h-12 px-8 text-lg w-full sm:w-auto"
+                      style={{ borderColor: "var(--court)", color: "var(--court)" }}
+                    >
+                      방 만들기
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Link href="/signup">
+                  <Button
+                    className="h-12 px-8 text-lg text-white hover:opacity-90"
+                    style={{ background: "var(--clay)" }}
+                  >
+                    지금 바로 시작하기
+                  </Button>
+                </Link>
+              )}
+            </div>
+
+            {/* 오른쪽: 마스코트 일러스트 */}
+            <div className="flex justify-center">
+              <div
+                className="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center"
+                style={{ background: "var(--chalk)", border: "3px dashed var(--ball)" }}
+              >
+                <TennisMascot pose="wave" className="w-48 h-48 md:w-60 md:h-60" />
+              </div>
+            </div>
           </div>
-        ) : (
-          <Link href="/signup">
-            <Button className="h-12 px-8 text-lg bg-green-600 hover:bg-green-700">
-              지금 바로 시작하기
-            </Button>
-          </Link>
-        )}
+        </section>
+
+        {/* 특징 3가지 - 코트 라인으로 구획 */}
+        <section className="max-w-6xl mx-auto px-4 py-16">
+          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "#dfe3d4" }}>
+            {[
+              { emoji: "🎯", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
+              { emoji: "🌡️", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
+              { emoji: "📍", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
+            ].map((f) => (
+              <div key={f.title} className="py-8 sm:py-0 sm:px-8 text-center first:pl-0 last:pr-0">
+                <div className="text-3xl mb-3">{f.emoji}</div>
+                <h3 className="font-display text-xl mb-2" style={{ color: "var(--court)" }}>
+                  {f.title}
+                </h3>
+                <p className="text-sm" style={{ color: "var(--ink)", opacity: 0.7 }}>
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

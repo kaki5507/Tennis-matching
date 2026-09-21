@@ -1,6 +1,7 @@
 // app/history/page.tsx
 import Link from "next/link";
 import { PrismaClient } from "@prisma/client";
+import TennisMascot from "@/components/TennisMascot";
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,7 @@ export default async function HistoryPage({
 
         {matches.length === 0 ? (
           <div className="text-center py-16 text-slate-500 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
             아직 완료된 경기가 없습니다. 첫 번째 기록의 주인공이 되어보세요! 🎾
           </div>
         ) : (

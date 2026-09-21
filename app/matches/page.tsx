@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PrismaClient } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
+import TennisMascot from "@/components/TennisMascot";
 
 // DB와 소통할 Prisma 준비
 const prisma = new PrismaClient();
@@ -95,8 +96,9 @@ export default async function MatchesPage({
         {/* 매칭 리스트 카드 영역 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.length === 0 ? (
-            <div className="col-span-full text-center py-16 text-slate-500 bg-white rounded-2xl border border-slate-100 shadow-sm">
-              아직 모집 중인 방이 없습니다. <br/> 첫 번째 방장이 되어 사람들을 초대해 보세요!
+            <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+              <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
+              <p className="text-slate-500">아직 모집 중인 방이 없습니다. <br/> 첫 번째 방장이 되어 사람들을 초대해 보세요!</p>
             </div>
           ) : (
             matches.map((match) => (
