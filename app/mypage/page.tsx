@@ -10,6 +10,7 @@ import { getProfile } from "@/app/actions/profile";
 import { Button } from "@/components/ui/button";
 import NotificationOptIn from "./NotificationOptIn";
 import CourtWatchList from "./CourtWatchList";
+import TennisLoader from "@/components/TennisLoader";
 
 interface CourtData {
   name: string;
@@ -84,7 +85,11 @@ export default function MyPage() {
   }, [router]);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">데이터를 불러오는 중입니다... 🎾</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <TennisLoader label="내 정보를 불러오는 중..." />
+      </div>
+    );
   }
 
   const renderMatchCard = (match: MatchData) => (

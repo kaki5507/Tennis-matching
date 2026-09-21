@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { isAdmin, getAdminStats, getSignupTrend } from "@/app/actions/admin";
+import TennisLoader from "@/components/TennisLoader";
 
 interface Stats {
   users: { total: number; today: number; week: number; month: number };
@@ -83,7 +84,11 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   if (status === "checking") {
-    return <div className="max-w-5xl mx-auto px-4 py-16 text-center text-slate-500">확인 중...</div>;
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-16">
+        <TennisLoader label="권한 확인 중..." />
+      </div>
+    );
   }
   if (status === "denied") {
     return (

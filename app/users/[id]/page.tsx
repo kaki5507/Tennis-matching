@@ -4,6 +4,7 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getUserRecord } from "@/app/actions/record";
+import TennisLoader from "@/components/TennisLoader";
 
 interface RecordData {
   totalMatches: number;
@@ -68,7 +69,11 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
   }, [id]);
 
   if (isLoading) {
-    return <div className="max-w-2xl mx-auto px-4 py-16 text-center text-slate-500">불러오는 중...</div>;
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16">
+        <TennisLoader label="전적을 불러오는 중..." />
+      </div>
+    );
   }
 
   if (errorMsg || !user || !record) {

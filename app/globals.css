@@ -19,6 +19,24 @@
   font-family: var(--font-display);
 }
 
+/* [NEW] 로딩 애니메이션 - 테니스공이 라켓에 튕기는 모습 */
+@keyframes tennis-ball-bounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  38% { transform: translateY(-52px) scale(1, 1); }
+  50% { transform: translateY(-58px) scale(1.05, 0.95); }
+  62% { transform: translateY(-52px) scale(1, 1); }
+  92% { transform: translateY(0) scale(1.18, 0.82); }
+}
+@keyframes tennis-ball-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.18; }
+  50% { transform: scaleX(0.55); opacity: 0.08; }
+}
+@keyframes tennis-racket-flick {
+  0%, 82%, 100% { transform: rotate(0deg); }
+  90% { transform: rotate(-14deg); }
+  96% { transform: rotate(8deg); }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

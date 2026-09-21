@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts";
 import { subscribeCourtWatch, unsubscribeCourtWatch, getMyCourtWatches } from "@/app/actions/courtWatch";
+import TennisLoader from "@/components/TennisLoader";
 import { Bell, BellOff } from "lucide-react";
 
 interface Props {
@@ -44,7 +45,7 @@ export default function CourtWatchList({ userId }: Props) {
   };
 
   if (isLoading) {
-    return <p className="text-sm text-slate-400">불러오는 중...</p>;
+    return <TennisLoader size="inline" label="불러오는 중..." />;
   }
 
   return (
