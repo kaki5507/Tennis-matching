@@ -11,6 +11,7 @@ import { createMatchRoom } from "@/app/actions/match";
 import { findOrCreateCourt } from "@/app/actions/court";
 import { getProfile } from "@/app/actions/profile"; // 👈 유저 진짜 점수 가져오기용
 import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
+import { ChevronDown } from "lucide-react";
 
 export default function CreateMatchPage() {
   const router = useRouter();
@@ -27,9 +28,10 @@ export default function CreateMatchPage() {
   const [selectedCourt, setSelectedCourt] = useState<SelectedCourt | null>(null);
 
   // 폼에 입력할 데이터들 상태 관리
+  const todayStr = new Date().toISOString().slice(0, 10); // [NEW] 오늘 날짜 (YYYY-MM-DD)
   const [formData, setFormData] = useState({
-    matchDate: "",
-    startTime: "",
+    matchDate: todayStr, // [NEW] 오늘 날짜를 기본값으로
+    startTime: "19:00", // [NEW] 저녁 시간대를 기본값으로 (직접 수정 가능)
     gameType: "단식",
     targetLevel: "누구나", // 기본값
     genderRequirement: "제한없음",
@@ -82,6 +84,12 @@ export default function CreateMatchPage() {
       return;
     }
 
+    // [NEW] 직접 입력한 시작 시간 형식 검증 (HH:MM)
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(formData.startTime)) {
+      alert("시작 시간은 '19:00'처럼 HH:MM 형식으로 입력해주세요.");
+      return;
+    }
+
     setIsLoading(true);
 
     // [NEW] 선택한 장소를 courts 테이블에서 찾거나 새로 생성
@@ -130,27 +138,55 @@ export default function CreateMatchPage() {
           </div>
 
           {/* 1. 날짜 및 시간 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="matchDate">경기 날짜</Label>
-              <Input type="date" id="matchDate" name="matchDate" value={formData.matchDate} onChange={handleChange} required />
+              <Input
+                type="date"
+                id="matchDate"
+                name="matchDate"
+                value={formData.matchDate}
+                onChange={handleChange}
+                min={todayStr}
+                className="h-12 text-base"
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="startTime">시작 시간</Label>
-              <Input type="time" id="startTime" name="startTime" value={formData.startTime} onChange={handleChange} required />
+              <Input
+                type="text"
+                id="startTime"
+                name="startTime"
+                value={formData.startTime}
+                onChange={handleChange}
+                placeholder="19:00"
+                inputMode="numeric"
+                className="h-12 text-lg font-medium tracking-wide"
+                required
+              />
+              <p className="text-xs text-slate-400">직접 입력해주세요 (예: 07:30, 19:00)</p>
             </div>
           </div>
 
           {/* 2. 게임 종류 & 실력 조건 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>게임 종류</Label>
-              <select name="gameType" value={formData.gameType} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
-                <option value="단식">단식</option>
-                <option value="복식">복식</option>
-                <option value="혼합복식">혼합복식</option>
-                <option value="랠리(연습)">랠리(연습)</option>
-              </select>
+              <div className="relative">
+                <select
+                  name="gameType"
+                  value={formData.gameType}
+                  onChange={handleChange}
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+                >
+                  <option value="단식">단식</option>
+                  <option value="복식">복식</option>
+                  <option value="혼합복식">혼합복식</option>
+                  <option value="랠리(연습)">랠리(연습)</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
             
             {/* 🌟 [수정] 요구 실력 드롭다운 자동화 적용 */}
@@ -167,13 +203,21 @@ export default function CreateMatchPage() {
                   </span>
                 )}
               </div>
-              <select name="targetLevel" value={formData.targetLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-600">
-                {levelOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  name="targetLevel"
+                  value={formData.targetLevel}
+                  onChange={handleChange}
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-indigo-600"
+                >
+                  {levelOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
             </div>
           </div>
 
@@ -189,18 +233,21 @@ export default function CreateMatchPage() {
               <Label htmlFor="minMannerScore">참여 최소 매너 온도</Label>
               <span className="text-xs text-slate-400">(선택)</span>
             </div>
-            <select
-              id="minMannerScore"
-              name="minMannerScore"
-              value={formData.minMannerScore}
-              onChange={handleChange}
-              className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600"
-            >
-              <option value="">🌡️ 제한없음 (누구나 참여 가능)</option>
-              <option value="33.0">33.0도 이상</option>
-              <option value="35.0">35.0도 이상 (평균 이상)</option>
-              <option value="36.5">36.5도 이상 (기본값 이상)</option>
-            </select>
+            <div className="relative">
+              <select
+                id="minMannerScore"
+                name="minMannerScore"
+                value={formData.minMannerScore}
+                onChange={handleChange}
+                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+              >
+                <option value="">🌡️ 제한없음 (누구나 참여 가능)</option>
+                <option value="33.0">33.0도 이상</option>
+                <option value="35.0">35.0도 이상 (평균 이상)</option>
+                <option value="36.5">36.5도 이상 (기본값 이상)</option>
+              </select>
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
             <p className="text-xs text-slate-400">
               비매너 평가를 많이 받아 온도가 낮은 유저의 참여를 제한할 수 있어요.
             </p>
