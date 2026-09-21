@@ -115,7 +115,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
           {/* 방장 대시보드 (방장에게만 보임) */}
           {currentUserId === match.hostId && (
-            <HostDashboard matchId={match.id} currentStatus={match.status} />
+            <HostDashboard matchId={match.id} currentStatus={match.status} costPerPerson={match.costPerPerson} />
           )}
 
           {/* 하단 액션 버튼 */}

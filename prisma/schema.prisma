@@ -161,6 +161,10 @@ model MatchParticipant {
   team    Team? // 복식일 경우 A/B팀 배정
   status  ParticipantStatus @default(PENDING) // [NEW] Enum에 노쇼(NO_SHOW) 추가됨
 
+  // [NEW] 참가비 입금확인 (자동 결제연동 전까지, 호스트가 수동으로 확인/체크)
+  paymentConfirmed   Boolean   @default(false) @map("payment_confirmed")
+  paymentConfirmedAt DateTime? @map("payment_confirmed_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

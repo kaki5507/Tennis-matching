@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { getMatchApplications } from "@/app/actions/participant";
+import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
 import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
 import Link from "next/link";
 
@@ -14,6 +14,7 @@ interface Applicant {
   id: string;
   userId: string;
   status: string;
+  paymentConfirmed: boolean; // [NEW]
   user: {
     nickname: string | null;
     email: string;
@@ -23,7 +24,15 @@ interface Applicant {
   };
 }
 
-export default function HostDashboard({ matchId, currentStatus }: { matchId: string, currentStatus: string }) {
+export default function HostDashboard({
+  matchId,
+  currentStatus,
+  costPerPerson,
+}: {
+  matchId: string;
+  currentStatus: string;
+  costPerPerson: number; // [NEW] 1인당 참가비 (입금확인 UI에 표시용)
+}) {
   const router = useRouter();
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [hostId, setHostId] = useState<string | null>(null);
@@ -38,6 +47,7 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
         id: p.id,
         userId: p.userId,
         status: p.status,
+        paymentConfirmed: p.paymentConfirmed,
         user: {
           nickname: p.user.nickname,
           email: p.user.email,
@@ -66,6 +76,7 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
             id: p.id,
             userId: p.userId,
             status: p.status,
+            paymentConfirmed: p.paymentConfirmed,
             user: {
               nickname: p.user.nickname,
               email: p.user.email,
@@ -93,6 +104,19 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
     if (result.success) {
       await reloadApplicants(); // 👈 useCallback 없이 안전하게 다시 불러오기
       router.refresh();
+    } else {
+      alert(result.error);
+    }
+    setIsLoading(false);
+  };
+
+  // [NEW] 입금확인 토글
+  const handleTogglePayment = async (participantId: string, current: boolean) => {
+    if (!hostId) return;
+    setIsLoading(true);
+    const result = await confirmPayment(participantId, hostId, !current);
+    if (result.success) {
+      await reloadApplicants();
     } else {
       alert(result.error);
     }
@@ -164,6 +188,14 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
                   }`}>
                     {applicant.status === "ACCEPTED" ? "수락됨" : applicant.status === "REJECTED" ? "거절됨" : "대기중"}
                   </span>
+                  {/* [NEW] 수락된 참가자에게만 입금확인 배지 표시 */}
+                  {applicant.status === "ACCEPTED" && costPerPerson > 0 && (
+                    <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                      applicant.paymentConfirmed ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-500"
+                    }`}>
+                      {applicant.paymentConfirmed ? "💰 입금확인" : "입금대기"}
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-slate-600 mt-1 flex gap-3">
                   <span>🎾 구력: {applicant.user.tennisLevel}</span>
@@ -178,6 +210,18 @@ export default function HostDashboard({ matchId, currentStatus }: { matchId: str
 
               {currentStatus !== "COMPLETED" && (
                 <div className="flex gap-2">
+                  {/* [NEW] 입금확인 토글 (수락된 참가자만) */}
+                  {applicant.status === "ACCEPTED" && costPerPerson > 0 && (
+                    <Button
+                      size="sm"
+                      variant={applicant.paymentConfirmed ? "outline" : "default"}
+                      onClick={() => handleTogglePayment(applicant.id, applicant.paymentConfirmed)}
+                      disabled={isLoading}
+                      className={applicant.paymentConfirmed ? "border-blue-300 text-blue-600" : "bg-blue-600 hover:bg-blue-700"}
+                    >
+                      {applicant.paymentConfirmed ? "입금 취소" : `입금확인 (${costPerPerson.toLocaleString()}원)`}
+                    </Button>
+                  )}
                   {applicant.status !== "ACCEPTED" && (
                     <Button 
                       size="sm" 
