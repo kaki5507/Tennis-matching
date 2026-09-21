@@ -109,7 +109,16 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
-        <h1 className="text-2xl font-bold text-slate-900">🛠️ 관리자 대시보드</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-slate-900">🛠️ 관리자 대시보드</h1>
+          <a
+            href="/admin/tournaments/create"
+            className="text-sm font-medium px-4 py-2 rounded-lg text-white"
+            style={{ background: "var(--clay)" }}
+          >
+            🏆 대회 개설
+          </a>
+        </div>
 
         {/* 핵심 지표 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

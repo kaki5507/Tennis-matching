@@ -66,9 +66,14 @@ export default async function MatchesPage({
             <p className="text-slate-500 mt-2">나에게 맞는 조건의 테니스 게임을 찾아보세요.</p>
           </div>
           <div className="flex gap-2">
+            <Link href="/tournaments">
+              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                🏆 대회
+              </Button>
+            </Link>
             <Link href="/history">
               <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                🏆 전체 기록실
+                📋 전체 기록실
               </Button>
             </Link>
             <Link href="/matches/create">

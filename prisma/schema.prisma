@@ -23,6 +23,13 @@ enum Role {
   ADMIN
 }
 
+enum TournamentStatus {
+  RECRUITING // 모집중
+  CLOSED     // 모집마감 (진행 대기)
+  ONGOING    // 진행중
+  COMPLETED  // 종료 (결과 입력 완료)
+}
+
 enum MatchStatus {
   OPEN // 모집중
   FULL // 모집마감
@@ -92,6 +99,7 @@ model User {
   levelMismatchCount Int @default(0) @map("level_mismatch_count") // [NEW] 자기신고 구력과 실제 평가가 크게 어긋나 자동조정된 횟수
   role       Role        @default(USER) // [NEW] 관리자 여부
   matchChats MatchChat[]
+  tournamentParticipations TournamentParticipant[] // [NEW]
 
   @@map("users") // 실제 DB 생성되는 테이블명
 }
@@ -112,7 +120,8 @@ model Court {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // [Relations]
-  matches Match[]
+  matches      Match[]
+  tournaments  Tournament[] // [NEW]
 
   @@map("courts")
 }
@@ -296,6 +305,51 @@ model CourtAvailabilitySnapshot {
   checkedAt     DateTime @updatedAt @map("checked_at")
 
   @@map("court_availability_snapshots")
+}
+
+// [13] [NEW] 자체 대회
+// 검증된 구력(NTRP)과 매너 온도를 만족하는 유저만 신청할 수 있는 공식 대회.
+// 관리자가 직접 개설하고, 대회가 끝나면 관리자가 직접 순위를 기록합니다.
+// (자동 대진표는 만들지 않고, 실제 클럽 운영처럼 현장 진행 후 결과만 입력하는 방식)
+model Tournament {
+  id                   String           @id @default(uuid()) @db.Uuid
+  title                String
+  description          String?          @db.Text
+  courtId              String           @map("court_id") @db.Uuid
+  startDate            DateTime         @map("start_date") @db.Date
+  registrationDeadline DateTime         @map("registration_deadline")
+  minNtrp              Decimal          @map("min_ntrp") @db.Decimal(3, 1)
+  maxNtrp              Decimal          @map("max_ntrp") @db.Decimal(3, 1)
+  minMannerScore       Decimal?         @map("min_manner_score") @db.Decimal(4, 1)
+  maxParticipants      Int              @map("max_participants")
+  status               TournamentStatus @default(RECRUITING)
+  createdBy            String           @map("created_by") @db.Uuid
+
+  // 결과 (관리자가 종료 후 수동 입력 - 유저 삭제 대비 relation 대신 plain uuid로 저장)
+  championId   String? @map("champion_id") @db.Uuid
+  runnerUpId   String? @map("runner_up_id") @db.Uuid
+  thirdPlaceId String? @map("third_place_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // [Relations]
+  court        Court                    @relation(fields: [courtId], references: [id])
+  participants TournamentParticipant[]
+
+  @@map("tournaments")
+}
+
+model TournamentParticipant {
+  id           String   @id @default(uuid()) @db.Uuid
+  tournamentId String   @map("tournament_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  registeredAt DateTime @default(now()) @map("registered_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  user       User       @relation(fields: [userId], references: [id])
+
+  @@unique([tournamentId, userId])
+  @@map("tournament_participants")
 }
 
 // [12] [NEW] 페이지 방문 로그 (관리자 통계용 - 어떤 메뉴/기기로 많이 접속하는지)
