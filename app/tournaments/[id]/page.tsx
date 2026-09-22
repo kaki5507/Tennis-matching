@@ -255,9 +255,18 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         {/* [NEW] 대진표 */}
         {tournament.matches.length > 0 && (
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-            <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
-              📋 대진표
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg" style={{ color: "var(--court)" }}>
+                📋 대진표
+              </h2>
+              <Link
+                href={`/tournaments/${tournament.id}/bracket`}
+                className="text-xs font-bold px-3 py-1.5 rounded-full text-white"
+                style={{ background: "var(--court)" }}
+              >
+                크게 보기 →
+              </Link>
+            </div>
             <TournamentBracket
               matches={tournament.matches}
               nameMap={Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]))}

@@ -2,6 +2,7 @@
 "use server"
 
 import { PrismaClient, WinLoss } from "@prisma/client"
+import { roundName } from "@/lib/bracket"
 
 const prisma = new PrismaClient()
 
@@ -106,14 +107,99 @@ export async function getUserRecord(userId: string) {
     const decidedMatches = wins + losses // 무승부는 승률 계산에서 제외 (통상적인 승률 정의)
     const winRate = decidedMatches > 0 ? Math.round((wins / decidedMatches) * 1000) / 10 : null
 
+    const tournament = await getTournamentRecord(userId)
+
     return {
       success: true,
       user,
       record: { totalMatches, wins, losses, draws, winRate },
       recentMatches: recentMatches.slice(0, 10),
+      tournamentHonors: tournament.honors,
+      tournamentMatches: tournament.matches,
+      tournamentRecord: tournament.summary,
     }
   } catch (error) {
     console.error("유저 전적 조회 에러:", error)
     return { success: false, error: "전적 조회에 실패했습니다." }
+  }
+}
+
+/**
+ * [NEW] 대회 경력(우승/준우승/3위)과 대회 경기 기록(라운드, 상대, 승패, 스코어)을 모읍니다.
+ * 부전승은 실제로 치른 경기가 아니라서 기록에서 뺍니다.
+ */
+async function getTournamentRecord(userId: string) {
+  const honorTournaments = await prisma.tournament.findMany({
+    where: {
+      status: "COMPLETED",
+      OR: [{ championId: userId }, { runnerUpId: userId }, { thirdPlaceId: userId }],
+    },
+    select: { id: true, title: true, startDate: true, championId: true, runnerUpId: true, thirdPlaceId: true },
+    orderBy: { startDate: "desc" },
+  })
+
+  const honors = honorTournaments.map((t) => ({
+    tournamentId: t.id,
+    title: t.title,
+    date: t.startDate,
+    place: (t.championId === userId ? 1 : t.runnerUpId === userId ? 2 : 3) as 1 | 2 | 3,
+  }))
+
+  const played = await prisma.tournamentMatch.findMany({
+    where: {
+      isBye: false,
+      winnerId: { not: null },
+      OR: [{ player1Id: userId }, { player2Id: userId }],
+    },
+    include: { tournament: { select: { id: true, title: true, startDate: true } } },
+    orderBy: [{ tournament: { startDate: "desc" } }, { round: "desc" }],
+    take: 50,
+  })
+
+  // 라운드 이름(결승/4강...)을 붙이려면 대회별 전체 라운드 수가 필요
+  const tournamentIds = [...new Set(played.map((m) => m.tournamentId))]
+  const roundTotals = tournamentIds.length
+    ? await prisma.tournamentMatch.groupBy({
+        by: ["tournamentId"],
+        where: { tournamentId: { in: tournamentIds }, isThirdPlace: false },
+        _max: { round: true },
+      })
+    : []
+  const totalRoundsMap = new Map(roundTotals.map((r) => [r.tournamentId, r._max.round ?? 1]))
+
+  const opponentIds = [
+    ...new Set(played.map((m) => (m.player1Id === userId ? m.player2Id : m.player1Id)).filter((id): id is string => !!id)),
+  ]
+  const opponents = opponentIds.length
+    ? await prisma.user.findMany({ where: { id: { in: opponentIds } }, select: { id: true, nickname: true } })
+    : []
+  const opponentName = new Map(opponents.map((o) => [o.id, o.nickname]))
+
+  const matches = played.map((m) => {
+    const opponentId = m.player1Id === userId ? m.player2Id : m.player1Id
+    return {
+      matchId: m.id,
+      tournamentId: m.tournamentId,
+      tournamentTitle: m.tournament.title,
+      date: m.tournament.startDate,
+      roundLabel: m.isThirdPlace ? "3·4위전" : roundName(m.round, totalRoundsMap.get(m.tournamentId) ?? m.round),
+      opponentId,
+      opponentName: opponentId ? opponentName.get(opponentId) ?? "알 수 없음" : "알 수 없음",
+      won: m.winnerId === userId,
+      score: m.score,
+    }
+  })
+
+  const matchWins = matches.filter((m) => m.won).length
+  return {
+    honors,
+    matches,
+    summary: {
+      titles: honors.filter((h) => h.place === 1).length,
+      runnerUps: honors.filter((h) => h.place === 2).length,
+      thirdPlaces: honors.filter((h) => h.place === 3).length,
+      matchWins,
+      matchLosses: matches.length - matchWins,
+    },
   }
 }

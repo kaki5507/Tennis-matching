@@ -30,6 +30,40 @@ interface UserData {
   ntrpCount: number;
 }
 
+// [NEW] 대회 경력
+interface TournamentHonor {
+  tournamentId: string;
+  title: string;
+  date: string | Date;
+  place: 1 | 2 | 3;
+}
+
+interface TournamentMatchRecord {
+  matchId: string;
+  tournamentId: string;
+  tournamentTitle: string;
+  date: string | Date;
+  roundLabel: string;
+  opponentId: string | null;
+  opponentName: string;
+  won: boolean;
+  score: string | null;
+}
+
+interface TournamentSummary {
+  titles: number;
+  runnerUps: number;
+  thirdPlaces: number;
+  matchWins: number;
+  matchLosses: number;
+}
+
+const MEDAL: Record<1 | 2 | 3, { emoji: string; label: string; bg: string }> = {
+  1: { emoji: "🏆", label: "우승", bg: "var(--ball)" },
+  2: { emoji: "🥈", label: "준우승", bg: "#e5e7eb" },
+  3: { emoji: "🥉", label: "3위", bg: "#f3d9c4" },
+};
+
 const RESULT_LABEL: Record<string, { text: string; className: string }> = {
   WIN: { text: "승", className: "bg-green-100 text-green-700" },
   LOSS: { text: "패", className: "bg-red-100 text-red-700" },
@@ -42,6 +76,10 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
   const [user, setUser] = useState<UserData | null>(null);
   const [record, setRecord] = useState<RecordData | null>(null);
   const [recentMatches, setRecentMatches] = useState<RecentMatch[]>([]);
+  const [honors, setHonors] = useState<TournamentHonor[]>([]);
+  const [tMatches, setTMatches] = useState<TournamentMatchRecord[]>([]);
+  const [tSummary, setTSummary] = useState<TournamentSummary | null>(null);
+  const [onlyWins, setOnlyWins] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -61,6 +99,9 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       setUser(result.user);
       setRecord(result.record);
       setRecentMatches(result.recentMatches ?? []);
+      setHonors(result.tournamentHonors ?? []);
+      setTMatches(result.tournamentMatches ?? []);
+      setTSummary(result.tournamentRecord ?? null);
       setIsLoading(false);
     };
 
@@ -99,6 +140,26 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
               {user.tennisLevel && <span>🎾 구력: {user.tennisLevel}</span>}
               {user.preferredPos && <span>🤾 선호 위치: {user.preferredPos}</span>}
             </div>
+            {/* [NEW] 대회 입상 배지 */}
+            {tSummary && tSummary.titles + tSummary.runnerUps + tSummary.thirdPlaces > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {tSummary.titles > 0 && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[1].bg, color: "var(--court)" }}>
+                    🏆 우승 {tSummary.titles}회
+                  </span>
+                )}
+                {tSummary.runnerUps > 0 && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[2].bg, color: "var(--court)" }}>
+                    🥈 준우승 {tSummary.runnerUps}회
+                  </span>
+                )}
+                {tSummary.thirdPlaces > 0 && (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[3].bg, color: "var(--court)" }}>
+                    🥉 3위 {tSummary.thirdPlaces}회
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -150,9 +211,114 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
+      {/* [NEW] 대회 경력 */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">🏆 대회 경력</h2>
+        {honors.length === 0 ? (
+          <p className="text-sm text-slate-400">아직 대회 입상 기록이 없어요.</p>
+        ) : (
+          <ul className="space-y-2">
+            {honors.map((h) => (
+              <li key={h.tournamentId}>
+                <Link
+                  href={`/tournaments/${h.tournamentId}/bracket`}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50"
+                >
+                  <span
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0"
+                    style={{ background: MEDAL[h.place].bg }}
+                    aria-label={MEDAL[h.place].label}
+                  >
+                    {MEDAL[h.place].emoji}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-bold text-slate-800 truncate">{h.title}</div>
+                    <div className="text-xs text-slate-400">
+                      {MEDAL[h.place].label} · {new Date(h.date).toLocaleDateString("ko-KR")}
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-400 shrink-0">대진표 →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* [NEW] 대회 경기 기록 */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">🎾 대회 경기 기록</h2>
+            {tSummary && tMatches.length > 0 && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                {tSummary.matchWins}승 {tSummary.matchLosses}패 (부전승 제외)
+              </p>
+            )}
+          </div>
+          {tMatches.length > 0 && (
+            <div className="flex rounded-full p-0.5 text-xs font-medium shrink-0" style={{ background: "var(--mist)" }}>
+              {[
+                { value: false, label: "전체" },
+                { value: true, label: "승리만" },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setOnlyWins(opt.value)}
+                  className="px-3 py-1 rounded-full"
+                  style={{
+                    background: onlyWins === opt.value ? "var(--court)" : "transparent",
+                    color: onlyWins === opt.value ? "var(--chalk)" : "var(--court)",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {tMatches.length === 0 ? (
+          <p className="text-sm text-slate-400">아직 대회에서 치른 경기가 없어요.</p>
+        ) : (
+          <ul className="space-y-2">
+            {tMatches
+              .filter((m) => !onlyWins || m.won)
+              .map((m) => (
+                <li key={m.matchId}>
+                  <Link
+                    href={`/tournaments/${m.tournamentId}/bracket`}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50"
+                  >
+                    <span
+                      className="text-xs font-bold w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      style={{
+                        background: m.won ? "var(--ball)" : "#f1f5f9",
+                        color: m.won ? "var(--court)" : "#94a3b8",
+                      }}
+                    >
+                      {m.won ? "승" : "패"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-slate-800 truncate">
+                        <span className="font-bold">{m.roundLabel}</span> · vs {m.opponentName}
+                      </div>
+                      <div className="text-xs text-slate-400 truncate">
+                        {m.tournamentTitle} · {new Date(m.date).toLocaleDateString("ko-KR")}
+                      </div>
+                    </div>
+                    {m.score && <span className="text-xs text-slate-500 shrink-0">{m.score}</span>}
+                  </Link>
+                </li>
+              ))}
+          </ul>
+        )}
+      </div>
+
       {/* 최근 경기 목록 */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">🕒 최근 경기</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">🕒 최근 매칭 경기</h2>
         {recentMatches.length === 0 ? (
           <p className="text-sm text-slate-400">참여한 경기 기록이 없어요.</p>
         ) : (
