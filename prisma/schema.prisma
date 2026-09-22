@@ -335,8 +335,33 @@ model Tournament {
   // [Relations]
   court        Court                    @relation(fields: [courtId], references: [id])
   participants TournamentParticipant[]
+  matches      TournamentMatch[] // [NEW] 자동 생성된 대진표
 
   @@map("tournaments")
+}
+
+// [14] [NEW] 대진표의 경기 하나하나 (싱글 엘리미네이션)
+// round는 1부터 시작하고 가장 큰 round가 결승입니다.
+// 다음 라운드 경기는 (round + 1, floor(position / 2))로 계산되고,
+// position이 짝수면 다음 경기의 player1, 홀수면 player2 자리로 올라갑니다.
+// 3·4위전은 결승과 같은 round에 isThirdPlace = true로 따로 저장합니다.
+model TournamentMatch {
+  id           String   @id @default(uuid()) @db.Uuid
+  tournamentId String   @map("tournament_id") @db.Uuid
+  round        Int
+  position     Int
+  player1Id    String?  @map("player1_id") @db.Uuid
+  player2Id    String?  @map("player2_id") @db.Uuid
+  winnerId     String?  @map("winner_id") @db.Uuid
+  score        String? // 예: "6-4 3-6 7-5"
+  isBye        Boolean  @default(false) @map("is_bye") // 부전승 경기
+  isThirdPlace Boolean  @default(false) @map("is_third_place")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, round, position, isThirdPlace])
+  @@map("tournament_matches")
 }
 
 model TournamentParticipant {

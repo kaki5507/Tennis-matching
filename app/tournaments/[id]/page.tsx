@@ -9,8 +9,12 @@ import {
   cancelTournamentRegistration,
   updateTournamentStatus,
   recordTournamentResult,
+  generateBracket,
+  resetBracket,
+  setMatchWinner,
 } from "@/app/actions/tournament";
 import { isAdmin } from "@/app/actions/admin";
+import TournamentBracket, { BracketMatch } from "@/components/TournamentBracket";
 import { Button } from "@/components/ui/button";
 import TennisLoader from "@/components/TennisLoader";
 import TennisMascot from "@/components/TennisMascot";
@@ -36,6 +40,7 @@ interface TournamentData {
   thirdPlaceId: string | null;
   court: { name: string; address: string };
   participants: Participant[];
+  matches: BracketMatch[]; // [NEW] 자동 생성된 대진표
 }
 
 export default function TournamentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -105,6 +110,40 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
+  };
+
+  // [NEW] 관리자: 대진표 자동 생성
+  const handleGenerateBracket = async () => {
+    if (!userId || !tournament) return;
+    if (!confirm(`참가자 ${tournament.participants.length}명으로 대진표를 만들까요?\nNTRP 높은 순으로 시드가 배정되고, 신청이 마감되며 참가자 전원에게 알림이 갑니다.`)) return;
+    setIsSubmitting(true);
+    const result = await generateBracket(userId, id);
+    if (!result.success) alert(result.error);
+    await load();
+    setIsSubmitting(false);
+  };
+
+  // [NEW] 관리자: 대진표 초기화
+  const handleResetBracket = async () => {
+    if (!userId) return;
+    if (!confirm("대진표를 초기화할까요? (결과가 입력된 경기가 있으면 초기화할 수 없어요)")) return;
+    setIsSubmitting(true);
+    const result = await resetBracket(userId, id);
+    if (!result.success) alert(result.error);
+    await load();
+    setIsSubmitting(false);
+  };
+
+  // [NEW] 관리자: 경기 승자 입력 → 자동 진출, 결승까지 끝나면 자동 종료
+  const handleSetWinner = async (matchId: string, winnerId: string, score: string) => {
+    if (!userId) return;
+    const result = await setMatchWinner(userId, matchId, winnerId, score);
+    if (!result.success) {
+      alert(result.error);
+    } else if (result.completed) {
+      alert("🏆 모든 경기가 끝났어요! 1~3위가 확정되고 참가자 전원에게 결과 알림을 보냈습니다.");
+    }
+    await load();
   };
 
   if (isLoading) {
@@ -213,6 +252,22 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           </div>
         )}
 
+        {/* [NEW] 대진표 */}
+        {tournament.matches.length > 0 && (
+          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+            <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
+              📋 대진표
+            </h2>
+            <TournamentBracket
+              matches={tournament.matches}
+              nameMap={Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]))}
+              canEdit={isAdminUser && tournament.status !== "COMPLETED"}
+              highlightUserId={userId}
+              onSetWinner={handleSetWinner}
+            />
+          </div>
+        )}
+
         {/* 참가자 목록 */}
         <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
           <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
@@ -257,7 +312,41 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               ))}
             </div>
 
-            <h3 className="text-sm font-bold text-slate-700 mb-2">대회 결과 입력</h3>
+            {/* [NEW] 대진표 생성/초기화 */}
+            <h3 className="text-sm font-bold text-slate-700 mb-2">대진표</h3>
+            {tournament.matches.length === 0 ? (
+              <div className="mb-6">
+                <Button
+                  onClick={handleGenerateBracket}
+                  disabled={isSubmitting || tournament.participants.length < 2}
+                  className="w-full text-white"
+                  style={{ background: "var(--court)" }}
+                >
+                  📋 대진표 자동 생성 (참가자 {tournament.participants.length}명)
+                </Button>
+                <p className="text-xs text-slate-400 mt-2">
+                  NTRP 높은 순으로 시드를 배정하고, 인원이 모자라면 상위 시드에게 부전승을 줍니다.
+                </p>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <p className="text-xs text-slate-500 mb-2">
+                  대진표의 각 경기에서 &apos;결과 입력&apos;을 누르면 승자가 다음 라운드로 자동 진출하고,
+                  결승이 끝나면 1~3위가 자동 확정됩니다.
+                </p>
+                <Button variant="outline" size="sm" onClick={handleResetBracket} disabled={isSubmitting}>
+                  대진표 초기화
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 대진표 없이 현장에서 진행한 대회용 수동 결과 입력 */}
+        {isAdminUser && tournament.status !== "COMPLETED" && tournament.matches.length === 0 && (
+          <div className="bg-white p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
+            <h3 className="text-sm font-bold text-slate-700 mb-1">대회 결과 직접 입력</h3>
+            <p className="text-xs text-slate-400 mb-3">대진표 없이 현장에서 진행한 경우에만 사용하세요.</p>
             <div className="space-y-2 mb-3">
               {(["championId", "runnerUpId", "thirdPlaceId"] as const).map((field, idx) => (
                 <select
