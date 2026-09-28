@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { getTournamentDetail, setMatchWinner } from "@/app/actions/tournament";
+import { getTournamentDetail } from "@/app/actions/tournament";
+import { setMatchWinner } from "@/app/actions/tournamentBracket";
 import { isAdmin } from "@/app/actions/admin";
 import BracketViewer from "@/components/BracketViewer";
 import type { BracketMatch } from "@/components/TournamentBracket";
@@ -18,12 +19,14 @@ interface TournamentData {
   id: string;
   title: string;
   status: string;
+  format: "SINGLES" | "DOUBLES";
   startDate: string | Date;
   championId: string | null;
   runnerUpId: string | null;
   thirdPlaceId: string | null;
   court: { name: string };
   participants: { userId: string; user: { nickname: string | null } }[];
+  teams: { id: string; status: string; captain: { id: string; nickname: string | null }; partner: { id: string; nickname: string | null } }[];
   matches: BracketMatch[];
 }
 
@@ -94,7 +97,19 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const nameMap = Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]));
+  const isDoubles = tournament.format === "DOUBLES";
+  // 대진표의 참가 단위 ID → 이름. 단식은 유저 ID, 복식은 팀 ID 입니다.
+  const nameMap: Record<string, string> = isDoubles
+    ? Object.fromEntries(
+        tournament.teams.map((tm) => [tm.id, `${tm.captain.nickname || "익명"} · ${tm.partner.nickname || "익명"}`])
+      )
+    : Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]));
+  // 내 경기를 강조하려면 복식에서는 유저 ID가 아니라 내 팀 ID가 필요합니다.
+  const myEntrantId = !userId
+    ? null
+    : isDoubles
+      ? tournament.teams.find((tm) => tm.captain.id === userId || tm.partner.id === userId)?.id ?? null
+      : userId;
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-court">
@@ -118,7 +133,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
             </h1>
             <p className="text-sm mt-1 opacity-75 text-chalk">
               📍 {tournament.court.name} · {new Date(tournament.startDate).toLocaleDateString("ko-KR")} ·{" "}
-              {tournament.participants.length}명 참가
+              {isDoubles ? `${tournament.teams.filter((tm) => tm.status === "CONFIRMED").length}팀` : `${tournament.participants.length}명`} 참가
             </p>
           </div>
 
@@ -162,7 +177,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
           <BracketViewer
             matches={tournament.matches}
             nameMap={nameMap}
-            meId={userId}
+            meId={myEntrantId}
             canEdit={isAdminUser && tournament.status !== "COMPLETED"}
             isCompleted={tournament.status === "COMPLETED"}
             championId={tournament.championId}

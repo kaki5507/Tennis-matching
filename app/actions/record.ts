@@ -3,6 +3,7 @@
 
 import { PrismaClient, WinLoss } from "@prisma/client"
 import { roundName } from "@/lib/bracket"
+import { teamLabel } from "@/lib/tournamentRules"
 
 const prisma = new PrismaClient()
 
@@ -132,31 +133,56 @@ export async function getUserRecord(userId: string) {
 /**
  * [NEW] 대회 경력(우승/준우승/3위)과 대회 경기 기록(라운드, 상대, 승패, 스코어)을 모읍니다.
  * 부전승은 실제로 치른 경기가 아니라서 기록에서 뺍니다.
+ *
+ * 단식은 대진표/결과에 "유저 ID"가, 복식은 "팀 ID"가 들어 있습니다. 그래서 이 유저를
+ * 나타내는 ID(본인 ID + 속한 팀 ID들)를 먼저 모은 뒤 그 ID들로 조회합니다.
  */
 async function getTournamentRecord(userId: string) {
+  const myTeams = await prisma.tournamentTeam.findMany({
+    where: { status: "CONFIRMED", OR: [{ captainId: userId }, { partnerId: userId }] },
+    include: {
+      captain: { select: { id: true, nickname: true } },
+      partner: { select: { id: true, nickname: true } },
+    },
+  })
+  const teamById = new Map(myTeams.map((tm) => [tm.id, tm]))
+  const myIds = [userId, ...myTeams.map((tm) => tm.id)]
+
   const honorTournaments = await prisma.tournament.findMany({
     where: {
       status: "COMPLETED",
-      OR: [{ championId: userId }, { runnerUpId: userId }, { thirdPlaceId: userId }],
+      OR: [{ championId: { in: myIds } }, { runnerUpId: { in: myIds } }, { thirdPlaceId: { in: myIds } }],
     },
-    select: { id: true, title: true, startDate: true, championId: true, runnerUpId: true, thirdPlaceId: true },
+    select: { id: true, title: true, format: true, startDate: true, championId: true, runnerUpId: true, thirdPlaceId: true },
     orderBy: { startDate: "desc" },
   })
 
-  const honors = honorTournaments.map((t) => ({
-    tournamentId: t.id,
-    title: t.title,
-    date: t.startDate,
-    place: (t.championId === userId ? 1 : t.runnerUpId === userId ? 2 : 3) as 1 | 2 | 3,
-  }))
+  const partnerNameOf = (teamId: string | null) => {
+    const team = teamId ? teamById.get(teamId) : undefined
+    if (!team) return null
+    return (team.captainId === userId ? team.partner.nickname : team.captain.nickname) ?? "익명"
+  }
+
+  const honors = honorTournaments.map((t) => {
+    const place = (myIds.includes(t.championId ?? "") ? 1 : myIds.includes(t.runnerUpId ?? "") ? 2 : 3) as 1 | 2 | 3
+    const teamId = place === 1 ? t.championId : place === 2 ? t.runnerUpId : t.thirdPlaceId
+    return {
+      tournamentId: t.id,
+      title: t.title,
+      date: t.startDate,
+      place,
+      format: t.format,
+      partnerName: t.format === "DOUBLES" ? partnerNameOf(teamId) : null,
+    }
+  })
 
   const played = await prisma.tournamentMatch.findMany({
     where: {
       isBye: false,
       winnerId: { not: null },
-      OR: [{ player1Id: userId }, { player2Id: userId }],
+      OR: [{ player1Id: { in: myIds } }, { player2Id: { in: myIds } }],
     },
-    include: { tournament: { select: { id: true, title: true, startDate: true } } },
+    include: { tournament: { select: { id: true, title: true, format: true, startDate: true } } },
     orderBy: [{ tournament: { startDate: "desc" } }, { round: "desc" }],
     take: 50,
   })
@@ -172,16 +198,40 @@ async function getTournamentRecord(userId: string) {
     : []
   const totalRoundsMap = new Map(roundTotals.map((r) => [r.tournamentId, r._max.round ?? 1]))
 
-  const opponentIds = [
-    ...new Set(played.map((m) => (m.player1Id === userId ? m.player2Id : m.player1Id)).filter((id): id is string => !!id)),
+  // 상대 이름: 단식은 유저 닉네임, 복식은 상대 팀의 "닉A · 닉B"
+  const isMine = (id: string | null) => !!id && myIds.includes(id)
+  const opponentEntrantId = (m: (typeof played)[number]) => (isMine(m.player1Id) ? m.player2Id : m.player1Id)
+
+  const singlesOpponentIds = [
+    ...new Set(
+      played.filter((m) => m.tournament.format === "SINGLES").map(opponentEntrantId).filter((id): id is string => !!id)
+    ),
   ]
-  const opponents = opponentIds.length
-    ? await prisma.user.findMany({ where: { id: { in: opponentIds } }, select: { id: true, nickname: true } })
-    : []
-  const opponentName = new Map(opponents.map((o) => [o.id, o.nickname]))
+  const doublesOpponentIds = [
+    ...new Set(
+      played.filter((m) => m.tournament.format === "DOUBLES").map(opponentEntrantId).filter((id): id is string => !!id)
+    ),
+  ]
+
+  const [singlesOpponents, doublesOpponents] = await Promise.all([
+    singlesOpponentIds.length
+      ? prisma.user.findMany({ where: { id: { in: singlesOpponentIds } }, select: { id: true, nickname: true } })
+      : [],
+    doublesOpponentIds.length
+      ? prisma.tournamentTeam.findMany({
+          where: { id: { in: doublesOpponentIds } },
+          include: { captain: { select: { nickname: true } }, partner: { select: { nickname: true } } },
+        })
+      : [],
+  ])
+  const opponentName = new Map<string, string>([
+    ...singlesOpponents.map((o) => [o.id, o.nickname ?? "익명"] as [string, string]),
+    ...doublesOpponents.map((tm) => [tm.id, teamLabel(tm.captain.nickname, tm.partner.nickname)] as [string, string]),
+  ])
 
   const matches = played.map((m) => {
-    const opponentId = m.player1Id === userId ? m.player2Id : m.player1Id
+    const opponentId = opponentEntrantId(m)
+    const myEntrantId = isMine(m.player1Id) ? m.player1Id : m.player2Id
     return {
       matchId: m.id,
       tournamentId: m.tournamentId,
@@ -190,7 +240,9 @@ async function getTournamentRecord(userId: string) {
       roundLabel: m.isThirdPlace ? "3·4위전" : roundName(m.round, totalRoundsMap.get(m.tournamentId) ?? m.round),
       opponentId,
       opponentName: opponentId ? opponentName.get(opponentId) ?? "알 수 없음" : "알 수 없음",
-      won: m.winnerId === userId,
+      // 복식이면 함께 뛴 파트너 (단식은 null)
+      partnerName: m.tournament.format === "DOUBLES" ? partnerNameOf(myEntrantId) : null,
+      won: m.winnerId === myEntrantId,
       score: m.score,
     }
   })

@@ -36,6 +36,8 @@ interface TournamentHonor {
   title: string;
   date: string | Date;
   place: 1 | 2 | 3;
+  format: "SINGLES" | "DOUBLES";
+  partnerName: string | null; // 복식일 때 함께 입상한 파트너
 }
 
 interface TournamentMatchRecord {
@@ -46,6 +48,7 @@ interface TournamentMatchRecord {
   roundLabel: string;
   opponentId: string | null;
   opponentName: string;
+  partnerName: string | null; // 복식일 때 함께 뛴 파트너
   won: boolean;
   score: string | null;
 }
@@ -233,7 +236,8 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-bold text-slate-800 truncate">{h.title}</div>
                     <div className="text-xs text-slate-400">
-                      {MEDAL[h.place].label} · {new Date(h.date).toLocaleDateString("ko-KR")}
+                      {MEDAL[h.place].label}
+                      {h.partnerName && ` · 파트너 ${h.partnerName}`} · {new Date(h.date).toLocaleDateString("ko-KR")}
                     </div>
                   </div>
                   <span className="text-xs text-slate-400 shrink-0">대진표 →</span>
@@ -296,6 +300,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                     <div className="min-w-0 flex-1">
                       <div className="text-sm text-slate-800 truncate">
                         <span className="font-bold">{m.roundLabel}</span> · vs {m.opponentName}
+                        {m.partnerName && <span className="text-slate-400"> (파트너 {m.partnerName})</span>}
                       </div>
                       <div className="text-xs text-slate-400 truncate">
                         {m.tournamentTitle} · {new Date(m.date).toLocaleDateString("ko-KR")}

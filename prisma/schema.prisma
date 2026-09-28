@@ -23,6 +23,16 @@ enum Role {
   ADMIN
 }
 
+enum TournamentFormat {
+  SINGLES // 단식 (개인 신청)
+  DOUBLES // 복식 (2인 팀 신청)
+}
+
+enum TeamStatus {
+  PENDING   // 파트너 수락 대기
+  CONFIRMED // 파트너가 수락해 팀 확정
+}
+
 enum TournamentStatus {
   RECRUITING // 모집중
   CLOSED     // 모집마감 (진행 대기)
@@ -100,6 +110,8 @@ model User {
   role       Role        @default(USER) // [NEW] 관리자 여부
   matchChats MatchChat[]
   tournamentParticipations TournamentParticipant[] // [NEW]
+  teamsAsCaptain           TournamentTeam[]        @relation("TeamCaptain")
+  teamsAsPartner           TournamentTeam[]        @relation("TeamPartner")
 
   @@map("users") // 실제 DB 생성되는 테이블명
 }
@@ -321,11 +333,14 @@ model Tournament {
   minNtrp              Decimal          @map("min_ntrp") @db.Decimal(3, 1)
   maxNtrp              Decimal          @map("max_ntrp") @db.Decimal(3, 1)
   minMannerScore       Decimal?         @map("min_manner_score") @db.Decimal(4, 1)
-  maxParticipants      Int              @map("max_participants")
+  maxParticipants      Int              @map("max_participants") // 단식: 최대 인원 / 복식: 최대 팀 수
+  format               TournamentFormat @default(SINGLES)
+  maxTeamNtrp          Decimal?         @map("max_team_ntrp") @db.Decimal(3, 1) // 복식 합산 NTRP 상한 (null = 제한없음)
   status               TournamentStatus @default(RECRUITING)
   createdBy            String           @map("created_by") @db.Uuid
 
   // 결과 (관리자가 종료 후 수동 입력 - 유저 삭제 대비 relation 대신 plain uuid로 저장)
+  // 결과 ID: 단식이면 유저 ID, 복식이면 팀(TournamentTeam) ID
   championId   String? @map("champion_id") @db.Uuid
   runnerUpId   String? @map("runner_up_id") @db.Uuid
   thirdPlaceId String? @map("third_place_id") @db.Uuid
@@ -334,7 +349,8 @@ model Tournament {
 
   // [Relations]
   court        Court                    @relation(fields: [courtId], references: [id])
-  participants TournamentParticipant[]
+  participants TournamentParticipant[] // 단식: 신청자 / 복식: 확정된 팀의 두 선수 모두
+  teams        TournamentTeam[]
   matches      TournamentMatch[] // [NEW] 자동 생성된 대진표
 
   @@map("tournaments")
@@ -345,6 +361,8 @@ model Tournament {
 // 다음 라운드 경기는 (round + 1, floor(position / 2))로 계산되고,
 // position이 짝수면 다음 경기의 player1, 홀수면 player2 자리로 올라갑니다.
 // 3·4위전은 결승과 같은 round에 isThirdPlace = true로 따로 저장합니다.
+// player1Id/player2Id/winnerId는 FK가 아니라 단순 uuid라서, 단식에서는 유저 ID,
+// 복식에서는 팀(TournamentTeam) ID를 담습니다. (컬럼명은 그대로 유지)
 model TournamentMatch {
   id           String   @id @default(uuid()) @db.Uuid
   tournamentId String   @map("tournament_id") @db.Uuid
@@ -362,6 +380,25 @@ model TournamentMatch {
 
   @@unique([tournamentId, round, position, isThirdPlace])
   @@map("tournament_matches")
+}
+
+// [15] [NEW] 복식 대회 팀
+// 신청자(captain)가 파트너를 지목하면 PENDING, 파트너가 수락하면 CONFIRMED가 됩니다.
+// CONFIRMED가 되는 순간 두 선수 모두 TournamentParticipant에도 등록됩니다.
+model TournamentTeam {
+  id           String     @id @default(uuid()) @db.Uuid
+  tournamentId String     @map("tournament_id") @db.Uuid
+  captainId    String     @map("captain_id") @db.Uuid
+  partnerId    String     @map("partner_id") @db.Uuid
+  status       TeamStatus @default(PENDING)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  captain    User       @relation("TeamCaptain", fields: [captainId], references: [id])
+  partner    User       @relation("TeamPartner", fields: [partnerId], references: [id])
+
+  @@index([tournamentId])
+  @@map("tournament_teams")
 }
 
 model TournamentParticipant {
