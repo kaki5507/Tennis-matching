@@ -142,41 +142,34 @@ export default function BracketViewer({
       <div
         onMouseEnter={() => playerId && setHovered(playerId)}
         onMouseLeave={() => setHovered(null)}
-        className="flex items-center gap-2 px-2.5 relative"
+        className={`flex items-center gap-2 px-2.5 relative ${isWinner ? "bracket-row-winner" : ""}`}
         style={{
           height: CARD_H / 2,
-          background: isWinner ? "rgba(215,222,35,0.28)" : "transparent",
           opacity: mounted ? targetOpacity : 1,
           filter: mounted && isLoser ? "grayscale(1)" : "none",
           transition: `opacity 900ms ease ${delay}ms, filter 900ms ease ${delay}ms, background 300ms`,
           boxShadow: isHover ? "inset 0 0 0 2px var(--clay)" : "none",
         }}
       >
-        {isWinner && <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--ball)" }} />}
-        {isMe && !isWinner && <span className="absolute left-0 top-0 bottom-0 w-1" style={{ background: "var(--clay)" }} />}
+        {isWinner && <span className="absolute left-0 top-0 bottom-0 w-1 bg-ball" />}
+        {isMe && !isWinner && <span className="absolute left-0 top-0 bottom-0 w-1 bg-clay text-white" />}
 
         <span
-          className="text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-          style={{
-            background: playerId ? "var(--mist)" : "transparent",
-            color: "var(--court)",
-          }}
+          className={`text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+            playerId ? "seed-badge" : "text-court"
+          }`}
         >
           {playerId && seedMap[playerId] ? seedMap[playerId] : ""}
         </span>
 
         <span
-          className="truncate text-[13px] flex-1"
-          style={{
-            color: playerId ? "var(--ink)" : "#94a3b8",
-            fontWeight: isWinner ? 700 : 500,
-            textDecoration: isLoser ? "line-through" : "none",
-            fontStyle: playerId ? "normal" : "italic",
-          }}
+          className={`truncate text-[13px] flex-1 ${playerId ? "text-ink" : "text-slate-400 italic"} ${
+            isWinner ? "font-bold" : "font-medium"
+          } ${isLoser ? "line-through" : ""}`}
         >
           {name}
           {isMe && (
-            <span className="ml-1 text-[10px] font-bold not-italic" style={{ color: "var(--clay)" }}>
+            <span className="ml-1 text-[10px] font-bold not-italic text-clay">
               나
             </span>
           )}
@@ -206,21 +199,19 @@ export default function BracketViewer({
         onKeyDown={(e) => {
           if (clickable && (e.key === "Enter" || e.key === " ")) openEditor(match);
         }}
-        className="rounded-xl overflow-hidden"
+        className={`rounded-xl overflow-hidden ${
+          match.isBye ? "bracket-card-bye" : isMine ? "bracket-card bracket-card-me" : "bracket-card"
+        }`}
         style={{
           ...style,
           width: CARD_W,
           height: CARD_H,
-          background: "var(--chalk)",
-          border: match.isBye ? "1px dashed rgba(251,248,241,0.5)" : isMine ? "2px solid var(--clay)" : "1px solid rgba(47,74,51,0.15)",
-          boxShadow: match.isBye ? "none" : "0 6px 18px rgba(0,0,0,0.18)",
-          opacity: match.isBye ? 0.55 : 1,
           cursor: clickable ? "pointer" : "default",
         }}
         title={clickable ? "클릭해서 결과 입력" : undefined}
       >
         {renderRow(match, match.player1Id, isThird)}
-        <div className="h-px" style={{ background: "rgba(47,74,51,0.1)" }} />
+        <div className="h-px bracket-divider" />
         {renderRow(match, match.player2Id, isThird)}
       </div>
     );
@@ -235,11 +226,9 @@ export default function BracketViewer({
             key={s}
             type="button"
             onClick={() => setScale(s)}
-            className="text-xs font-medium px-2.5 py-1 rounded-full"
-            style={{
-              background: scale === s ? "var(--ball)" : "rgba(251,248,241,0.12)",
-              color: scale === s ? "var(--court)" : "var(--chalk)",
-            }}
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+              scale === s ? "bg-ball text-court" : "on-court-chip"
+            }`}
           >
             {Math.round(s * 100)}%
           </button>
@@ -257,15 +246,15 @@ export default function BracketViewer({
             {Array.from({ length: totalRounds }, (_, i) => i + 1).map((round) => (
               <div
                 key={round}
-                className="absolute font-display text-base text-center"
-                style={{ left: colX(round), top: 6, width: CARD_W, color: "var(--ball)" }}
+                className="absolute font-display text-base text-center round-label"
+                style={{ left: colX(round), top: 6, width: CARD_W }}
               >
                 {roundName(round, totalRounds)}
               </div>
             ))}
             <div
-              className="absolute font-display text-base text-center"
-              style={{ left: champX, top: 6, width: CHAMP_W, color: "var(--ball)" }}
+              className="absolute font-display text-base text-center round-label"
+              style={{ left: champX, top: 6, width: CHAMP_W }}
             >
               우승
             </div>
@@ -301,24 +290,18 @@ export default function BracketViewer({
 
             {/* 트로피 카드 */}
             <div
-              className="absolute rounded-2xl flex flex-col items-center justify-center text-center px-4"
-              style={{
-                left: champX,
-                top: champTop,
-                width: CHAMP_W,
-                height: CHAMP_H,
-                background: isCompleted && championId ? "var(--ball)" : "transparent",
-                border: isCompleted && championId ? "none" : "2px dashed rgba(251,248,241,0.35)",
-                boxShadow: isCompleted && championId ? "0 10px 30px rgba(215,222,35,0.35)" : "none",
-              }}
+              className={`absolute rounded-2xl flex flex-col items-center justify-center text-center px-4 ${
+                isCompleted && championId ? "champ-card-done" : "champ-card-wait"
+              }`}
+              style={{ left: champX, top: champTop, width: CHAMP_W, height: CHAMP_H }}
             >
               {isCompleted && championId ? (
                 <>
                   <div className="text-4xl mb-1" aria-hidden="true">🏆</div>
-                  <div className="font-display text-xl truncate max-w-full" style={{ color: "var(--court)" }}>
+                  <div className="font-display text-xl truncate max-w-full text-court">
                     {nameMap[championId] ?? "알 수 없음"}
                   </div>
-                  <div className="text-[11px] mt-2 space-y-0.5" style={{ color: "var(--court)" }}>
+                  <div className="text-[11px] mt-2 space-y-0.5 text-court">
                     {runnerUpId && <div>🥈 {nameMap[runnerUpId] ?? "알 수 없음"}</div>}
                     {thirdPlaceId && <div>🥉 {nameMap[thirdPlaceId] ?? "알 수 없음"}</div>}
                   </div>
@@ -326,7 +309,7 @@ export default function BracketViewer({
               ) : (
                 <>
                   <div className="text-3xl mb-1 opacity-60" aria-hidden="true">🏆</div>
-                  <div className="font-display text-lg" style={{ color: "var(--chalk)" }}>
+                  <div className="font-display text-lg text-chalk">
                     우승자는 누구?
                   </div>
                 </>
@@ -339,7 +322,7 @@ export default function BracketViewer({
       {/* 3·4위전 */}
       {thirdPlaceMatch && (
         <div className="mt-6">
-          <div className="font-display text-base mb-3" style={{ color: "var(--ball)" }}>
+          <div className="font-display text-base mb-3 text-ball">
             🥉 3·4위전
           </div>
           {renderCard(thirdPlaceMatch, { position: "relative" }, true)}
@@ -349,16 +332,14 @@ export default function BracketViewer({
       {/* 관리자 결과 입력 모달 */}
       {editing && editing.player1Id && editing.player2Id && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: "rgba(20,30,20,0.6)" }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 modal-overlay"
           onClick={() => !isSaving && setEditing(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl p-6"
-            style={{ background: "var(--chalk)" }}
+            className="w-full max-w-sm rounded-2xl p-6 bg-chalk"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="font-display text-lg mb-1" style={{ color: "var(--court)" }}>
+            <div className="font-display text-lg mb-1 text-court">
               {editing.isThirdPlace ? "3·4위전" : roundName(editing.round, totalRounds)} 결과 입력
             </div>
             <p className="text-xs text-slate-500 mb-4">승자를 누르면 다음 라운드로 자동 진출합니다.</p>
@@ -377,8 +358,8 @@ export default function BracketViewer({
                   type="button"
                   disabled={isSaving}
                   onClick={() => save(pid)}
-                  className="w-full h-11 rounded-lg text-sm font-bold text-white flex items-center justify-center gap-2"
-                  style={{ background: "var(--clay)", opacity: isSaving ? 0.6 : 1 }}
+                  className="w-full h-11 rounded-lg text-sm font-bold flex items-center justify-center gap-2 btn-clay"
+                  style={{ opacity: isSaving ? 0.6 : 1 }}
                 >
                   🎾 {nameMap[pid] ?? "알 수 없음"} 승리
                 </button>

@@ -36,16 +36,13 @@ function PlayerRow({
 }) {
   return (
     <div
-      className="flex items-center justify-between px-3 py-2 text-sm"
-      style={{
-        background: isWinner ? "rgba(215,222,35,0.25)" : "transparent",
-        color: isLoser ? "#94a3b8" : "var(--ink)",
-        fontWeight: isWinner ? 700 : 400,
-      }}
+      className={`flex items-center justify-between px-3 py-2 text-sm ${
+        isWinner ? "bracket-row-winner font-bold" : ""
+      } ${isLoser ? "text-slate-400" : "text-ink"}`}
     >
       <span className="truncate">
         {name}
-        {isMe && <span className="ml-1 text-[10px] font-bold" style={{ color: "var(--clay)" }}>나</span>}
+        {isMe && <span className="ml-1 text-[10px] font-bold text-clay">나</span>}
       </span>
       {isWinner && <span aria-label="승리">🎾</span>}
     </div>
@@ -82,8 +79,7 @@ function MatchCard({
 
   return (
     <div
-      className="w-48 rounded-xl overflow-hidden bg-white"
-      style={{ border: isMine ? "2px solid var(--clay)" : "1px solid #dfe3d4" }}
+      className={`w-48 rounded-xl overflow-hidden bg-chalk ${isMine ? "bracket-card-me" : "border border-line"}`}
     >
       <PlayerRow
         name={nameOf(match.player1Id)}
@@ -91,7 +87,7 @@ function MatchCard({
         isLoser={!!match.winnerId && !!match.player1Id && match.winnerId !== match.player1Id}
         isMe={!!highlightUserId && match.player1Id === highlightUserId}
       />
-      <div className="h-px" style={{ background: "#eef1e4" }} />
+      <div className="h-px bracket-divider" />
       <PlayerRow
         name={nameOf(match.player2Id)}
         isWinner={!!match.winnerId && match.winnerId === match.player2Id}
@@ -100,7 +96,7 @@ function MatchCard({
       />
 
       {match.score && !isEditing && (
-        <div className="px-3 py-1 text-[11px] text-slate-500" style={{ background: "var(--mist)" }}>
+        <div className="px-3 py-1 text-[11px] text-slate-500 tint">
           {match.score}
         </div>
       )}
@@ -109,15 +105,14 @@ function MatchCard({
         <button
           type="button"
           onClick={() => setIsEditing(true)}
-          className="w-full text-[11px] font-medium py-1.5"
-          style={{ background: "var(--mist)", color: "var(--court)" }}
+          className="w-full text-[11px] font-medium py-1.5 tint text-court"
         >
           {match.winnerId ? "결과 수정" : "결과 입력"}
         </button>
       )}
 
       {isEditing && match.player1Id && match.player2Id && (
-        <div className="p-2 space-y-1.5" style={{ background: "var(--mist)" }}>
+        <div className="p-2 space-y-1.5 tint">
           <input
             value={score}
             onChange={(e) => setScore(e.target.value)}
@@ -130,8 +125,7 @@ function MatchCard({
               type="button"
               disabled={isSaving}
               onClick={() => save(pid)}
-              className="w-full h-8 rounded-md text-xs font-medium text-white truncate px-2"
-              style={{ background: "var(--clay)" }}
+              className="w-full h-8 rounded-md text-xs font-medium text-white truncate px-2 bg-clay text-white"
             >
               {nameMap[pid] ?? "알 수 없음"} 승
             </button>
@@ -162,7 +156,7 @@ export default function TournamentBracket({ matches, nameMap, canEdit, highlight
         <div className="flex gap-6 min-w-max">
           {rounds.map((round) => (
             <div key={round} className="flex flex-col">
-              <div className="font-display text-sm mb-3 text-center" style={{ color: "var(--court)" }}>
+              <div className="font-display text-sm mb-3 text-center text-court">
                 {roundName(round, totalRounds)}
               </div>
               <div className="flex flex-col justify-around flex-1 gap-4">
@@ -186,7 +180,7 @@ export default function TournamentBracket({ matches, nameMap, canEdit, highlight
 
       {thirdPlace && (
         <div>
-          <div className="font-display text-sm mb-3" style={{ color: "var(--court)" }}>
+          <div className="font-display text-sm mb-3 text-court">
             🥉 3·4위전
           </div>
           <MatchCard

@@ -86,7 +86,7 @@ const handleLogin = async (e: React.SyntheticEvent) => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">비밀번호</Label>
-              <Link href="#" className="text-sm text-green-600 hover:underline">
+              <Link href="#" className="text-sm text-ok hover:underline">
                 비밀번호를 잊으셨나요?
               </Link>
             </div>
@@ -106,7 +106,7 @@ const handleLogin = async (e: React.SyntheticEvent) => {
 
         <div className="mt-6 text-center text-slate-600">
           아직 계정이 없으신가요?{" "}
-          <Link href="/signup" className="text-green-600 font-semibold hover:underline">
+          <Link href="/signup" className="text-ok font-semibold hover:underline">
             회원가입하기
           </Link>
         </div>

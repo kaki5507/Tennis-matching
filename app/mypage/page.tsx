@@ -96,7 +96,7 @@ export default function MyPage() {
     <div key={match.id} className="surface p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4  transition-colors">
       <div>
         <div className="flex gap-2 items-center mb-1">
-          <span className={`text-xs font-bold px-2 py-1 rounded-md ${match.status === "OPEN" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+          <span className={`text-xs font-bold px-2 py-1 rounded-md ${match.status === "OPEN" ? "badge-ok" : "bg-slate-100 text-slate-500"}`}>
             {match.status === "OPEN" ? "모집중" : "마감됨"}
           </span>
           <span className="text-slate-500 text-sm font-medium">{match.gameType}</span>
@@ -109,7 +109,7 @@ export default function MyPage() {
         </p>
       </div>
       <Link href={`/matches/${match.id}`}>
-        <Button variant="outline" className="w-full sm:w-auto text-green-700 border-green-600 hover:bg-green-50">
+        <Button variant="outline" className="w-full sm:w-auto text-ok border-ok hover-ok">
           상세 보기
         </Button>
       </Link>
@@ -126,7 +126,7 @@ export default function MyPage() {
         {/* 프로필 헤더 */}
         <div className="surface p-8 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
+            <div className="w-20 h-20 bg-ok-soft text-ok rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
               {displayNickname.charAt(0).toUpperCase()}
             </div>
             <div>

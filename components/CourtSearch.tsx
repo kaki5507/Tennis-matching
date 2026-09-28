@@ -5,35 +5,7 @@ import Script from "next/script";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search } from "lucide-react";
-
-// 카카오맵 SDK 타입은 프로젝트에 별도 타입 정의가 없어서 최소한의 형태만 선언합니다.
-interface KakaoPlace {
-  place_name: string;
-  address_name: string;
-  road_address_name: string;
-  category_name: string;
-  x: string; // 경도
-  y: string; // 위도
-}
-
-declare global {
-  interface Window {
-    kakao: {
-      maps: {
-        load: (callback: () => void) => void;
-        services: {
-          Places: new () => {
-            keywordSearch: (
-              query: string,
-              callback: (data: KakaoPlace[], status: string) => void
-            ) => void;
-          };
-          Status: { OK: string };
-        };
-      };
-    };
-  }
-}
+import type { KakaoPlace } from "@/types/kakao-maps";
 
 export interface SelectedCourt {
   name: string;
@@ -110,9 +82,9 @@ export default function CourtSearch({ onSelect, selected }: Props) {
       )}
 
       {selected ? (
-        <div className="flex items-start justify-between gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <div className="flex items-start justify-between gap-3 p-3 bg-ok-soft border border-ok rounded-lg">
           <div className="flex items-start gap-2">
-            <MapPin className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+            <MapPin className="w-4 h-4 text-ok mt-0.5 shrink-0" />
             <div>
               <div className="font-medium text-slate-800 text-sm">{selected.name}</div>
               <div className="text-xs text-slate-500">{selected.address}</div>

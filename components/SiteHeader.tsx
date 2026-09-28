@@ -45,7 +45,7 @@ export default function SiteHeader() {
   const links = isAdminUser ? [...NAV, { href: "/admin", label: "관리자" }] : NAV;
 
   return (
-    <header className="sticky top-0 z-30 border-b" style={{ background: "var(--chalk)", borderColor: "#dfe3d4" }}>
+    <header className="sticky top-0 z-30 border-b app-bar">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <TennisMascot pose="wave" className="w-8 h-8" />
@@ -60,17 +60,13 @@ export default function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-1.5 rounded-full text-sm font-medium"
-                style={{
-                  background: active ? "var(--court)" : "transparent",
-                  color: active ? "var(--chalk)" : "var(--ink)",
-                }}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium ${active ? "chip-on" : "chip-off"}`}
               >
                 {link.label}
               </Link>
             );
           })}
-          <span className="w-px h-5 mx-1.5" style={{ background: "#dfe3d4" }} />
+          <span className="w-px h-5 mx-1.5 bg-line" />
           {userId ? (
             <Link href="/mypage" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
               마이페이지
@@ -101,13 +97,13 @@ export default function SiteHeader() {
 
       {/* 모바일 메뉴 */}
       {isOpen && (
-        <nav className="sm:hidden border-t px-4 py-3 space-y-1" style={{ borderColor: "#dfe3d4" }}>
+        <nav className="sm:hidden border-t px-4 py-3 space-y-1 border-line">
           {links.map((link) => (
             <Link key={link.href} href={link.href} onClick={() => setIsOpen(false)} className="block py-2 text-sm font-medium text-ink">
               {link.label}
             </Link>
           ))}
-          <div className="h-px my-2" style={{ background: "#dfe3d4" }} />
+          <div className="h-px my-2 bg-line" />
           {userId ? (
             <Link href="/mypage" onClick={() => setIsOpen(false)} className="block py-2 text-sm font-medium text-ink">
               마이페이지
@@ -117,7 +113,7 @@ export default function SiteHeader() {
               <Link href="/login" onClick={() => setIsOpen(false)} className="block py-2 text-sm font-medium text-ink">
                 로그인
               </Link>
-              <Link href="/signup" onClick={() => setIsOpen(false)} className="block py-2 text-sm font-bold" style={{ color: "var(--clay)" }}>
+              <Link href="/signup" onClick={() => setIsOpen(false)} className="block py-2 text-sm font-bold text-clay">
                 회원가입
               </Link>
             </>

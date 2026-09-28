@@ -100,9 +100,9 @@ export default function CreateTournamentPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4" style={{ background: "var(--mist)" }}>
+    <div className="min-h-screen py-12 px-4 tint">
       <div className="max-w-xl mx-auto surface p-8 rounded-2xl shadow-sm">
-        <h1 className="font-display text-2xl mb-6" style={{ color: "var(--court)" }}>
+        <h1 className="font-display text-2xl mb-6 text-court">
           🏆 대회 개설
         </h1>
 
@@ -124,7 +124,7 @@ export default function CreateTournamentPage() {
               value={form.description}
               onChange={handleChange}
               rows={3}
-              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-green-600"
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus-ok"
             />
           </div>
 
@@ -133,7 +133,7 @@ export default function CreateTournamentPage() {
             <CourtSearch selected={selectedCourt} onSelect={setSelectedCourt} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="startDate">대회 날짜</Label>
               <Input type="date" id="startDate" name="startDate" value={form.startDate} onChange={handleChange} required />
@@ -144,7 +144,7 @@ export default function CreateTournamentPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="minNtrp">최소 NTRP</Label>
               <Input type="number" step="0.1" id="minNtrp" name="minNtrp" value={form.minNtrp} onChange={handleChange} required />
@@ -164,7 +164,7 @@ export default function CreateTournamentPage() {
             <Input type="number" step="0.1" id="minMannerScore" name="minMannerScore" value={form.minMannerScore} onChange={handleChange} placeholder="예: 36.5" />
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full h-12 text-white text-lg" style={{ background: "var(--clay)" }}>
+          <Button type="submit" disabled={isLoading} className="w-full h-12 text-white text-lg bg-clay text-white">
             {isLoading ? "개설 중..." : "대회 개설하고 알림 보내기"}
           </Button>
         </form>

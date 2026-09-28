@@ -209,7 +209,7 @@ export default function SignupPage() {
               {isVerifying ? "본인인증 진행 중..." : "본인인증 하기 (필수)"}
             </Button>
           ) : (
-            <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-lg">
+            <div className="flex items-center gap-2 p-3 badge-ok text-sm rounded-lg">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               본인인증이 완료되었습니다{verifiedName ? ` (${verifiedName}님)` : ""}.
             </div>
@@ -335,7 +335,7 @@ export default function SignupPage() {
 
         <div className="mt-6 text-center text-slate-600">
           이미 계정이 있으신가요?{" "}
-          <Link href="/login" className="text-green-600 font-semibold hover:underline">
+          <Link href="/login" className="text-ok font-semibold hover:underline">
             로그인하기
           </Link>
         </div>

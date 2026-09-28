@@ -4,61 +4,163 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* [NEW] 테니스 매칭 서비스 전용 컬러 팔레트 — 실제 코트/공/클레이 색감에서 추출 */
+/* ==========================================================================
+   테니스 매칭 서비스 디자인 시스템
+   색을 바꾸고 싶으면 아래 :root 토큰만 수정하면 전체에 반영됩니다.
+   컴포넌트에서는 색을 직접 쓰지 말고 이 파일의 클래스를 사용하세요.
+   ========================================================================== */
+
+/* --- 1. 토큰 -------------------------------------------------------------- */
 :root {
-  --clay: #c1512f;      /* 클레이코트 브릭오렌지 — CTA, 강조 */
-  --court: #2f4a33;     /* 짙은 코트그린 — 헤더, 진한 텍스트 */
-  --ball: #d7de23;      /* 테니스공 연두 — 마스코트, 하이라이트 */
-  --chalk: #fbf8f1;     /* 라인화이트 — 카드 배경 */
-  --mist: #eef1e4;      /* 옅은 세이지 — 페이지 배경 */
-  --ink: #24301f;       /* 웜톤 다크 — 본문 텍스트 */
+  /* 브랜드 컬러 (실제 코트/공/클레이 색감에서 추출) */
+  --clay: #c1512f;   /* 클레이코트 브릭오렌지 — CTA, 강조 */
+  --court: #2f4a33;  /* 짙은 코트그린 — 헤더, 진한 텍스트 */
+  --ball: #d7de23;   /* 테니스공 연두 — 마스코트, 하이라이트 */
+  --chalk: #fbf8f1;  /* 라인화이트 — 카드 배경 */
+  --mist: #eef1e4;   /* 옅은 세이지 — 페이지 배경 */
+  --ink: #24301f;    /* 웜톤 다크 — 본문 텍스트 */
+  --line: #dfe3d4;   /* 옅은 구분선/테두리 */
+
+  /* 의미 색 (성공/수락 등 긍정 상태) */
+  --ok: #3f7a4a;
+  --ok-soft: #e8f2e9;
+  --court-soft: #3d6042; /* 코트그린 그라데이션 끝색 */
+
+  /* 보조 색 */
+  --silver: #e5e7eb; /* 준우승 */
+  --bronze: #f3d9c4; /* 3위 */
+  --muted-bg: #f1f5f9;
+  --muted-fg: #94a3b8;
+  --overlay: rgba(20, 30, 20, 0.6); /* 모달 뒷배경 */
+
+  /* 코트그린 배경 위에 얹는 반투명 레이어 */
+  --on-court-panel: rgba(251, 248, 241, 0.08);
+  --on-court-chip: rgba(251, 248, 241, 0.12);
+  --on-court-border: rgba(251, 248, 241, 0.35);
+  --on-court-idle: rgba(251, 248, 241, 0.15);
+
+  /* 대진표 */
+  --bracket-border: rgba(47, 74, 51, 0.15);
+  --bracket-divider: rgba(47, 74, 51, 0.1);
+  --bracket-winner: rgba(215, 222, 35, 0.28);
+
   --font-display: "Do Hyeon", "Noto Sans KR", sans-serif;
 }
 
-.font-display {
-  font-family: var(--font-display);
-}
-
-/* [NEW] 페이지 공통 스타일 토큰 — 페이지마다 색을 하드코딩하지 않고 이 클래스를 씁니다. */
-.page-bg {
-  background: var(--mist);
-}
-.tint {
-  background: var(--mist);
-}
-.surface {
-  background: var(--chalk);
-  border: 1px solid rgba(47, 74, 51, 0.1);
-}
-.text-court {
-  color: var(--court);
-}
-.text-ink {
-  color: var(--ink);
-}
+/* --- 2. 타이포그래피 ------------------------------------------------------ */
+.font-display { font-family: var(--font-display); }
 .heading {
   font-family: var(--font-display);
   color: var(--court);
   font-weight: 400;
 }
+.text-court { color: var(--court); }
+.text-ink { color: var(--ink); }
+.text-ink-muted { color: var(--ink); opacity: 0.75; }
+.text-chalk { color: var(--chalk); }
+.text-ball { color: var(--ball); }
+.text-clay { color: var(--clay); }
+
+/* --- 3. 레이아웃 / 표면 --------------------------------------------------- */
+.page-bg { background: var(--mist); }   /* 페이지 전체 배경 */
+.tint { background: var(--mist); }      /* 카드 안쪽 보조 영역 */
+.surface {                              /* 기본 카드 */
+  background: var(--chalk);
+  border: 1px solid var(--bracket-divider);
+}
+.app-bar {                              /* 상단 고정 바 */
+  background: var(--chalk);
+  border-bottom: 1px solid var(--line);
+}
+.admin-panel {                          /* 관리자 전용 영역 */
+  background: var(--chalk);
+  border: 2px dashed var(--clay);
+}
+.modal-overlay { background: var(--overlay); }
+.mascot-frame {                         /* 랜딩 마스코트 원형 프레임 */
+  background: var(--chalk);
+  border: 3px dashed var(--ball);
+}
+
+/* --- 4. 배경 / 테두리 유틸 ------------------------------------------------ */
+.bg-court { background: var(--court); }
+.bg-chalk { background: var(--chalk); }
+.bg-ball { background: var(--ball); }
+.bg-clay { background: var(--clay); }
+.bg-line { background: var(--line); }
+.border-line { border-color: var(--line); }
+.border-clay { border-color: var(--clay); }
+
+/* --- 5. 버튼 -------------------------------------------------------------- */
 .btn-clay {
   background: var(--clay);
   color: #fff;
   transition: filter 150ms;
 }
-.btn-clay:hover {
-  filter: brightness(1.08);
-}
-.btn-court {
-  background: var(--court);
-  color: var(--chalk);
-  transition: filter 150ms;
-}
-.btn-court:hover {
-  filter: brightness(1.15);
+.btn-clay:hover { filter: brightness(1.08); }
+.btn-outline-court {
+  border-color: var(--court);
+  color: var(--court);
 }
 
-/* [NEW] 로딩 애니메이션 - 테니스공이 라켓에 튕기는 모습 */
+/* 성공/수락 상태 */
+.badge-ok { background: var(--ok-soft); color: var(--ok); }
+.text-ok { color: var(--ok); }
+.bg-ok-soft { background: var(--ok-soft); }
+.border-ok { border-color: var(--ok); }
+.bg-ok { background: var(--ok); }
+.hover-ok:hover { background: var(--ok-soft); }
+
+/* 상세 페이지 상단 히어로 */
+.hero-court { background: linear-gradient(90deg, var(--court), var(--court-soft)); }
+
+/* 폼 요소 포커스 */
+.focus-ok:focus { border-color: var(--ok); outline: none; }
+
+/* --- 6. 칩 / 배지 --------------------------------------------------------- */
+.chip-on { background: var(--court); color: var(--chalk); }
+.chip-off { background: transparent; color: var(--ink); }
+.chip-off-court { background: transparent; color: var(--court); }
+.badge-win { background: var(--ball); color: var(--court); }
+.badge-lose { background: var(--muted-bg); color: var(--muted-fg); }
+.badge-live { background: var(--clay); color: var(--chalk); }
+.badge-idle { background: var(--on-court-idle); color: var(--chalk); }
+.medal-1 { background: var(--ball); color: var(--court); }
+.medal-2 { background: var(--silver); color: var(--court); }
+.medal-3 { background: var(--bronze); color: var(--court); }
+
+/* --- 7. 코트그린 배경 위 요소 (대진표 전용 화면) -------------------------- */
+.on-court-panel { background: var(--on-court-panel); }
+.on-court-chip { background: var(--on-court-chip); color: var(--chalk); }
+.round-label { color: var(--ball); }
+.champ-card-done {
+  background: var(--ball);
+  box-shadow: 0 10px 30px rgba(215, 222, 35, 0.35);
+}
+.champ-card-wait {
+  background: transparent;
+  border: 2px dashed var(--on-court-border);
+}
+.legend-me { border: 2px solid var(--clay); }
+
+/* --- 8. 대진표 카드 ------------------------------------------------------- */
+.bracket-card {
+  background: var(--chalk);
+  border: 1px solid var(--bracket-border);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+.bracket-card-me { border: 2px solid var(--clay); }
+.bracket-card-bye {
+  background: var(--chalk);
+  border: 1px dashed var(--on-court-border);
+  box-shadow: none;
+  opacity: 0.55;
+}
+.bracket-row-winner { background: var(--bracket-winner); }
+.bracket-divider { background: var(--bracket-divider); }
+.seed-badge { background: var(--mist); color: var(--court); }
+
+/* --- 9. 애니메이션 (로딩: 라켓에 공이 튕기는 모습) ------------------------ */
 @keyframes tennis-ball-bounce {
   0%, 100% { transform: translateY(0) scale(1, 1); }
   38% { transform: translateY(-52px) scale(1, 1); }
@@ -74,6 +176,15 @@
   0%, 82%, 100% { transform: rotate(0deg); }
   90% { transform: rotate(-14deg); }
   96% { transform: rotate(8deg); }
+}
+
+/* 움직임 최소화를 선호하는 사용자를 위한 배려 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @theme inline {

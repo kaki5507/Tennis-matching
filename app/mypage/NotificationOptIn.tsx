@@ -47,7 +47,7 @@ export default function NotificationOptIn({ userId, marketingAgreed }: Props) {
 
   if (status === "enabled") {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-700 p-3 bg-green-50 rounded-lg">
+      <div className="flex items-center gap-2 text-sm text-ok p-3 bg-ok-soft rounded-lg">
         <BellRing className="w-4 h-4 shrink-0" />
         알림이 켜져 있습니다.
       </div>

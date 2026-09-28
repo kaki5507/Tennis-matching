@@ -96,10 +96,10 @@ export default function ProfileEditPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>성별</Label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
+              <select name="gender" value={formData.gender} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus-ok">
                 <option value="MALE">남성 (MALE)</option>
                 <option value="FEMALE">여성 (FEMALE)</option>
               </select>
@@ -107,7 +107,7 @@ export default function ProfileEditPage() {
             
             <div className="space-y-2">
               <Label>선호 포지션 (특기)</Label>
-              <select name="preferredPos" value={formData.preferredPos} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
+              <select name="preferredPos" value={formData.preferredPos} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus-ok">
                 <option value="ANY">상관없음 (ANY)</option>
                 <option value="FOREHAND">포핸드 (FOREHAND)</option>
                 <option value="BACKHAND">백핸드 (BACKHAND)</option>
@@ -117,7 +117,7 @@ export default function ProfileEditPage() {
 
           <div className="space-y-2">
             <Label>테니스 구력 (레벨)</Label>
-            <select name="tennisLevel" value={formData.tennisLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
+            <select name="tennisLevel" value={formData.tennisLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus-ok">
               <option value="테린이">테린이 (1년 미만)</option>
               <option value="NTRP 2.0">NTRP 2.0 (초급)</option>
               <option value="NTRP 2.5">NTRP 2.5 (초중급)</option>

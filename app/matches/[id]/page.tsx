@@ -44,9 +44,9 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
       <div className="max-w-3xl mx-auto surface rounded-2xl shadow-sm overflow-hidden">
         
         {/* 상단 헤더 영역 (그라데이션 배경) */}
-        <div className="bg-gradient-to-r from-green-600 to-green-500 px-8 py-10 text-white">
+        <div className="px-8 py-10 text-white hero-court">
           <div className="flex justify-between items-start mb-4">
-            <span className="surface/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
+            <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
               {match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : "🔴 마감됨"}
             </span>
             <span className="font-medium bg-black/10 px-3 py-1 rounded-full text-sm">
@@ -56,7 +56,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           <h1 className="text-3xl font-bold mb-3">
             {new Date(match.matchDate).toLocaleDateString("ko-KR", { month: 'long', day: 'numeric', weekday: 'short' })} 테니스 칠 분 구해요!
           </h1>
-          <p className="text-green-50 flex items-center gap-2 text-lg">
+          <p className="text-chalk flex items-center gap-2 text-lg">
             📍 {match.court?.name || "코트 미정"}
           </p>
         </div>

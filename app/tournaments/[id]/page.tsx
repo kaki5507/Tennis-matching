@@ -161,11 +161,11 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     uid ? tournament.participants.find((p) => p.userId === uid) : null;
 
   return (
-    <div className="min-h-screen py-12 px-4" style={{ background: "var(--mist)" }}>
+    <div className="min-h-screen py-12 px-4 tint">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* 헤더 카드 */}
         <div className="surface p-6 rounded-2xl shadow-sm">
-          <h1 className="font-display text-2xl mb-2" style={{ color: "var(--court)" }}>
+          <h1 className="font-display text-2xl mb-2 text-court">
             🏆 {tournament.title}
           </h1>
           {tournament.description && <p className="text-slate-600 mb-4">{tournament.description}</p>}
@@ -196,7 +196,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         {/* 결과 카드 (종료된 대회만) */}
         {tournament.status === "COMPLETED" && tournament.championId && (
           <div className="surface p-6 rounded-2xl shadow-sm">
-            <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
+            <h2 className="font-display text-lg mb-4 text-court">
               🎉 최종 결과
             </h2>
             <div className="space-y-2 text-sm">
@@ -225,11 +225,11 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
           <div className="surface p-6 rounded-2xl shadow-sm">
             {!userId ? (
               <p className="text-center text-slate-500 text-sm">
-                <Link href="/login" className="text-green-600 underline">로그인</Link> 후 신청할 수 있어요.
+                <Link href="/login" className="text-ok underline">로그인</Link> 후 신청할 수 있어요.
               </p>
             ) : eligibility?.alreadyRegistered ? (
               <div className="text-center">
-                <p className="text-green-700 font-medium mb-3">✅ 신청 완료됐어요!</p>
+                <p className="text-ok font-medium mb-3">✅ 신청 완료됐어요!</p>
                 <Button variant="outline" onClick={handleCancel} disabled={isSubmitting}>
                   신청 취소
                 </Button>
@@ -238,8 +238,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               <Button
                 onClick={handleRegister}
                 disabled={isSubmitting}
-                className="w-full h-12 text-white text-lg"
-                style={{ background: "var(--clay)" }}
+                className="w-full h-12 text-white text-lg bg-clay text-white"
               >
                 {isSubmitting ? "신청 중..." : "대회 신청하기"}
               </Button>
@@ -256,13 +255,12 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         {tournament.matches.length > 0 && (
           <div className="surface p-6 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg" style={{ color: "var(--court)" }}>
+              <h2 className="font-display text-lg text-court">
                 📋 대진표
               </h2>
               <Link
                 href={`/tournaments/${tournament.id}/bracket`}
-                className="text-xs font-bold px-3 py-1.5 rounded-full text-white"
-                style={{ background: "var(--court)" }}
+                className="text-xs font-bold px-3 py-1.5 rounded-full text-white bg-court"
               >
                 크게 보기 →
               </Link>
@@ -279,7 +277,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* 참가자 목록 */}
         <div className="surface p-6 rounded-2xl shadow-sm">
-          <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
+          <h2 className="font-display text-lg mb-4 text-court">
             참가자 명단
           </h2>
           {tournament.participants.length === 0 ? (
@@ -302,8 +300,8 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* [NEW] 관리자 전용 패널 */}
         {isAdminUser && tournament.status !== "COMPLETED" && (
-          <div className="surface p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
-            <h2 className="font-display text-lg mb-4" style={{ color: "var(--clay)" }}>
+          <div className="admin-panel p-6 rounded-2xl">
+            <h2 className="font-display text-lg mb-4 text-clay">
               🛠️ 관리자 패널
             </h2>
 
@@ -328,8 +326,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 <Button
                   onClick={handleGenerateBracket}
                   disabled={isSubmitting || tournament.participants.length < 2}
-                  className="w-full text-white"
-                  style={{ background: "var(--court)" }}
+                  className="w-full text-white bg-court"
                 >
                   📋 대진표 자동 생성 (참가자 {tournament.participants.length}명)
                 </Button>
@@ -353,7 +350,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* 대진표 없이 현장에서 진행한 대회용 수동 결과 입력 */}
         {isAdminUser && tournament.status !== "COMPLETED" && tournament.matches.length === 0 && (
-          <div className="surface p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
+          <div className="admin-panel p-6 rounded-2xl">
             <h3 className="text-sm font-bold text-slate-700 mb-1">대회 결과 직접 입력</h3>
             <p className="text-xs text-slate-400 mb-3">대진표 없이 현장에서 진행한 경우에만 사용하세요.</p>
             <div className="space-y-2 mb-3">
@@ -375,7 +372,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 </select>
               ))}
             </div>
-            <Button onClick={handleRecordResult} disabled={isSubmitting} className="w-full" style={{ background: "var(--clay)" }}>
+            <Button onClick={handleRecordResult} disabled={isSubmitting} className="w-full bg-clay text-white">
               결과 확정 및 알림 발송
             </Button>
           </div>

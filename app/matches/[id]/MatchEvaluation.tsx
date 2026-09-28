@@ -104,7 +104,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
   if (evaluatees.length === 0) return null;
   if (isSubmitted) {
     return (
-      <div className="mt-8 bg-green-50 p-6 rounded-xl border border-green-200 text-center text-green-700 font-medium">
+      <div className="mt-8 bg-ok-soft p-6 rounded-xl border border-ok text-center text-ok font-medium">
         ✅ 동료 평가를 완료했습니다. 
       </div>
     );
@@ -140,7 +140,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
                 <select
                   value={evalData[user.id]?.winLoss || "WIN"}
                   onChange={(e) => handleEvalChange(user.id, "winLoss", e.target.value)}
-                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus:border-green-600 outline-none"
+                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus-ok outline-none"
                 >
                   <option value="WIN">🏆 승리</option>
                   <option value="LOSS">😢 패배</option>
@@ -154,7 +154,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
                 <select 
                   value={evalData[user.id]?.ntrpRating || 2.0}
                   onChange={(e) => handleEvalChange(user.id, "ntrpRating", parseFloat(e.target.value))}
-                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus:border-green-600 outline-none"
+                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus-ok outline-none"
                 >
                   <option value={1.0}>1.0 (입문자)</option>
                   <option value={1.5}>1.5 (초보자)</option>
@@ -174,7 +174,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
                 <select 
                   value={evalData[user.id]?.mannerRating || 5}
                   onChange={(e) => handleEvalChange(user.id, "mannerRating", parseInt(e.target.value))}
-                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus:border-green-600 outline-none"
+                  className="w-full h-10 rounded-md border border-slate-200 px-3 text-sm focus-ok outline-none"
                 >
                   <option value={5}>⭐⭐⭐⭐⭐ (5점 - 최고예요)</option>
                   <option value={4}>⭐⭐⭐⭐ (4점 - 좋았어요)</option>

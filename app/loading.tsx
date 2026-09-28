@@ -7,7 +7,7 @@ import TennisLoader from "@/components/TennisLoader";
 
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--mist)" }}>
+    <div className="min-h-screen flex items-center justify-center tint">
       <TennisLoader label="코트로 이동 중..." />
     </div>
   );

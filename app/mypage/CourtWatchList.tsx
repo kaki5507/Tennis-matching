@@ -68,7 +68,7 @@ export default function CourtWatchList({ userId }: Props) {
                 disabled={pendingId === court.facilityId}
                 className={`text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1 ${
                   isWatching
-                    ? "bg-green-100 text-green-700"
+                    ? "badge-ok"
                     : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                 }`}
               >

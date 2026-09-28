@@ -145,7 +145,7 @@ export default function HostDashboard({
   return (
     <div className="mt-12 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
       {/* 왕관 뱃지 디자인 */}
-      <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-xl font-bold text-sm">
+      <div className="absolute top-0 right-0 bg-ok-soft0 text-white px-4 py-1 rounded-bl-xl font-bold text-sm">
         방장 전용
       </div>
 
@@ -179,12 +179,12 @@ export default function HostDashboard({
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/users/${applicant.userId}`}
-                    className="font-bold text-slate-900 text-lg hover:text-green-600 hover:underline"
+                    className="font-bold text-slate-900 text-lg hover:text-[color:var(--ok)] hover:underline"
                   >
                     {applicant.user.nickname || applicant.user.email.split('@')[0]}
                   </Link>
                   <span className={`text-xs px-2 py-1 rounded-full font-bold ${
-                    applicant.status === "ACCEPTED" ? "bg-green-100 text-green-700" :
+                    applicant.status === "ACCEPTED" ? "badge-ok" :
                     applicant.status === "REJECTED" ? "bg-red-100 text-red-700" :
                     "bg-yellow-100 text-yellow-700"
                   }`}>

@@ -111,7 +111,7 @@ export default async function MatchesPage({
                 
                 {/* 상단 태그 */}
                 <div className="flex justify-between items-center mb-4">
-                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">
+                  <span className="badge-ok text-xs font-bold px-3 py-1 rounded-full">
                     모집중
                   </span>
                   <span className="text-slate-400 text-sm font-medium">
@@ -153,7 +153,7 @@ export default async function MatchesPage({
                     방장: <span className="font-medium text-slate-700">{match.host?.nickname || "알 수 없음"}</span>
                   </div>
                   <Link href={`/matches/${match.id}`}>
-                    <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50 text-sm h-8 px-4">
+                    <Button variant="outline" className="border-ok text-ok hover-ok text-sm h-8 px-4">
                       자세히
                     </Button>
                   </Link>

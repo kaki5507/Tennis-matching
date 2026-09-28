@@ -37,13 +37,13 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--mist)" }}>
+    <div className="min-h-screen flex flex-col tint">
       {/* 헤더 */}
-      <header className="border-b sticky top-0 z-10" style={{ background: "var(--chalk)", borderColor: "#dfe3d4" }}>
+      <header className="border-b sticky top-0 z-10 app-bar">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TennisMascot pose="wave" className="w-9 h-9" />
-            <span className="font-display text-xl" style={{ color: "var(--court)" }}>
+            <span className="font-display text-xl text-court">
               테니스매칭
             </span>
           </div>
@@ -51,11 +51,11 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
-                <span className="text-sm font-medium hidden sm:inline-block" style={{ color: "var(--ink)" }}>
+                <span className="text-sm font-medium hidden sm:inline-block text-ink">
                   환영합니다!
                 </span>
                 <Link href="/mypage">
-                  <Button variant="ghost" className="h-9 font-medium" style={{ color: "var(--court)" }}>
+                  <Button variant="ghost" className="h-9 font-medium text-court">
                     마이페이지
                   </Button>
                 </Link>
@@ -69,7 +69,7 @@ export default function HomePage() {
                   <Button variant="ghost" className="h-9">로그인</Button>
                 </Link>
                 <Link href="/signup">
-                  <Button className="h-9 text-white hover:opacity-90" style={{ background: "var(--clay)" }}>
+                  <Button className="h-9 text-white hover:opacity-90 bg-clay text-white">
                     회원가입
                   </Button>
                 </Link>
@@ -84,19 +84,18 @@ export default function HomePage() {
         <section className="relative overflow-hidden">
           {/* 배경 코트라인 장식 (우측에 크게, 옅게) */}
           <CourtLines
-            className="absolute -right-32 -top-10 w-[720px] h-[500px] opacity-[0.07] pointer-events-none hidden md:block"
-            style={{ color: "var(--court)" }}
+            className="absolute -right-32 -top-10 w-[720px] h-[500px] opacity-[0.07] pointer-events-none hidden md:block text-court"
           />
 
           <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center relative">
             {/* 왼쪽: 카피 */}
             <div className="text-center md:text-left">
-              <h1 className="font-display text-4xl md:text-6xl leading-tight mb-6" style={{ color: "var(--ink)" }}>
+              <h1 className="font-display text-4xl md:text-6xl leading-tight mb-6 text-ink">
                 오늘도 코트에서
                 <br />
                 만나요
               </h1>
-              <p className="text-lg mb-10 max-w-md mx-auto md:mx-0" style={{ color: "var(--ink)", opacity: 0.75 }}>
+              <p className="text-lg mb-10 max-w-md mx-auto md:mx-0 text-ink-muted">
                 실력, 연령, 성별 조건에 맞는 매칭 방을 찾거나 직접 만들어보세요.
                 매너 온도로 쾌적한 경기를 보장합니다.
               </p>
@@ -105,8 +104,7 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                   <Link href="/matches">
                     <Button
-                      className="h-12 px-8 text-lg w-full sm:w-auto text-white hover:opacity-90"
-                      style={{ background: "var(--clay)" }}
+                      className="h-12 px-8 text-lg w-full sm:w-auto text-white hover:opacity-90 bg-clay text-white"
                     >
                       매칭 방 찾기
                     </Button>
@@ -114,8 +112,7 @@ export default function HomePage() {
                   <Link href="/matches/create">
                     <Button
                       variant="outline"
-                      className="h-12 px-8 text-lg w-full sm:w-auto"
-                      style={{ borderColor: "var(--court)", color: "var(--court)" }}
+                      className="h-12 px-8 text-lg w-full sm:w-auto btn-outline-court"
                     >
                       방 만들기
                     </Button>
@@ -124,8 +121,7 @@ export default function HomePage() {
               ) : (
                 <Link href="/signup">
                   <Button
-                    className="h-12 px-8 text-lg text-white hover:opacity-90"
-                    style={{ background: "var(--clay)" }}
+                    className="h-12 px-8 text-lg text-white hover:opacity-90 bg-clay text-white"
                   >
                     지금 바로 시작하기
                   </Button>
@@ -136,8 +132,7 @@ export default function HomePage() {
             {/* 오른쪽: 마스코트 일러스트 */}
             <div className="flex justify-center">
               <div
-                className="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center"
-                style={{ background: "var(--chalk)", border: "3px dashed var(--ball)" }}
+                className="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center mascot-frame"
               >
                 <TennisMascot pose="wave" className="w-48 h-48 md:w-60 md:h-60" />
               </div>
@@ -147,7 +142,7 @@ export default function HomePage() {
 
         {/* 특징 3가지 - 코트 라인으로 구획 */}
         <section className="max-w-6xl mx-auto px-4 py-16">
-          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "#dfe3d4" }}>
+          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x border-line">
             {[
               { emoji: "🎯", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
               { emoji: "🌡️", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
@@ -155,10 +150,10 @@ export default function HomePage() {
             ].map((f) => (
               <div key={f.title} className="py-8 sm:py-0 sm:px-8 text-center first:pl-0 last:pr-0">
                 <div className="text-3xl mb-3">{f.emoji}</div>
-                <h3 className="font-display text-xl mb-2" style={{ color: "var(--court)" }}>
+                <h3 className="font-display text-xl mb-2 text-court">
                   {f.title}
                 </h3>
-                <p className="text-sm" style={{ color: "var(--ink)", opacity: 0.7 }}>
+                <p className="text-sm text-ink-muted">
                   {f.desc}
                 </p>
               </div>

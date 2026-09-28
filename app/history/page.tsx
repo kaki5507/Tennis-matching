@@ -83,7 +83,7 @@ export default async function HistoryPage({
                         {match.participants.length}명
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/matches/${match.id}`} className="text-green-600 hover:underline font-medium">
+                        <Link href={`/matches/${match.id}`} className="text-ok hover:underline font-medium">
                           보기
                         </Link>
                       </td>

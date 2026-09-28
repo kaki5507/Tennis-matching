@@ -3,28 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
-interface KakaoLatLng {
-  new (lat: number, lng: number): unknown;
-}
-interface KakaoMapInstance {
-  new (container: HTMLElement, options: { center: unknown; level: number }): unknown;
-}
-interface KakaoMarkerInstance {
-  new (options: { position: unknown; map: unknown }): unknown;
-}
-
-declare global {
-  interface Window {
-    kakao: Window["kakao"] & {
-      maps: Window["kakao"]["maps"] & {
-        LatLng: KakaoLatLng;
-        Map: KakaoMapInstance;
-        Marker: KakaoMarkerInstance;
-      };
-    };
-  }
-}
-
 interface Props {
   latitude: number;
   longitude: number;

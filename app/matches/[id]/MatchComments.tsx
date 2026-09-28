@@ -90,7 +90,7 @@ export default function MatchComments({ matchId }: { matchId: string }) {
   return (
     <div className="mt-12 surface p-6 md:p-8 rounded-xl shadow-sm">
       <h3 className="text-xl heading mb-6 flex items-center gap-2">
-        💬 Q&A 및 소통 <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-sm">{comments.length}</span>
+        💬 Q&A 및 소통 <span className="text-ok bg-ok-soft px-2 py-0.5 rounded-full text-sm">{comments.length}</span>
       </h3>
 
       {/* 댓글 목록 영역 */}

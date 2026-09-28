@@ -58,14 +58,14 @@ interface TournamentSummary {
   matchLosses: number;
 }
 
-const MEDAL: Record<1 | 2 | 3, { emoji: string; label: string; bg: string }> = {
-  1: { emoji: "🏆", label: "우승", bg: "var(--ball)" },
-  2: { emoji: "🥈", label: "준우승", bg: "#e5e7eb" },
-  3: { emoji: "🥉", label: "3위", bg: "#f3d9c4" },
+const MEDAL: Record<1 | 2 | 3, { emoji: string; label: string; cls: string }> = {
+  1: { emoji: "🏆", label: "우승", cls: "medal-1" },
+  2: { emoji: "🥈", label: "준우승", cls: "medal-2" },
+  3: { emoji: "🥉", label: "3위", cls: "medal-3" },
 };
 
 const RESULT_LABEL: Record<string, { text: string; className: string }> = {
-  WIN: { text: "승", className: "bg-green-100 text-green-700" },
+  WIN: { text: "승", className: "badge-ok" },
   LOSS: { text: "패", className: "bg-red-100 text-red-700" },
   DRAW: { text: "무", className: "bg-slate-100 text-slate-600" },
 };
@@ -121,7 +121,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">{errorMsg || "유저를 찾을 수 없습니다."}</p>
-        <Link href="/matches" className="text-green-600 underline">매칭 목록으로 돌아가기</Link>
+        <Link href="/matches" className="text-ok underline">매칭 목록으로 돌아가기</Link>
       </div>
     );
   }
@@ -144,17 +144,17 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
             {tSummary && tSummary.titles + tSummary.runnerUps + tSummary.thirdPlaces > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {tSummary.titles > 0 && (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[1].bg, color: "var(--court)" }}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${MEDAL[1].cls}`}>
                     🏆 우승 {tSummary.titles}회
                   </span>
                 )}
                 {tSummary.runnerUps > 0 && (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[2].bg, color: "var(--court)" }}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${MEDAL[2].cls}`}>
                     🥈 준우승 {tSummary.runnerUps}회
                   </span>
                 )}
                 {tSummary.thirdPlaces > 0 && (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: MEDAL[3].bg, color: "var(--court)" }}>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${MEDAL[3].cls}`}>
                     🥉 3위 {tSummary.thirdPlaces}회
                   </span>
                 )}
@@ -189,7 +189,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
             <div className="text-xs text-slate-500">총 경기</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-green-600">{record.wins}</div>
+            <div className="text-2xl font-bold text-ok">{record.wins}</div>
             <div className="text-xs text-slate-500">승</div>
           </div>
           <div>
@@ -225,8 +225,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                   className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50"
                 >
                   <span
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0"
-                    style={{ background: MEDAL[h.place].bg }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xl shrink-0 ${MEDAL[h.place].cls}`}
                     aria-label={MEDAL[h.place].label}
                   >
                     {MEDAL[h.place].emoji}
@@ -257,7 +256,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
             )}
           </div>
           {tMatches.length > 0 && (
-            <div className="flex rounded-full p-0.5 text-xs font-medium shrink-0" style={{ background: "var(--mist)" }}>
+            <div className="flex rounded-full p-0.5 text-xs font-medium shrink-0 tint">
               {[
                 { value: false, label: "전체" },
                 { value: true, label: "승리만" },
@@ -266,11 +265,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                   key={opt.label}
                   type="button"
                   onClick={() => setOnlyWins(opt.value)}
-                  className="px-3 py-1 rounded-full"
-                  style={{
-                    background: onlyWins === opt.value ? "var(--court)" : "transparent",
-                    color: onlyWins === opt.value ? "var(--chalk)" : "var(--court)",
-                  }}
+                  className={`px-3 py-1 rounded-full ${onlyWins === opt.value ? "chip-on" : "chip-off-court"}`}
                 >
                   {opt.label}
                 </button>
@@ -292,11 +287,9 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                     className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50"
                   >
                     <span
-                      className="text-xs font-bold w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{
-                        background: m.won ? "var(--ball)" : "#f1f5f9",
-                        color: m.won ? "var(--court)" : "#94a3b8",
-                      }}
+                      className={`text-xs font-bold w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                        m.won ? "badge-win" : "badge-lose"
+                      }`}
                     >
                       {m.won ? "승" : "패"}
                     </span>

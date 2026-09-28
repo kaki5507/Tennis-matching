@@ -77,7 +77,7 @@ export default function AdminDashboardPage() {
       ]);
 
       if (statsResult.success) setStats(statsResult as unknown as Stats);
-      if (trendResult.success) setSignupTrend(trendResult.trend);
+      if (trendResult.success) setSignupTrend(trendResult.trend ?? []);
       setStatus("ok");
     };
     load();
@@ -113,8 +113,7 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl heading">🛠️ 관리자 대시보드</h1>
           <a
             href="/admin/tournaments/create"
-            className="text-sm font-medium px-4 py-2 rounded-lg text-white"
-            style={{ background: "var(--clay)" }}
+            className="text-sm font-medium px-4 py-2 rounded-lg text-white bg-clay text-white"
           >
             🏆 대회 개설
           </a>
@@ -226,7 +225,7 @@ export default function AdminDashboardPage() {
                       </div>
                       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${d.device === "mobile" ? "bg-green-500" : "bg-blue-500"}`}
+                          className={`h-full rounded-full ${d.device === "mobile" ? "bg-ok-soft0" : "bg-blue-500"}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>

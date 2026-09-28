@@ -178,7 +178,7 @@ export default function CreateMatchPage() {
                   name="gameType"
                   value={formData.gameType}
                   onChange={handleChange}
-                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus-ok"
                 >
                   <option value="단식">단식</option>
                   <option value="복식">복식</option>
@@ -239,7 +239,7 @@ export default function CreateMatchPage() {
                 name="minMannerScore"
                 value={formData.minMannerScore}
                 onChange={handleChange}
-                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus-ok"
               >
                 <option value="">🌡️ 제한없음 (누구나 참여 가능)</option>
                 <option value="33.0">33.0도 이상</option>

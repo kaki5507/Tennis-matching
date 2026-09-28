@@ -71,7 +71,7 @@ export default function TennisLoader({ label = "불러오는 중...", size = "fu
       </div>
 
       {label && (
-        <p className="text-sm font-medium" style={{ color: "var(--court)" }}>
+        <p className="text-sm font-medium text-court">
           {label}
         </p>
       )}
