@@ -335,7 +335,7 @@ model Tournament {
   minMannerScore       Decimal?         @map("min_manner_score") @db.Decimal(4, 1)
   maxParticipants      Int              @map("max_participants") // 단식: 최대 인원 / 복식: 최대 팀 수
   format               TournamentFormat @default(SINGLES)
-  maxTeamNtrp          Decimal?         @map("max_team_ntrp") @db.Decimal(3, 1) // 복식 합산 NTRP 상한 (null = 제한없음)
+  maxTeamAvgNtrp       Decimal?         @map("max_team_avg_ntrp") @db.Decimal(3, 1) // 복식 두 선수 평균 NTRP 상한 (null = 제한없음)
   status               TournamentStatus @default(RECRUITING)
   createdBy            String           @map("created_by") @db.Uuid
 

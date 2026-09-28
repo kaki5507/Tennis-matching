@@ -18,7 +18,7 @@ interface CreateTournamentInput {
   minNtrp: number
   maxNtrp: number
   minMannerScore?: number | null
-  maxTeamNtrp?: number | null // 복식 합산 NTRP 상한
+  maxTeamAvgNtrp?: number | null // 복식 두 선수 평균 NTRP 상한
   maxParticipants: number // 단식: 인원 / 복식: 팀 수
 }
 
@@ -34,8 +34,9 @@ export async function createTournament(adminId: string, data: CreateTournamentIn
   if (data.maxParticipants < 2) {
     return { success: false, error: `정원은 최소 2${data.format === "DOUBLES" ? "팀" : "명"} 이상이어야 합니다.` }
   }
-  if (data.format === "DOUBLES" && data.maxTeamNtrp != null && data.maxTeamNtrp < data.minNtrp * 2) {
-    return { success: false, error: "합산 NTRP 상한이 너무 낮아서, 조건을 만족하는 팀을 만들 수 없어요." }
+  // 평균은 두 선수 중 낮은 쪽보다 작을 수 없으므로, 최소 NTRP보다 낮은 평균 상한은 어떤 팀도 통과할 수 없습니다.
+  if (data.format === "DOUBLES" && data.maxTeamAvgNtrp != null && data.maxTeamAvgNtrp < data.minNtrp) {
+    return { success: false, error: "평균 NTRP 상한이 선수별 최소 NTRP보다 낮아서, 조건을 만족하는 팀을 만들 수 없어요." }
   }
 
   try {
@@ -50,7 +51,7 @@ export async function createTournament(adminId: string, data: CreateTournamentIn
         minNtrp: data.minNtrp,
         maxNtrp: data.maxNtrp,
         minMannerScore: data.minMannerScore ?? null,
-        maxTeamNtrp: data.format === "DOUBLES" ? data.maxTeamNtrp ?? null : null,
+        maxTeamAvgNtrp: data.format === "DOUBLES" ? data.maxTeamAvgNtrp ?? null : null,
         maxParticipants: data.maxParticipants,
         createdBy: adminId,
       },
@@ -107,7 +108,7 @@ export async function getTournaments() {
       startDate: t.startDate,
       minNtrp: Number(t.minNtrp),
       maxNtrp: Number(t.maxNtrp),
-      maxTeamNtrp: t.maxTeamNtrp === null ? null : Number(t.maxTeamNtrp),
+      maxTeamAvgNtrp: t.maxTeamAvgNtrp === null ? null : Number(t.maxTeamAvgNtrp),
       maxParticipants: t.maxParticipants,
       courtName: t.court.name,
       // 단식이면 신청 인원, 복식이면 확정된 팀 수
@@ -137,13 +138,13 @@ export async function getTournamentDetail(tournamentId: string, viewerId?: strin
       include: {
         court: true,
         participants: {
-          include: { user: { select: { id: true, nickname: true, ntrpScore: true, mannerScore: true } } },
+          include: { user: { select: { id: true, nickname: true, gender: true, ntrpScore: true, mannerScore: true } } },
           orderBy: { registeredAt: "asc" },
         },
         teams: {
           include: {
-            captain: { select: { id: true, nickname: true, ntrpScore: true } },
-            partner: { select: { id: true, nickname: true, ntrpScore: true } },
+            captain: { select: { id: true, nickname: true, gender: true, ntrpScore: true } },
+            partner: { select: { id: true, nickname: true, gender: true, ntrpScore: true } },
           },
           orderBy: { createdAt: "asc" },
         },
@@ -160,7 +161,7 @@ export async function getTournamentDetail(tournamentId: string, viewerId?: strin
       minNtrp: Number(row.minNtrp),
       maxNtrp: Number(row.maxNtrp),
       minMannerScore: row.minMannerScore === null ? null : Number(row.minMannerScore),
-      maxTeamNtrp: row.maxTeamNtrp === null ? null : Number(row.maxTeamNtrp),
+      maxTeamAvgNtrp: row.maxTeamAvgNtrp === null ? null : Number(row.maxTeamAvgNtrp),
       participants: row.participants.map((p) => ({
         ...p,
         user: {
@@ -176,7 +177,15 @@ export async function getTournamentDetail(tournamentId: string, viewerId?: strin
       })),
     }
 
-    return { success: true, tournament, viewer: await resolveViewerStatus(row, viewerId) }
+    // 파트너를 고르는 동안 "우리 팀 평균/유형"을 미리 보여주려면 조회자 본인의 NTRP·성별이 필요합니다.
+    const me = viewerId
+      ? await prisma.user.findUnique({ where: { id: viewerId }, select: { ntrpScore: true, gender: true } })
+      : null
+    const viewerProfile = me
+      ? { ntrpScore: me.ntrpScore === null ? null : Number(me.ntrpScore), gender: me.gender }
+      : null
+
+    return { success: true, tournament, viewer: await resolveViewerStatus(row, viewerId), viewerProfile }
   } catch (error) {
     console.error("대회 상세 조회 에러:", error)
     return { success: false, error: "대회 정보를 불러오지 못했습니다." }

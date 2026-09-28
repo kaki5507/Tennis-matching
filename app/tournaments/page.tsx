@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { getTournaments } from "@/app/actions/tournament";
 import TennisMascot from "@/components/TennisMascot";
+import { formatNtrp } from "@/lib/tournamentRules";
 
 // 대회 신청/마감 상태는 수시로 바뀌므로 정적으로 캐시하지 않습니다.
 export const dynamic = "force-dynamic";
@@ -56,7 +57,7 @@ export default async function TournamentsPage() {
                   <p className="text-sm text-slate-500 mb-2">📍 {t.courtName}</p>
                   <p className="text-xs text-slate-400">
                     {new Date(t.startDate).toLocaleDateString("ko-KR")} · NTRP {t.minNtrp.toFixed(1)}~{t.maxNtrp.toFixed(1)}
-                    {isDoubles && t.maxTeamNtrp !== null && ` · 합산 ${t.maxTeamNtrp.toFixed(1)} 이하`}
+                    {isDoubles && t.maxTeamAvgNtrp !== null && ` · 팀 평균 ${formatNtrp(t.maxTeamAvgNtrp)} 이하`}
                   </p>
                 </Link>
               );

@@ -26,6 +26,24 @@
   --ok-soft: #e8f2e9;
   --court-soft: #3d6042; /* 코트그린 그라데이션 끝색 */
 
+  /* 성별 구분 색 (대진표/명단에서 남복·여복·혼복을 한눈에 구분) */
+  --gender-m: #3f6fa3;      /* 남성: 차분한 코발트 */
+  --gender-f: #c4506f;      /* 여성: 장미 */
+  --gender-none: #94a3b8;   /* 성별 미입력 */
+  --gender-m-soft: #e6eef7;
+  --gender-f-soft: #f8e7ec;
+
+  /* 트로피 */
+  --trophy-gold: #e2b93b;
+  --trophy-gold-dark: #b98f1c;
+  --trophy-gold-light: #f7e08e;
+  --trophy-silver: #b9c0c9;
+  --trophy-silver-dark: #8b939d;
+  --trophy-silver-light: #e6eaee;
+  --trophy-bronze: #c98a5a;
+  --trophy-bronze-dark: #9a6236;
+  --trophy-bronze-light: #e8c19f;
+
   /* 보조 색 */
   --silver: #e5e7eb; /* 준우승 */
   --bronze: #f3d9c4; /* 3위 */
@@ -90,6 +108,25 @@
 .bg-line { background: var(--line); }
 .border-line { border-color: var(--line); }
 .border-clay { border-color: var(--clay); }
+
+/* 성별 배지: 남/여는 단색, 혼합은 두 색이 반반 (배지 안 글자는 흰색) */
+.gender-m { background: var(--gender-m); color: #fff; }
+.gender-f { background: var(--gender-f); color: #fff; }
+.gender-mf { background: linear-gradient(135deg, var(--gender-m) 50%, var(--gender-f) 50%); color: #fff; }
+.gender-none { background: var(--gender-none); color: #fff; }
+.text-gender-m { color: var(--gender-m); }
+.text-gender-f { color: var(--gender-f); }
+.text-gender-mf { color: var(--gender-m); }
+.text-gender-none { color: var(--gender-none); }
+/* 명단 행 왼쪽에 붙는 성별 띠 */
+.stripe-m { box-shadow: inset 4px 0 0 var(--gender-m); }
+.stripe-f { box-shadow: inset 4px 0 0 var(--gender-f); }
+.stripe-mf { box-shadow: inset 4px 0 0 var(--gender-m), inset 8px 0 0 var(--gender-f); }
+.stripe-none { box-shadow: inset 4px 0 0 var(--gender-none); }
+/* 프로필 아바타 테두리 */
+.ring-m { box-shadow: 0 0 0 3px var(--gender-m-soft), 0 0 0 5px var(--gender-m); }
+.ring-f { box-shadow: 0 0 0 3px var(--gender-f-soft), 0 0 0 5px var(--gender-f); }
+.ring-none { box-shadow: 0 0 0 3px var(--mist), 0 0 0 5px var(--line); }
 
 /* --- 5. 버튼 -------------------------------------------------------------- */
 .btn-clay {
@@ -182,6 +219,21 @@
   90% { transform: rotate(-14deg); }
   96% { transform: rotate(8deg); }
 }
+
+/* 진열장 선반 */
+.trophy-shelf {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--court-soft), var(--court));
+  box-shadow: 0 3px 0 rgba(47, 74, 51, 0.15);
+}
+
+/* 금 트로피를 여러 번 딴 경우: 은은하게 빛나는 효과 */
+@keyframes trophy-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(226, 185, 59, 0.55)); }
+  50% { filter: drop-shadow(0 0 12px rgba(247, 224, 142, 0.95)); }
+}
+.trophy-glow { animation: trophy-glow-pulse 2.6s ease-in-out infinite; }
 
 /* 움직임 최소화를 선호하는 사용자를 위한 배려 */
 @media (prefers-reduced-motion: reduce) {

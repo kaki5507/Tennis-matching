@@ -18,10 +18,12 @@ import TeamRegistration from "@/components/TeamRegistration";
 import { Button } from "@/components/ui/button";
 import TennisLoader from "@/components/TennisLoader";
 import TennisMascot from "@/components/TennisMascot";
+import { formatNtrp } from "@/lib/tournamentRules";
+import { buildEntrantMaps } from "@/lib/gender";
 
 interface Participant {
   userId: string;
-  user: { id: string; nickname: string | null; ntrpScore: number | null; mannerScore: number };
+  user: { id: string; nickname: string | null; gender: string | null; ntrpScore: number | null; mannerScore: number };
 }
 
 interface TournamentData {
@@ -35,7 +37,7 @@ interface TournamentData {
   minNtrp: number;
   maxNtrp: number;
   minMannerScore: number | null;
-  maxTeamNtrp: number | null;
+  maxTeamAvgNtrp: number | null;
   maxParticipants: number;
   championId: string | null;
   runnerUpId: string | null;
@@ -51,6 +53,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
   const [tournament, setTournament] = useState<TournamentData | null>(null);
   const [viewer, setViewer] = useState<ViewerStatus>({ kind: "guest" });
+  const [viewerProfile, setViewerProfile] = useState<{ ntrpScore: number | null; gender: string | null } | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [resultForm, setResultForm] = useState({ championId: "", runnerUpId: "", thirdPlaceId: "" });
@@ -66,6 +69,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (result.success && result.tournament) {
       setTournament(result.tournament as unknown as TournamentData);
       setViewer(result.viewer);
+      setViewerProfile(result.viewerProfile);
     }
     setIsLoading(false);
   };
@@ -162,12 +166,9 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   }
 
   const isDoubles = tournament.format === "DOUBLES";
-  const teamName = (tm: TeamRow) => `${tm.captain.nickname || "익명"} · ${tm.partner.nickname || "익명"}`;
 
-  // 대진표/결과에 쓰이는 "참가 단위" ID → 이름. 단식은 유저 ID, 복식은 팀 ID 입니다.
-  const nameMap: Record<string, string> = isDoubles
-    ? Object.fromEntries(tournament.teams.map((tm) => [tm.id, teamName(tm)]))
-    : Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]));
+  // 대진표/결과에 쓰이는 "참가 단위" ID → 이름/성별 종류. 단식은 유저 ID, 복식은 팀 ID 입니다.
+  const { nameMap, kindMap } = buildEntrantMaps(tournament);
 
   // 내가 속한 참가 단위 ID (대진표에서 내 경기를 강조하는 데 사용)
   const myEntrantId = !userId
@@ -206,7 +207,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
               <div className="text-slate-400 text-xs mb-0.5">참가 조건</div>
               <div className="text-slate-800">
                 {isDoubles ? "선수별 " : ""}NTRP {tournament.minNtrp.toFixed(1)}~{tournament.maxNtrp.toFixed(1)}
-                {isDoubles && tournament.maxTeamNtrp !== null && ` · 합산 ${tournament.maxTeamNtrp.toFixed(1)} 이하`}
+                {isDoubles && tournament.maxTeamAvgNtrp !== null && ` · 팀 평균 ${formatNtrp(tournament.maxTeamAvgNtrp)} 이하`}
                 {tournament.minMannerScore !== null && ` · 매너 ${tournament.minMannerScore.toFixed(1)}도↑`}
               </div>
             </div>
@@ -255,7 +256,13 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
                 tournamentId={tournament.id}
                 userId={userId}
                 viewer={viewer}
-                maxTeamNtrp={tournament.maxTeamNtrp}
+                viewerProfile={viewerProfile}
+                rule={{
+                  minNtrp: tournament.minNtrp,
+                  maxNtrp: tournament.maxNtrp,
+                  minMannerScore: tournament.minMannerScore,
+                  maxTeamAvgNtrp: tournament.maxTeamAvgNtrp,
+                }}
                 onChanged={load}
               />
             ) : !userId ? (
@@ -301,6 +308,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
             <TournamentBracket
               matches={tournament.matches}
               nameMap={nameMap}
+              kindMap={kindMap}
               canEdit={isAdminUser && tournament.status !== "COMPLETED"}
               highlightUserId={myEntrantId}
               onSetWinner={handleSetWinner}

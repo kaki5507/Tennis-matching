@@ -32,7 +32,7 @@ export async function searchPartnerCandidates(userId: string, tournamentId: stri
         isBanned: false,
         id: { notIn: [userId, ...takenIds] },
       },
-      select: { id: true, nickname: true, ntrpScore: true, ntrpCount: true },
+      select: { id: true, nickname: true, gender: true, ntrpScore: true, ntrpCount: true },
       take: 8,
       orderBy: { nickname: "asc" },
     })
@@ -42,6 +42,7 @@ export async function searchPartnerCandidates(userId: string, tournamentId: stri
       candidates: users.map((u) => ({
         id: u.id,
         nickname: u.nickname,
+        gender: u.gender,
         ntrpScore: u.ntrpScore === null ? null : Number(u.ntrpScore),
         ntrpCount: u.ntrpCount,
       })),

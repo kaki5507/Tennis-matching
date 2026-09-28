@@ -15,7 +15,7 @@ export interface TournamentRule {
   minNtrp: number;
   maxNtrp: number;
   minMannerScore: number | null;
-  maxTeamNtrp: number | null; // 복식 합산 상한
+  maxTeamAvgNtrp: number | null; // 복식 두 선수 평균 NTRP 상한
 }
 
 export type EligibilityResult = { ok: true } | { ok: false; reason: string };
@@ -47,28 +47,38 @@ export function checkPlayer(player: PlayerInfo, rule: TournamentRule, who = "회
   return { ok: true };
 }
 
-/** 복식 팀(두 명)이 대회 조건을 만족하는지. 각자 조건 + 합산 NTRP 상한을 함께 봅니다. */
+/** 복식 팀(두 명)이 대회 조건을 만족하는지. 각자 조건 + 두 사람 평균 NTRP 상한을 함께 봅니다. */
 export function checkTeam(a: PlayerInfo, b: PlayerInfo, rule: TournamentRule): EligibilityResult {
   const first = checkPlayer(a, rule, a.nickname ?? "신청자");
   if (!first.ok) return first;
   const second = checkPlayer(b, rule, b.nickname ?? "파트너");
   if (!second.ok) return second;
 
-  if (rule.maxTeamNtrp !== null) {
-    const sum = teamNtrp(a, b);
-    if (sum > rule.maxTeamNtrp) {
+  if (rule.maxTeamAvgNtrp !== null) {
+    const avg = teamAvgNtrp(a, b);
+    if (avg > rule.maxTeamAvgNtrp) {
       return {
         ok: false,
-        reason: `두 분의 합산 NTRP(${sum.toFixed(1)})가 이 대회의 상한(${rule.maxTeamNtrp.toFixed(1)})을 넘어요.`,
+        reason: `두 분의 평균 NTRP(${formatNtrp(avg)})가 이 대회의 상한(${formatNtrp(rule.maxTeamAvgNtrp)})을 넘어요.`,
       };
     }
   }
   return { ok: true };
 }
 
-/** 팀 합산 NTRP (시드 배정과 합산 상한 검사에 같이 씁니다) */
-export function teamNtrp(a: Pick<PlayerInfo, "ntrpScore">, b: Pick<PlayerInfo, "ntrpScore">): number {
-  return Math.round(((a.ntrpScore ?? 0) + (b.ntrpScore ?? 0)) * 10) / 10;
+/**
+ * 팀 평균 NTRP. 시드 배정, 평균 상한 검사, 화면 표시에 같이 씁니다.
+ * (2.5 + 3.0) / 2 = 2.75 처럼 소수 둘째 자리까지 나올 수 있어서 둘째 자리에서 반올림합니다.
+ * 부동소수점 오차(예: 0.1 + 0.2)가 상한 비교를 뒤집지 않도록 반드시 이 함수로만 계산하세요.
+ */
+export function teamAvgNtrp(a: Pick<PlayerInfo, "ntrpScore">, b: Pick<PlayerInfo, "ntrpScore">): number {
+  return Math.round((((a.ntrpScore ?? 0) + (b.ntrpScore ?? 0)) / 2) * 100) / 100;
+}
+
+/** NTRP 표시: 2.75 → "2.75", 3 → "3.0", 2.5 → "2.5" (필요할 때만 소수 둘째 자리를 보여줍니다) */
+export function formatNtrp(value: number): string {
+  const rounded = Math.round(value * 100) / 100;
+  return Number.isInteger(rounded * 10) ? rounded.toFixed(1) : rounded.toFixed(2);
 }
 
 /** 복식 팀 표시 이름. 예: "김철수 · 이영희" */

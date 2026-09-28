@@ -42,6 +42,7 @@ export async function getUserRecord(userId: string) {
       select: {
         id: true,
         nickname: true,
+        gender: true,
         tennisLevel: true,
         preferredPos: true,
         mannerScore: true,
@@ -163,6 +164,12 @@ async function getTournamentRecord(userId: string) {
     return (team.captainId === userId ? team.partner.nickname : team.captain.nickname) ?? "익명"
   }
 
+  const partnerIdOf = (teamId: string | null) => {
+    const team = teamId ? teamById.get(teamId) : undefined
+    if (!team) return null
+    return team.captainId === userId ? team.partnerId : team.captainId
+  }
+
   const honors = honorTournaments.map((t) => {
     const place = (myIds.includes(t.championId ?? "") ? 1 : myIds.includes(t.runnerUpId ?? "") ? 2 : 3) as 1 | 2 | 3
     const teamId = place === 1 ? t.championId : place === 2 ? t.runnerUpId : t.thirdPlaceId
@@ -240,14 +247,35 @@ async function getTournamentRecord(userId: string) {
       roundLabel: m.isThirdPlace ? "3·4위전" : roundName(m.round, totalRoundsMap.get(m.tournamentId) ?? m.round),
       opponentId,
       opponentName: opponentId ? opponentName.get(opponentId) ?? "알 수 없음" : "알 수 없음",
+      format: m.tournament.format,
       // 복식이면 함께 뛴 파트너 (단식은 null)
       partnerName: m.tournament.format === "DOUBLES" ? partnerNameOf(myEntrantId) : null,
+      partnerId: m.tournament.format === "DOUBLES" ? partnerIdOf(myEntrantId) : null,
       won: m.winnerId === myEntrantId,
       score: m.score,
     }
   })
 
-  const matchWins = matches.filter((m) => m.won).length
+  const wins = (list: typeof matches) => list.filter((m) => m.won).length
+  const singles = matches.filter((m) => m.format === "SINGLES")
+  const doubles = matches.filter((m) => m.format === "DOUBLES")
+  const matchWins = wins(matches)
+
+  // 베스트 파트너: 복식 경기를 가장 많이 함께 뛴 사람 (같으면 이긴 경기가 많은 쪽)
+  const partnerStats = new Map<string, { id: string; name: string; games: number; wins: number }>()
+  doubles.forEach((m) => {
+    if (!m.partnerId) return
+    const cur = partnerStats.get(m.partnerId) ?? { id: m.partnerId, name: m.partnerName ?? "익명", games: 0, wins: 0 }
+    cur.games += 1
+    if (m.won) cur.wins += 1
+    partnerStats.set(m.partnerId, cur)
+  })
+  const bestPartner =
+    [...partnerStats.values()].sort((a, b) => b.games - a.games || b.wins - a.wins)[0] ?? null
+
+  // 지금까지 참가한 대회 수 (아직 진행 중이거나 입상하지 못한 대회도 포함)
+  const participated = await prisma.tournamentParticipant.count({ where: { userId } })
+
   return {
     honors,
     matches,
@@ -255,8 +283,12 @@ async function getTournamentRecord(userId: string) {
       titles: honors.filter((h) => h.place === 1).length,
       runnerUps: honors.filter((h) => h.place === 2).length,
       thirdPlaces: honors.filter((h) => h.place === 3).length,
+      participated,
       matchWins,
       matchLosses: matches.length - matchWins,
+      singles: { wins: wins(singles), losses: singles.length - wins(singles) },
+      doubles: { wins: wins(doubles), losses: doubles.length - wins(doubles) },
+      bestPartner,
     },
   }
 }

@@ -30,7 +30,7 @@ export default function CreateTournamentPage() {
     minNtrp: "2.0",
     maxNtrp: "3.0",
     minMannerScore: "",
-    maxTeamNtrp: "",
+    maxTeamAvgNtrp: "",
     maxParticipants: "16",
   });
 
@@ -79,7 +79,7 @@ export default function CreateTournamentPage() {
       maxNtrp: parseFloat(form.maxNtrp),
       format,
       minMannerScore: form.minMannerScore ? parseFloat(form.minMannerScore) : null,
-      maxTeamNtrp: isDoubles && form.maxTeamNtrp ? parseFloat(form.maxTeamNtrp) : null,
+      maxTeamAvgNtrp: isDoubles && form.maxTeamAvgNtrp ? parseFloat(form.maxTeamAvgNtrp) : null,
       maxParticipants: parseInt(form.maxParticipants, 10),
     });
 
@@ -190,18 +190,18 @@ export default function CreateTournamentPage() {
 
           {isDoubles && (
             <div className="space-y-2">
-              <Label htmlFor="maxTeamNtrp">두 사람 합산 NTRP 상한 (선택, 비우면 제한없음)</Label>
+              <Label htmlFor="maxTeamAvgNtrp">두 사람 평균 NTRP 상한 (선택, 비우면 제한없음)</Label>
               <Input
                 type="number"
                 step="0.1"
-                id="maxTeamNtrp"
-                name="maxTeamNtrp"
-                value={form.maxTeamNtrp}
+                id="maxTeamAvgNtrp"
+                name="maxTeamAvgNtrp"
+                value={form.maxTeamAvgNtrp}
                 onChange={handleChange}
-                placeholder="예: 6.0 (3.0 + 3.0 팀까지 가능)"
+                placeholder="예: 3.0 (3.0 + 3.0, 2.5 + 3.5 팀까지 가능)"
               />
               <p className="text-xs text-slate-400">
-                실력 차이가 큰 팀이 몰리지 않도록, 두 선수 NTRP의 합이 이 값 이하인 팀만 신청할 수 있어요.
+                실력이 높은 팀만 몰리지 않도록, 두 선수 NTRP의 평균이 이 값 이하인 팀만 신청할 수 있어요.
               </p>
             </div>
           )}

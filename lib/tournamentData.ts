@@ -7,7 +7,7 @@
 
 import { PrismaClient, Prisma } from "@prisma/client";
 import type { PlayerInfo, TournamentRule } from "@/lib/tournamentRules";
-import { teamLabel, teamNtrp } from "@/lib/tournamentRules";
+import { teamLabel, teamAvgNtrp } from "@/lib/tournamentRules";
 
 // Next.js 개발 서버가 핫리로드할 때마다 새 커넥션이 생기는 걸 막기 위해 전역에 하나만 둡니다.
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
@@ -45,13 +45,13 @@ export function toRule(t: {
   minNtrp: Prisma.Decimal;
   maxNtrp: Prisma.Decimal;
   minMannerScore: Prisma.Decimal | null;
-  maxTeamNtrp: Prisma.Decimal | null;
+  maxTeamAvgNtrp: Prisma.Decimal | null;
 }): TournamentRule {
   return {
     minNtrp: Number(t.minNtrp),
     maxNtrp: Number(t.maxNtrp),
     minMannerScore: t.minMannerScore === null ? null : Number(t.minMannerScore),
-    maxTeamNtrp: t.maxTeamNtrp === null ? null : Number(t.maxTeamNtrp),
+    maxTeamAvgNtrp: t.maxTeamAvgNtrp === null ? null : Number(t.maxTeamAvgNtrp),
   };
 }
 
@@ -66,7 +66,7 @@ export async function findTeamOf(tournamentId: string, userId: string) {
  * 대진표에 오를 참가 단위(entrant) 목록을 시드 순서(강한 순)로 만듭니다.
  * - 단식: 참가 신청한 유저 ID
  * - 복식: 확정된(CONFIRMED) 팀 ID  (파트너 수락 대기 중인 팀은 제외)
- * 정렬 기준: NTRP(복식은 합산) 높은 순 → 매너 온도 높은 순 → 먼저 신청한 순
+ * 정렬 기준: NTRP(복식은 두 선수 평균) 높은 순 → 매너 온도 높은 순 → 먼저 신청한 순
  */
 export async function getSeededEntrants(tournamentId: string, format: "SINGLES" | "DOUBLES") {
   if (format === "SINGLES") {
@@ -95,7 +95,7 @@ export async function getSeededEntrants(tournamentId: string, format: "SINGLES" 
   return teams
     .map((t) => ({
       id: t.id,
-      ntrp: teamNtrp(
+      ntrp: teamAvgNtrp(
         { ntrpScore: t.captain.ntrpScore === null ? null : Number(t.captain.ntrpScore) },
         { ntrpScore: t.partner.ntrpScore === null ? null : Number(t.partner.ntrpScore) }
       ),
