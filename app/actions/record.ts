@@ -111,7 +111,12 @@ export async function getUserRecord(userId: string) {
 
     return {
       success: true,
-      user,
+      // Decimal 객체는 클라이언트로 그대로 넘기면 안 되므로 숫자로 변환해서 내려줍니다.
+      user: {
+        ...user,
+        mannerScore: Number(user.mannerScore),
+        ntrpScore: user.ntrpScore === null ? null : Number(user.ntrpScore),
+      },
       record: { totalMatches, wins, losses, draws, winRate },
       recentMatches: recentMatches.slice(0, 10),
       tournamentHonors: tournament.honors,
