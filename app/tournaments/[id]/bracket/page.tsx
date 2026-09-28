@@ -6,11 +6,13 @@
 import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { getTournamentDetail, setMatchWinner } from "@/app/actions/tournament";
+import { getTournamentDetail } from "@/app/actions/tournament";
+import { setMatchWinner } from "@/app/actions/tournamentBracket";
 import { isAdmin } from "@/app/actions/admin";
 import BracketViewer from "@/components/BracketViewer";
 import type { BracketMatch } from "@/components/TournamentBracket";
 import CourtLines from "@/components/CourtLines";
+import { buildEntrantMaps, genderBadgeClass, teamKindLabel } from "@/lib/gender";
 import TennisLoader from "@/components/TennisLoader";
 import TennisMascot from "@/components/TennisMascot";
 
@@ -18,12 +20,14 @@ interface TournamentData {
   id: string;
   title: string;
   status: string;
+  format: "SINGLES" | "DOUBLES";
   startDate: string | Date;
   championId: string | null;
   runnerUpId: string | null;
   thirdPlaceId: string | null;
   court: { name: string };
-  participants: { userId: string; user: { nickname: string | null } }[];
+  participants: { userId: string; user: { nickname: string | null; gender: string | null } }[];
+  teams: { id: string; status: string; captain: { id: string; nickname: string | null; gender: string | null }; partner: { id: string; nickname: string | null; gender: string | null } }[];
   matches: BracketMatch[];
 }
 
@@ -94,7 +98,22 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const nameMap = Object.fromEntries(tournament.participants.map((p) => [p.userId, p.user.nickname || "익명"]));
+  const isDoubles = tournament.format === "DOUBLES";
+  // 대진표의 참가 단위 ID → 이름/성별 종류. 단식은 유저 ID, 복식은 팀 ID 입니다.
+  const { nameMap, kindMap } = buildEntrantMaps(tournament);
+  // 대진표에 실제로 오른 유형만 범례에 보여줍니다 (남복 팀만 있는 대회에 '혼복' 안내가 뜨지 않게).
+  const inBracket = new Set<string>();
+  tournament.matches.forEach((m) => {
+    if (m.player1Id) inBracket.add(m.player1Id);
+    if (m.player2Id) inBracket.add(m.player2Id);
+  });
+  const legendKinds = [...new Set([...inBracket].map((id) => kindMap[id]).filter(Boolean))].filter((k) => k !== "unknown");
+  // 내 경기를 강조하려면 복식에서는 유저 ID가 아니라 내 팀 ID가 필요합니다.
+  const myEntrantId = !userId
+    ? null
+    : isDoubles
+      ? tournament.teams.find((tm) => tm.captain.id === userId || tm.partner.id === userId)?.id ?? null
+      : userId;
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-court">
@@ -118,7 +137,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
             </h1>
             <p className="text-sm mt-1 opacity-75 text-chalk">
               📍 {tournament.court.name} · {new Date(tournament.startDate).toLocaleDateString("ko-KR")} ·{" "}
-              {tournament.participants.length}명 참가
+              {isDoubles ? `${tournament.teams.filter((tm) => tm.status === "CONFIRMED").length}팀` : `${tournament.participants.length}명`} 참가
             </p>
           </div>
 
@@ -150,6 +169,11 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-sm legend-me" /> 내 경기
           </span>
+          {legendKinds.map((kind) => (
+            <span key={kind} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-full ${genderBadgeClass(kind)}`} /> {teamKindLabel(kind)}
+            </span>
+          ))}
           <span className="opacity-70">선수에 마우스를 올리면 그 선수의 길이 보여요</span>
         </div>
 
@@ -162,7 +186,8 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
           <BracketViewer
             matches={tournament.matches}
             nameMap={nameMap}
-            meId={userId}
+            kindMap={kindMap}
+            meId={myEntrantId}
             canEdit={isAdminUser && tournament.status !== "COMPLETED"}
             isCompleted={tournament.status === "COMPLETED"}
             championId={tournament.championId}

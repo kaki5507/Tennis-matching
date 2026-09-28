@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { roundName, seedOrder } from "@/lib/bracket";
 import type { BracketMatch } from "@/components/TournamentBracket";
+import { genderBadgeClass, type GenderKind } from "@/lib/gender";
 
 const CARD_W = 200;
 const CARD_H = 68;
@@ -23,6 +24,7 @@ const CHAMP_H = 150;
 interface Props {
   matches: BracketMatch[];
   nameMap: Record<string, string>;
+  kindMap?: Record<string, GenderKind>; // 참가 단위 ID → 성별 종류 (남/여/남복/여복/혼복)
   meId?: string | null;
   canEdit: boolean;
   isCompleted: boolean;
@@ -35,6 +37,7 @@ interface Props {
 export default function BracketViewer({
   matches,
   nameMap,
+  kindMap = {},
   meId,
   canEdit,
   isCompleted,
@@ -156,7 +159,7 @@ export default function BracketViewer({
 
         <span
           className={`text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-            playerId ? "seed-badge" : "text-court"
+            playerId ? (kindMap[playerId] ? genderBadgeClass(kindMap[playerId]) : "seed-badge") : "text-court"
           }`}
         >
           {playerId && seedMap[playerId] ? seedMap[playerId] : ""}

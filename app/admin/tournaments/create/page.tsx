@@ -20,6 +20,8 @@ export default function CreateTournamentPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [selectedCourt, setSelectedCourt] = useState<SelectedCourt | null>(null);
+  const [format, setFormat] = useState<"SINGLES" | "DOUBLES">("SINGLES");
+  const isDoubles = format === "DOUBLES";
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -28,6 +30,7 @@ export default function CreateTournamentPage() {
     minNtrp: "2.0",
     maxNtrp: "3.0",
     minMannerScore: "",
+    maxTeamAvgNtrp: "",
     maxParticipants: "16",
   });
 
@@ -74,7 +77,9 @@ export default function CreateTournamentPage() {
       registrationDeadline: form.registrationDeadline,
       minNtrp: parseFloat(form.minNtrp),
       maxNtrp: parseFloat(form.maxNtrp),
+      format,
       minMannerScore: form.minMannerScore ? parseFloat(form.minMannerScore) : null,
+      maxTeamAvgNtrp: isDoubles && form.maxTeamAvgNtrp ? parseFloat(form.maxTeamAvgNtrp) : null,
       maxParticipants: parseInt(form.maxParticipants, 10),
     });
 
@@ -112,6 +117,30 @@ export default function CreateTournamentPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
+            <Label>대회 방식</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: "SINGLES", label: "🎾 단식", desc: "개인으로 신청" },
+                  { value: "DOUBLES", label: "👯 복식", desc: "파트너와 팀으로 신청" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFormat(opt.value)}
+                  className={`rounded-xl px-4 py-3 text-left border ${
+                    format === opt.value ? "chip-on border-court" : "surface"
+                  }`}
+                >
+                  <div className="font-bold text-sm">{opt.label}</div>
+                  <div className="text-xs opacity-75">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="title">대회명</Label>
             <Input id="title" name="title" value={form.title} onChange={handleChange} required placeholder="예: 가을맞이 초급부 리그전" />
           </div>
@@ -146,18 +175,36 @@ export default function CreateTournamentPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="minNtrp">최소 NTRP</Label>
+              <Label htmlFor="minNtrp">{isDoubles ? "선수별 최소 NTRP" : "최소 NTRP"}</Label>
               <Input type="number" step="0.1" id="minNtrp" name="minNtrp" value={form.minNtrp} onChange={handleChange} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="maxNtrp">최대 NTRP</Label>
+              <Label htmlFor="maxNtrp">{isDoubles ? "선수별 최대 NTRP" : "최대 NTRP"}</Label>
               <Input type="number" step="0.1" id="maxNtrp" name="maxNtrp" value={form.maxNtrp} onChange={handleChange} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="maxParticipants">정원</Label>
+              <Label htmlFor="maxParticipants">{isDoubles ? "정원(팀)" : "정원(명)"}</Label>
               <Input type="number" id="maxParticipants" name="maxParticipants" value={form.maxParticipants} onChange={handleChange} required />
             </div>
           </div>
+
+          {isDoubles && (
+            <div className="space-y-2">
+              <Label htmlFor="maxTeamAvgNtrp">두 사람 평균 NTRP 상한 (선택, 비우면 제한없음)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                id="maxTeamAvgNtrp"
+                name="maxTeamAvgNtrp"
+                value={form.maxTeamAvgNtrp}
+                onChange={handleChange}
+                placeholder="예: 3.0 (3.0 + 3.0, 2.5 + 3.5 팀까지 가능)"
+              />
+              <p className="text-xs text-slate-400">
+                실력이 높은 팀만 몰리지 않도록, 두 선수 NTRP의 평균이 이 값 이하인 팀만 신청할 수 있어요.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="minMannerScore">최소 매너 온도 (선택, 비우면 제한없음)</Label>

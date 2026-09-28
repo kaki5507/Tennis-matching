@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
       await sendPushToUsers(
         watchers.map((w) => w.userId),
         {
-          title: `🎾 ${court.facilityName} 예약 가능!`,
+          title: `🎾 ${court.name} 예약 가능!`,
           body: `새로 예약 가능한 시간대가 ${newlyAvailable.length}개 생겼어요. 서둘러 확인해보세요.`,
           url: "https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=" + court.facilityId,
         }

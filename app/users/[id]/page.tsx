@@ -5,6 +5,9 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getUserRecord } from "@/app/actions/record";
 import TennisLoader from "@/components/TennisLoader";
+import TrophyCase from "@/components/TrophyCase";
+import { singleKind } from "@/lib/gender";
+import { championTitle } from "@/lib/trophies";
 
 interface RecordData {
   totalMatches: number;
@@ -23,6 +26,7 @@ interface RecentMatch {
 
 interface UserData {
   nickname: string | null;
+  gender: string | null;
   tennisLevel: string | null;
   preferredPos: string | null;
   mannerScore: number | string | null;
@@ -36,6 +40,8 @@ interface TournamentHonor {
   title: string;
   date: string | Date;
   place: 1 | 2 | 3;
+  format: "SINGLES" | "DOUBLES";
+  partnerName: string | null; // 복식일 때 함께 입상한 파트너
 }
 
 interface TournamentMatchRecord {
@@ -46,6 +52,7 @@ interface TournamentMatchRecord {
   roundLabel: string;
   opponentId: string | null;
   opponentName: string;
+  partnerName: string | null; // 복식일 때 함께 뛴 파트너
   won: boolean;
   score: string | null;
 }
@@ -54,8 +61,12 @@ interface TournamentSummary {
   titles: number;
   runnerUps: number;
   thirdPlaces: number;
+  participated: number;
   matchWins: number;
   matchLosses: number;
+  singles: { wins: number; losses: number };
+  doubles: { wins: number; losses: number };
+  bestPartner: { id: string; name: string; games: number; wins: number } | null;
 }
 
 const MEDAL: Record<1 | 2 | 3, { emoji: string; label: string; cls: string }> = {
@@ -131,7 +142,11 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       {/* 프로필 헤더 */}
       <div className="surface p-6 rounded-2xl shadow-sm mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">
+          <div
+            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 ${
+              { M: "ring-m", F: "ring-f" }[singleKind(user.gender) as "M" | "F"] ?? "ring-none"
+            } tint text-court`}
+          >
             {(user.nickname || "?").charAt(0).toUpperCase()}
           </div>
           <div>
@@ -146,6 +161,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                 {tSummary.titles > 0 && (
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${MEDAL[1].cls}`}>
                     🏆 우승 {tSummary.titles}회
+                    {championTitle(tSummary.titles) && tSummary.titles >= 2 && ` · ${championTitle(tSummary.titles)}`}
                   </span>
                 )}
                 {tSummary.runnerUps > 0 && (
@@ -211,13 +227,53 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      {/* [NEW] 대회 경력 */}
+      {/* [NEW] 트로피 진열장 */}
       <div className="surface p-6 rounded-2xl shadow-sm mb-6">
-        <h2 className="text-lg heading mb-4">🏆 대회 경력</h2>
-        {honors.length === 0 ? (
-          <p className="text-sm text-slate-400">아직 대회 입상 기록이 없어요.</p>
-        ) : (
-          <ul className="space-y-2">
+        <h2 className="text-lg heading mb-4">🏆 트로피 진열장</h2>
+        <TrophyCase honors={honors} />
+
+        {tSummary && (tSummary.participated > 0 || tMatches.length > 0) && (
+          <div className="mt-6 pt-5 border-t border-line">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="tint rounded-xl py-3">
+                <div className="text-xl font-bold text-court">{tSummary.participated}</div>
+                <div className="text-[11px] text-slate-500">참가한 대회</div>
+              </div>
+              <div className="tint rounded-xl py-3">
+                <div className="text-xl font-bold text-gender-m">
+                  {tSummary.singles.wins}<span className="text-slate-300 text-sm mx-0.5">승</span>
+                  {tSummary.singles.losses}<span className="text-slate-300 text-sm ml-0.5">패</span>
+                </div>
+                <div className="text-[11px] text-slate-500">단식</div>
+              </div>
+              <div className="tint rounded-xl py-3">
+                <div className="text-xl font-bold text-gender-f">
+                  {tSummary.doubles.wins}<span className="text-slate-300 text-sm mx-0.5">승</span>
+                  {tSummary.doubles.losses}<span className="text-slate-300 text-sm ml-0.5">패</span>
+                </div>
+                <div className="text-[11px] text-slate-500">복식</div>
+              </div>
+            </div>
+
+            {tSummary.bestPartner && (
+              <Link
+                href={`/users/${tSummary.bestPartner.id}`}
+                className="mt-3 flex items-center justify-between gap-3 tint rounded-xl px-4 py-3 hover:brightness-95"
+              >
+                <div className="min-w-0">
+                  <div className="text-[11px] text-slate-500">👯 베스트 파트너</div>
+                  <div className="font-bold text-sm text-ink truncate">{tSummary.bestPartner.name}</div>
+                </div>
+                <div className="text-xs text-slate-500 shrink-0">
+                  {tSummary.bestPartner.games}경기 {tSummary.bestPartner.wins}승
+                </div>
+              </Link>
+            )}
+          </div>
+        )}
+
+        {honors.length > 0 && (
+          <ul className="space-y-2 mt-5">
             {honors.map((h) => (
               <li key={h.tournamentId}>
                 <Link
@@ -233,7 +289,8 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-bold text-slate-800 truncate">{h.title}</div>
                     <div className="text-xs text-slate-400">
-                      {MEDAL[h.place].label} · {new Date(h.date).toLocaleDateString("ko-KR")}
+                      {h.format === "DOUBLES" ? "복식" : "단식"} · {MEDAL[h.place].label}
+                      {h.partnerName && ` · 파트너 ${h.partnerName}`} · {new Date(h.date).toLocaleDateString("ko-KR")}
                     </div>
                   </div>
                   <span className="text-xs text-slate-400 shrink-0">대진표 →</span>
@@ -296,6 +353,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
                     <div className="min-w-0 flex-1">
                       <div className="text-sm text-slate-800 truncate">
                         <span className="font-bold">{m.roundLabel}</span> · vs {m.opponentName}
+                        {m.partnerName && <span className="text-slate-400"> (파트너 {m.partnerName})</span>}
                       </div>
                       <div className="text-xs text-slate-400 truncate">
                         {m.tournamentTitle} · {new Date(m.date).toLocaleDateString("ko-KR")}

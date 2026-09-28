@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { roundName } from "@/lib/bracket";
+import { genderBadgeClass, type GenderKind } from "@/lib/gender";
 
 export interface BracketMatch {
   id: string;
@@ -18,6 +19,7 @@ export interface BracketMatch {
 interface Props {
   matches: BracketMatch[];
   nameMap: Record<string, string>;
+  kindMap?: Record<string, GenderKind>;
   canEdit: boolean;
   highlightUserId?: string | null; // 로그인한 본인 경기 강조
   onSetWinner: (matchId: string, winnerId: string, score: string) => Promise<void>;
@@ -25,11 +27,13 @@ interface Props {
 
 function PlayerRow({
   name,
+  kind,
   isWinner,
   isLoser,
   isMe,
 }: {
   name: string;
+  kind?: GenderKind;
   isWinner: boolean;
   isLoser: boolean;
   isMe: boolean;
@@ -40,9 +44,12 @@ function PlayerRow({
         isWinner ? "bracket-row-winner font-bold" : ""
       } ${isLoser ? "text-slate-400" : "text-ink"}`}
     >
-      <span className="truncate">
-        {name}
-        {isMe && <span className="ml-1 text-[10px] font-bold text-clay">나</span>}
+      <span className="truncate flex items-center gap-1.5 min-w-0">
+        {kind && <span className={`w-2 h-2 rounded-full shrink-0 ${genderBadgeClass(kind)}`} />}
+        <span className="truncate">
+          {name}
+          {isMe && <span className="ml-1 text-[10px] font-bold text-clay">나</span>}
+        </span>
       </span>
       {isWinner && <span aria-label="승리">🎾</span>}
     </div>
@@ -52,12 +59,14 @@ function PlayerRow({
 function MatchCard({
   match,
   nameMap,
+  kindMap,
   canEdit,
   highlightUserId,
   onSetWinner,
 }: {
   match: BracketMatch;
   nameMap: Record<string, string>;
+  kindMap: Record<string, GenderKind>;
   canEdit: boolean;
   highlightUserId?: string | null;
   onSetWinner: Props["onSetWinner"];
@@ -83,6 +92,7 @@ function MatchCard({
     >
       <PlayerRow
         name={nameOf(match.player1Id)}
+        kind={match.player1Id ? kindMap[match.player1Id] : undefined}
         isWinner={!!match.winnerId && match.winnerId === match.player1Id}
         isLoser={!!match.winnerId && !!match.player1Id && match.winnerId !== match.player1Id}
         isMe={!!highlightUserId && match.player1Id === highlightUserId}
@@ -90,6 +100,7 @@ function MatchCard({
       <div className="h-px bracket-divider" />
       <PlayerRow
         name={nameOf(match.player2Id)}
+        kind={match.player2Id ? kindMap[match.player2Id] : undefined}
         isWinner={!!match.winnerId && match.winnerId === match.player2Id}
         isLoser={!!match.winnerId && !!match.player2Id && match.winnerId !== match.player2Id}
         isMe={!!highlightUserId && match.player2Id === highlightUserId}
@@ -143,7 +154,7 @@ function MatchCard({
   );
 }
 
-export default function TournamentBracket({ matches, nameMap, canEdit, highlightUserId, onSetWinner }: Props) {
+export default function TournamentBracket({ matches, nameMap, kindMap = {}, canEdit, highlightUserId, onSetWinner }: Props) {
   const main = matches.filter((m) => !m.isThirdPlace);
   const thirdPlace = matches.find((m) => m.isThirdPlace);
   const totalRounds = Math.max(...main.map((m) => m.round));
@@ -167,6 +178,7 @@ export default function TournamentBracket({ matches, nameMap, canEdit, highlight
                       key={match.id}
                       match={match}
                       nameMap={nameMap}
+                      kindMap={kindMap}
                       canEdit={canEdit}
                       highlightUserId={highlightUserId}
                       onSetWinner={onSetWinner}
@@ -186,6 +198,7 @@ export default function TournamentBracket({ matches, nameMap, canEdit, highlight
           <MatchCard
             match={thirdPlace}
             nameMap={nameMap}
+            kindMap={kindMap}
             canEdit={canEdit}
             highlightUserId={highlightUserId}
             onSetWinner={onSetWinner}
