@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import TennisMascot from "@/components/TennisMascot";
 import CourtLines from "@/components/CourtLines";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function HomePage() {
   // 현재 로그인한 유저 정보를 담을 공간
@@ -54,6 +55,7 @@ export default function HomePage() {
                 <span className="text-sm font-medium hidden sm:inline-block text-ink">
                   환영합니다!
                 </span>
+                <NotificationBell />
                 <Link href="/mypage">
                   <Button variant="ghost" className="h-9 font-medium text-court">
                     마이페이지
