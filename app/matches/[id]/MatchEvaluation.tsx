@@ -111,15 +111,15 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
   }
 
   return (
-    <div className="mt-12 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm">
-      <h3 className="text-xl font-bold text-slate-900 mb-2">⭐ 동료 평가 (NTRP & 매너)</h3>
+    <div className="mt-12 surface p-6 md:p-8 rounded-xl shadow-sm">
+      <h3 className="text-xl heading mb-2">⭐ 동료 평가 (NTRP & 매너)</h3>
       <p className="text-slate-500 mb-6 text-sm">
         함께 경기한 동료들의 진짜 실력과 매너를 평가해 주세요. (익명으로 반영됩니다)
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {evaluatees.map((user) => (
-          <div key={user.id} className="p-5 bg-slate-50 rounded-lg border border-slate-100 flex flex-col md:flex-row gap-6 md:items-center">
+          <div key={user.id} className="p-5 tint rounded-lg border border-slate-100 flex flex-col md:flex-row gap-6 md:items-center">
             
             {/* 유저 정보 영역 */}
             <div className="flex items-center gap-3 md:w-1/4 shrink-0">

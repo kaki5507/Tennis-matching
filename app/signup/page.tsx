@@ -181,10 +181,10 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+    <div className="min-h-screen flex items-center justify-center tint px-4 py-12">
+      <div className="w-full max-w-md surface p-8 rounded-2xl shadow-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">반갑습니다! 🎾</h1>
+          <h1 className="text-2xl heading mb-2">반갑습니다! 🎾</h1>
           <p className="text-slate-500">딱 맞는 테니스 파트너를 찾아드릴게요.</p>
         </div>
 
@@ -328,7 +328,7 @@ export default function SignupPage() {
             </div>
           </fieldset>
 
-          <Button type="submit" disabled={isLoading || !verifiedCiDi || !allRequiredAgreed} className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
+          <Button type="submit" disabled={isLoading || !verifiedCiDi || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
             {isLoading ? "가입 처리 중..." : "가입하기"}
           </Button>
         </form>

@@ -88,20 +88,20 @@ export default function MatchComments({ matchId }: { matchId: string }) {
   };
 
   return (
-    <div className="mt-12 bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm">
-      <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+    <div className="mt-12 surface p-6 md:p-8 rounded-xl shadow-sm">
+      <h3 className="text-xl heading mb-6 flex items-center gap-2">
         💬 Q&A 및 소통 <span className="text-green-600 bg-green-100 px-2 py-0.5 rounded-full text-sm">{comments.length}</span>
       </h3>
 
       {/* 댓글 목록 영역 */}
       <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
         {comments.length === 0 ? (
-          <p className="text-slate-500 text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+          <p className="text-slate-500 text-center py-8 tint rounded-lg border border-dashed border-slate-200">
             아직 작성된 댓글이 없습니다.<br/>방장에게 궁금한 점이나 인사말을 남겨보세요!
           </p>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
+            <div key={comment.id} className="flex gap-4 p-4 tint rounded-lg border border-slate-100">
               <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold shrink-0">
                 {(comment.user.nickname || comment.user.email).charAt(0).toUpperCase()}
               </div>
@@ -130,12 +130,12 @@ export default function MatchComments({ matchId }: { matchId: string }) {
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={currentUserId ? "궁금한 점이나 인사말을 남겨보세요!" : "로그인 후 댓글을 작성할 수 있습니다."}
           disabled={!currentUserId || isLoading}
-          className="flex-1 h-12 bg-slate-50"
+          className="flex-1 h-12 tint"
         />
         <Button 
           type="submit" 
           disabled={!currentUserId || isLoading || !newComment.trim()}
-          className="bg-green-600 hover:bg-green-700 h-12 px-6"
+          className="btn-clay h-12 px-6"
         >
           {isLoading ? "등록 중..." : "등록"}
         </Button>

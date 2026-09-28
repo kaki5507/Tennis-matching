@@ -56,13 +56,13 @@ export default async function MatchesPage({
       : allMatches;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen page-bg py-12 px-4">
       <div className="max-w-5xl mx-auto">
         
         {/* 상단 헤더 영역 */}
         <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">오픈된 매칭 방 🎾</h1>
+            <h1 className="text-3xl heading">오픈된 매칭 방 🎾</h1>
             <p className="text-slate-500 mt-2">나에게 맞는 조건의 테니스 게임을 찾아보세요.</p>
           </div>
           <div className="flex gap-2">
@@ -77,7 +77,7 @@ export default async function MatchesPage({
               </Button>
             </Link>
             <Link href="/matches/create">
-              <Button className="bg-green-600 hover:bg-green-700">새 방 만들기</Button>
+              <Button className="btn-clay">새 방 만들기</Button>
             </Link>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default async function MatchesPage({
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 filterByLevel
                   ? "bg-indigo-600 border-indigo-600 text-white"
-                  : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
+                  : "surface border-slate-300 text-slate-600 hover:bg-slate-50"
               }`}
             >
               🎯 내 레벨({myDisplayScore.toFixed(1)})에 맞는 방만 보기
@@ -101,13 +101,13 @@ export default async function MatchesPage({
         {/* 매칭 리스트 카드 영역 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.length === 0 ? (
-            <div className="col-span-full text-center py-16 bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <div className="col-span-full text-center py-16 surface rounded-2xl shadow-sm">
               <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
               <p className="text-slate-500">아직 모집 중인 방이 없습니다. <br/> 첫 번째 방장이 되어 사람들을 초대해 보세요!</p>
             </div>
           ) : (
             matches.map((match) => (
-              <div key={match.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden">
+              <div key={match.id} className="surface p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden">
                 
                 {/* 상단 태그 */}
                 <div className="flex justify-between items-center mb-4">
@@ -120,7 +120,7 @@ export default async function MatchesPage({
                 </div>
 
                 {/* 메인 정보 (날짜, 시간, 코트장) */}
-                <h3 className="text-xl font-bold text-slate-900 mb-1">
+                <h3 className="text-xl heading mb-1">
                   {/* 날짜를 예쁘게 변환 (예: 10월 25일 (금)) */}
                   {new Date(match.matchDate).toLocaleDateString("ko-KR", { month: 'long', day: 'numeric', weekday: 'short' })}
                 </h3>

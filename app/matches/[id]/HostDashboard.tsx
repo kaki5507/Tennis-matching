@@ -143,14 +143,14 @@ export default function HostDashboard({
   };
 
   return (
-    <div className="mt-12 bg-white p-6 md:p-8 rounded-xl border-2 border-green-500 shadow-sm relative overflow-hidden">
+    <div className="mt-12 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
       {/* 왕관 뱃지 디자인 */}
       <div className="absolute top-0 right-0 bg-green-500 text-white px-4 py-1 rounded-bl-xl font-bold text-sm">
         방장 전용
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+        <h3 className="text-xl heading flex items-center gap-2">
           👑 방장 대시보드
         </h3>
         
@@ -168,13 +168,13 @@ export default function HostDashboard({
 
       <div className="space-y-3">
         {applicants.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 bg-slate-50 rounded-lg">
+          <div className="text-center py-6 text-slate-500 tint rounded-lg">
             <TennisMascot pose="sad" className="w-16 h-16 mx-auto mb-2" />
             아직 참여 신청자가 없습니다.
           </div>
         ) : (
           applicants.map((applicant) => (
-            <div key={applicant.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 gap-4">
+            <div key={applicant.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 tint rounded-lg border border-slate-200 gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <Link
@@ -229,7 +229,7 @@ export default function HostDashboard({
                       size="sm" 
                       onClick={() => handleStatusChange(applicant.id, "ACCEPTED")}
                       disabled={isLoading}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="btn-clay"
                     >
                       수락
                     </Button>

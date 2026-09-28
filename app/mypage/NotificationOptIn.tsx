@@ -38,7 +38,7 @@ export default function NotificationOptIn({ userId, marketingAgreed }: Props) {
 
   if (!marketingAgreed) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-500 p-3 bg-slate-50 rounded-lg">
+      <div className="flex items-center gap-2 text-sm text-slate-500 p-3 tint rounded-lg">
         <Bell className="w-4 h-4 shrink-0" />
         알림을 받으시려면 마이페이지 설정에서 알림 수신에 먼저 동의해주세요.
       </div>

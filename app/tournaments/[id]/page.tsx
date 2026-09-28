@@ -164,7 +164,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     <div className="min-h-screen py-12 px-4" style={{ background: "var(--mist)" }}>
       <div className="max-w-2xl mx-auto space-y-6">
         {/* 헤더 카드 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="surface p-6 rounded-2xl shadow-sm">
           <h1 className="font-display text-2xl mb-2" style={{ color: "var(--court)" }}>
             🏆 {tournament.title}
           </h1>
@@ -195,7 +195,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* 결과 카드 (종료된 대회만) */}
         {tournament.status === "COMPLETED" && tournament.championId && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="surface p-6 rounded-2xl shadow-sm">
             <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
               🎉 최종 결과
             </h2>
@@ -222,7 +222,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* 신청 버튼 영역 */}
         {tournament.status === "RECRUITING" && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="surface p-6 rounded-2xl shadow-sm">
             {!userId ? (
               <p className="text-center text-slate-500 text-sm">
                 <Link href="/login" className="text-green-600 underline">로그인</Link> 후 신청할 수 있어요.
@@ -254,7 +254,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* [NEW] 대진표 */}
         {tournament.matches.length > 0 && (
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="surface p-6 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg" style={{ color: "var(--court)" }}>
                 📋 대진표
@@ -278,7 +278,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
         )}
 
         {/* 참가자 목록 */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="surface p-6 rounded-2xl shadow-sm">
           <h2 className="font-display text-lg mb-4" style={{ color: "var(--court)" }}>
             참가자 명단
           </h2>
@@ -302,7 +302,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* [NEW] 관리자 전용 패널 */}
         {isAdminUser && tournament.status !== "COMPLETED" && (
-          <div className="bg-white p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
+          <div className="surface p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
             <h2 className="font-display text-lg mb-4" style={{ color: "var(--clay)" }}>
               🛠️ 관리자 패널
             </h2>
@@ -353,7 +353,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
 
         {/* 대진표 없이 현장에서 진행한 대회용 수동 결과 입력 */}
         {isAdminUser && tournament.status !== "COMPLETED" && tournament.matches.length === 0 && (
-          <div className="bg-white p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
+          <div className="surface p-6 rounded-2xl border-2 border-dashed" style={{ borderColor: "var(--clay)" }}>
             <h3 className="text-sm font-bold text-slate-700 mb-1">대회 결과 직접 입력</h3>
             <p className="text-xs text-slate-400 mb-3">대진표 없이 현장에서 진행한 경우에만 사용하세요.</p>
             <div className="space-y-2 mb-3">

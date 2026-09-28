@@ -101,7 +101,7 @@ export default function CreateTournamentPage() {
 
   return (
     <div className="min-h-screen py-12 px-4" style={{ background: "var(--mist)" }}>
-      <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+      <div className="max-w-xl mx-auto surface p-8 rounded-2xl shadow-sm">
         <h1 className="font-display text-2xl mb-6" style={{ color: "var(--court)" }}>
           🏆 대회 개설
         </h1>

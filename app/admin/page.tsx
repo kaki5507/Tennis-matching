@@ -20,16 +20,16 @@ interface Stats {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
+    <div className="surface rounded-xl p-4">
       <div className="text-xs text-slate-500 mb-1">{label}</div>
-      <div className="text-2xl font-bold text-slate-900">{value}</div>
+      <div className="text-2xl heading">{value}</div>
     </div>
   );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
+    <div className="surface rounded-xl p-5">
       <h3 className="font-bold text-slate-900 mb-3">{title}</h3>
       {children}
     </div>
@@ -107,10 +107,10 @@ export default function AdminDashboardPage() {
   const totalDeviceViews = stats.deviceBreakdown.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
+    <div className="min-h-screen page-bg py-10 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-slate-900">🛠️ 관리자 대시보드</h1>
+          <h1 className="text-2xl heading">🛠️ 관리자 대시보드</h1>
           <a
             href="/admin/tournaments/create"
             className="text-sm font-medium px-4 py-2 rounded-lg text-white"

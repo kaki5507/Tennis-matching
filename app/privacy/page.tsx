@@ -1,7 +1,7 @@
 export default function PrivacyPolicyPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 text-slate-700 leading-relaxed">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">개인정보처리방침</h1>
+      <h1 className="text-2xl heading mb-6">개인정보처리방침</h1>
 
       <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
         ⚠️ 이 페이지는 개발용 템플릿입니다. 실제 서비스 오픈 전 반드시 아래 항목을

@@ -126,9 +126,9 @@ export default function CreateMatchPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-        <h1 className="text-2xl font-bold text-slate-900 mb-6">새로운 매칭 방 만들기</h1>
+    <div className="min-h-screen page-bg py-12 px-4">
+      <div className="max-w-2xl mx-auto surface p-8 rounded-2xl shadow-sm">
+        <h1 className="text-2xl heading mb-6">새로운 매칭 방 만들기</h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* [NEW] 테니스장 검색 */}
@@ -178,7 +178,7 @@ export default function CreateMatchPage() {
                   name="gameType"
                   value={formData.gameType}
                   onChange={handleChange}
-                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
                 >
                   <option value="단식">단식</option>
                   <option value="복식">복식</option>
@@ -208,7 +208,7 @@ export default function CreateMatchPage() {
                   name="targetLevel"
                   value={formData.targetLevel}
                   onChange={handleChange}
-                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-indigo-600"
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-indigo-600"
                 >
                   {levelOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -239,7 +239,7 @@ export default function CreateMatchPage() {
                 name="minMannerScore"
                 value={formData.minMannerScore}
                 onChange={handleChange}
-                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 bg-white pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
+                className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-green-600"
               >
                 <option value="">🌡️ 제한없음 (누구나 참여 가능)</option>
                 <option value="33.0">33.0도 이상</option>
@@ -266,7 +266,7 @@ export default function CreateMatchPage() {
             />
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
+          <Button type="submit" disabled={isLoading} className="w-full btn-clay h-12 text-lg">
             {isLoading ? "방 생성 중..." : "방 만들기 🚀"}
           </Button>
         </form>

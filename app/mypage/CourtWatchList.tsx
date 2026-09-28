@@ -57,7 +57,7 @@ export default function CourtWatchList({ userId }: Props) {
         {BUCHEON_COURTS.map((court) => {
           const isWatching = watchedIds.has(court.facilityId);
           return (
-            <li key={court.facilityId} className="flex items-center justify-between px-4 py-3 bg-white">
+            <li key={court.facilityId} className="flex items-center justify-between px-4 py-3 surface">
               <div>
                 <div className="text-sm font-medium text-slate-800">{court.name}</div>
                 {court.indoor && <div className="text-xs text-slate-400">실내</div>}

@@ -99,7 +99,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+    <div className="surface rounded-2xl shadow-sm overflow-hidden flex flex-col h-[500px]">
       {/* 채팅창 헤더 */}
       <div className="bg-indigo-600 px-6 py-4">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
       {/* 채팅 내역 영역 */}
       <div 
         ref={scrollRef} 
-        className="flex-1 p-6 overflow-y-auto bg-slate-50 space-y-4"
+        className="flex-1 p-6 overflow-y-auto tint space-y-4"
       >
         {chats.length === 0 ? (
           <div className="text-center text-slate-400 mt-20">
@@ -135,7 +135,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
                   className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-[15px] shadow-sm ${
                     isMe 
                       ? "bg-indigo-600 text-white rounded-tr-sm" 
-                      : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
+                      : "surface text-slate-800 rounded-tl-sm"
                   }`}
                 >
                   {chat.message}
@@ -154,13 +154,13 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
       {/* 입력 영역 */}
       <form 
         onSubmit={handleSend} 
-        className="p-4 bg-white border-t border-slate-100 flex gap-2"
+        className="p-4 surface border-t border-slate-100 flex gap-2"
       >
         <Input 
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="메시지를 입력하세요..."
-          className="flex-1 bg-slate-50 border-slate-200 focus-visible:ring-indigo-500"
+          className="flex-1 tint border-slate-200 focus-visible:ring-indigo-500"
         />
         <Button 
           type="submit" 

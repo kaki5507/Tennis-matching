@@ -32,7 +32,7 @@ export default async function TournamentsPage() {
         </div>
 
         {tournaments.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-100">
+          <div className="text-center py-16 surface rounded-2xl">
             <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
             <p className="text-slate-500">아직 개설된 대회가 없습니다.</p>
           </div>
@@ -44,7 +44,7 @@ export default async function TournamentsPage() {
                 <Link
                   key={t.id}
                   href={`/tournaments/${t.id}`}
-                  className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                  className="surface p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-xs font-bold px-2 py-1 rounded-full ${label.className}`}>{label.text}</span>

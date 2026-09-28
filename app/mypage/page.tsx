@@ -93,7 +93,7 @@ export default function MyPage() {
   }
 
   const renderMatchCard = (match: MatchData) => (
-    <div key={match.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-green-300 transition-colors">
+    <div key={match.id} className="surface p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4  transition-colors">
       <div>
         <div className="flex gap-2 items-center mb-1">
           <span className={`text-xs font-bold px-2 py-1 rounded-md ${match.status === "OPEN" ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
@@ -101,7 +101,7 @@ export default function MyPage() {
           </span>
           <span className="text-slate-500 text-sm font-medium">{match.gameType}</span>
         </div>
-        <h3 className="text-lg font-bold text-slate-900">
+        <h3 className="text-lg heading">
           {new Date(match.matchDate).toLocaleDateString("ko-KR", { month: 'long', day: 'numeric', weekday: 'short' })}
         </h3>
         <p className="text-sm text-slate-600 mt-1">
@@ -120,17 +120,17 @@ export default function MyPage() {
   const evalCount = profile?.ntrpCount || 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
+    <div className="min-h-screen page-bg py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-10">
         
         {/* 프로필 헤더 */}
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="surface p-8 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
               {displayNickname.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">{displayNickname} 님</h1>
+              <h1 className="text-2xl heading">{displayNickname} 님</h1>
               
               {/* 💡 [수정] 뱃지 영역: 자가 평가와 동료 평가(진짜 실력)를 나란히 배치 */}
               <div className="flex flex-wrap items-center gap-2 mt-3">
@@ -174,14 +174,14 @@ export default function MyPage() {
         </div>
 
         {/* [NEW] 알림 설정 카드 */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-bold text-slate-900 mb-3">🔔 알림 설정</h2>
+        <div className="surface p-6 rounded-2xl shadow-sm">
+          <h2 className="text-lg heading mb-3">🔔 알림 설정</h2>
           {userId && <NotificationOptIn userId={userId} marketingAgreed={marketingAgreed} />}
         </div>
 
         {/* [NEW] 관심 테니스장 예약 알림 */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
-          <h2 className="text-lg font-bold text-slate-900 mb-3">📅 테니스장 예약 오픈 알림</h2>
+        <div className="surface p-6 rounded-2xl shadow-sm mt-6">
+          <h2 className="text-lg heading mb-3">📅 테니스장 예약 오픈 알림</h2>
           {userId && <CourtWatchList userId={userId} />}
         </div>
 
@@ -195,12 +195,12 @@ export default function MyPage() {
 
         {/* ... (내가 만든 방, 참여한 방 영역 유지) ... */}
         <section>
-          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl heading mb-4 flex items-center gap-2">
             👑 내가 방장인 매칭
             <span className="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full">{hosted.length}</span>
           </h2>
           {hosted.length === 0 ? (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500">
+            <div className="surface p-8 rounded-xl text-center text-slate-500">
               아직 만든 방이 없습니다.
             </div>
           ) : (
@@ -209,12 +209,12 @@ export default function MyPage() {
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <h2 className="text-xl heading mb-4 flex items-center gap-2">
             🏃‍♂️ 참여 신청한 매칭
             <span className="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full">{joined.length}</span>
           </h2>
           {joined.length === 0 ? (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500">
+            <div className="surface p-8 rounded-xl text-center text-slate-500">
               아직 참여 신청한 방이 없습니다.
             </div>
           ) : (

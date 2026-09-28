@@ -37,27 +37,27 @@ export default async function HistoryPage({
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
+    <div className="min-h-screen page-bg py-12 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">🏆 전체 게임 기록실</h1>
+          <h1 className="text-3xl heading">🏆 전체 게임 기록실</h1>
           <p className="text-slate-500 mt-2">
             지금까지 완료된 모든 매칭의 기록입니다. 총 {totalCount}건.
           </p>
         </div>
 
         {matches.length === 0 ? (
-          <div className="text-center py-16 text-slate-500 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="text-center py-16 text-slate-500 surface rounded-2xl shadow-sm">
             <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
             아직 완료된 경기가 없습니다. 첫 번째 기록의 주인공이 되어보세요! 🎾
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="surface rounded-2xl shadow-sm overflow-hidden">
             {/* 데스크톱: 표 형태 */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-200">
+                  <tr className="tint text-slate-500 text-left border-b border-slate-200">
                     <th className="px-6 py-3 font-medium">날짜</th>
                     <th className="px-6 py-3 font-medium">테니스장</th>
                     <th className="px-6 py-3 font-medium">경기 종류</th>

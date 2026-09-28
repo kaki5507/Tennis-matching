@@ -40,13 +40,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="min-h-screen page-bg py-12 px-4">
+      <div className="max-w-3xl mx-auto surface rounded-2xl shadow-sm overflow-hidden">
         
         {/* 상단 헤더 영역 (그라데이션 배경) */}
         <div className="bg-gradient-to-r from-green-600 to-green-500 px-8 py-10 text-white">
           <div className="flex justify-between items-start mb-4">
-            <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
+            <span className="surface/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
               {match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : "🔴 마감됨"}
             </span>
             <span className="font-medium bg-black/10 px-3 py-1 rounded-full text-sm">
@@ -63,7 +63,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
         {/* 상세 정보 요약 카드 영역 */}
         <div className="p-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 p-6 bg-slate-50 rounded-xl border border-slate-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 p-6 tint rounded-xl border border-slate-100">
             <div>
               <p className="text-sm text-slate-500 mb-1">시작 시간</p>
               <p className="font-bold text-slate-900">
@@ -95,7 +95,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           {/* [NEW] 테니스장 위치 지도 */}
           {match.court && (
             <div className="mb-12">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">📍 테니스장 위치</h3>
+              <h3 className="text-lg heading mb-4">📍 테니스장 위치</h3>
               <CourtMap
                 latitude={Number(match.court.latitude)}
                 longitude={Number(match.court.longitude)}
@@ -107,8 +107,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
           {/* 방장이 쓴 상세 설명 영역 */}
           <div className="mb-12">
-            <h3 className="text-lg font-bold text-slate-900 mb-4">상세 안내 및 공지사항</h3>
-            <div className="text-slate-700 leading-relaxed whitespace-pre-wrap bg-white p-6 rounded-xl border border-slate-200 min-h-[120px]">
+            <h3 className="text-lg heading mb-4">상세 안내 및 공지사항</h3>
+            <div className="text-slate-700 leading-relaxed whitespace-pre-wrap surface p-6 rounded-xl min-h-[120px]">
               {match.description || "상세 설명이 없습니다."}
             </div>
           </div>

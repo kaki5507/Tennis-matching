@@ -81,9 +81,9 @@ export default function ProfileEditPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">나의 테니스 프로필 설정</h1>
+    <div className="min-h-screen page-bg py-12 px-4">
+      <div className="max-w-xl mx-auto surface p-8 rounded-2xl shadow-sm">
+        <h1 className="text-2xl heading mb-2">나의 테니스 프로필 설정</h1>
         <p className="text-slate-500 mb-8">매너 있는 매칭을 위해 정확한 정보를 입력해 주세요.</p>
         
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -99,7 +99,7 @@ export default function ProfileEditPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>성별</Label>
-              <select name="gender" value={formData.gender} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
+              <select name="gender" value={formData.gender} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
                 <option value="MALE">남성 (MALE)</option>
                 <option value="FEMALE">여성 (FEMALE)</option>
               </select>
@@ -107,7 +107,7 @@ export default function ProfileEditPage() {
             
             <div className="space-y-2">
               <Label>선호 포지션 (특기)</Label>
-              <select name="preferredPos" value={formData.preferredPos} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
+              <select name="preferredPos" value={formData.preferredPos} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
                 <option value="ANY">상관없음 (ANY)</option>
                 <option value="FOREHAND">포핸드 (FOREHAND)</option>
                 <option value="BACKHAND">백핸드 (BACKHAND)</option>
@@ -117,7 +117,7 @@ export default function ProfileEditPage() {
 
           <div className="space-y-2">
             <Label>테니스 구력 (레벨)</Label>
-            <select name="tennisLevel" value={formData.tennisLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-green-600">
+            <select name="tennisLevel" value={formData.tennisLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus:border-green-600">
               <option value="테린이">테린이 (1년 미만)</option>
               <option value="NTRP 2.0">NTRP 2.0 (초급)</option>
               <option value="NTRP 2.5">NTRP 2.5 (초중급)</option>
@@ -130,7 +130,7 @@ export default function ProfileEditPage() {
             <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
               취소
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
+            <Button type="submit" disabled={isLoading} className="flex-1 btn-clay text-white">
               {isLoading ? "저장 중..." : "프로필 저장하기"}
             </Button>
           </div>

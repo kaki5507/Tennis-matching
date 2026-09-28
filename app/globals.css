@@ -19,6 +19,45 @@
   font-family: var(--font-display);
 }
 
+/* [NEW] 페이지 공통 스타일 토큰 — 페이지마다 색을 하드코딩하지 않고 이 클래스를 씁니다. */
+.page-bg {
+  background: var(--mist);
+}
+.tint {
+  background: var(--mist);
+}
+.surface {
+  background: var(--chalk);
+  border: 1px solid rgba(47, 74, 51, 0.1);
+}
+.text-court {
+  color: var(--court);
+}
+.text-ink {
+  color: var(--ink);
+}
+.heading {
+  font-family: var(--font-display);
+  color: var(--court);
+  font-weight: 400;
+}
+.btn-clay {
+  background: var(--clay);
+  color: #fff;
+  transition: filter 150ms;
+}
+.btn-clay:hover {
+  filter: brightness(1.08);
+}
+.btn-court {
+  background: var(--court);
+  color: var(--chalk);
+  transition: filter 150ms;
+}
+.btn-court:hover {
+  filter: brightness(1.15);
+}
+
 /* [NEW] 로딩 애니메이션 - 테니스공이 라켓에 튕기는 모습 */
 @keyframes tennis-ball-bounce {
   0%, 100% { transform: translateY(0) scale(1, 1); }

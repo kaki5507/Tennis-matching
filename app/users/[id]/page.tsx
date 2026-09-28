@@ -129,13 +129,13 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       {/* 프로필 헤더 */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+      <div className="surface p-6 rounded-2xl shadow-sm mb-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold shrink-0">
             {(user.nickname || "?").charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{user.nickname || "테니스인"}</h1>
+            <h1 className="text-2xl heading">{user.nickname || "테니스인"}</h1>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-1">
               {user.tennisLevel && <span>🎾 구력: {user.tennisLevel}</span>}
               {user.preferredPos && <span>🤾 선호 위치: {user.preferredPos}</span>}
@@ -164,16 +164,16 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-6">
-          <div className="bg-slate-50 rounded-xl p-4 text-center">
+          <div className="tint rounded-xl p-4 text-center">
             <div className="text-xs text-slate-500 mb-1">NTRP 실력 평가</div>
-            <div className="text-xl font-bold text-slate-900">
+            <div className="text-xl heading">
               {user.ntrpScore ? Number(user.ntrpScore).toFixed(1) : "평가 전"}
               {user.ntrpCount > 0 && <span className="text-xs text-slate-400 font-normal"> ({user.ntrpCount}회)</span>}
             </div>
           </div>
-          <div className="bg-slate-50 rounded-xl p-4 text-center">
+          <div className="tint rounded-xl p-4 text-center">
             <div className="text-xs text-slate-500 mb-1">매너 온도</div>
-            <div className="text-xl font-bold text-slate-900">
+            <div className="text-xl heading">
               🌡️ {user.mannerScore ? Number(user.mannerScore).toFixed(1) : "36.5"}도
             </div>
           </div>
@@ -181,11 +181,11 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* 전적 요약 */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">📊 전적</h2>
+      <div className="surface p-6 rounded-2xl shadow-sm mb-6">
+        <h2 className="text-lg heading mb-4">📊 전적</h2>
         <div className="grid grid-cols-4 gap-2 text-center mb-4">
           <div>
-            <div className="text-2xl font-bold text-slate-900">{record.totalMatches}</div>
+            <div className="text-2xl heading">{record.totalMatches}</div>
             <div className="text-xs text-slate-500">총 경기</div>
           </div>
           <div>
@@ -212,8 +212,8 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* [NEW] 대회 경력 */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">🏆 대회 경력</h2>
+      <div className="surface p-6 rounded-2xl shadow-sm mb-6">
+        <h2 className="text-lg heading mb-4">🏆 대회 경력</h2>
         {honors.length === 0 ? (
           <p className="text-sm text-slate-400">아직 대회 입상 기록이 없어요.</p>
         ) : (
@@ -246,10 +246,10 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* [NEW] 대회 경기 기록 */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+      <div className="surface p-6 rounded-2xl shadow-sm mb-6">
         <div className="flex items-center justify-between mb-4 gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">🎾 대회 경기 기록</h2>
+            <h2 className="text-lg heading">🎾 대회 경기 기록</h2>
             {tSummary && tMatches.length > 0 && (
               <p className="text-xs text-slate-400 mt-0.5">
                 {tSummary.matchWins}승 {tSummary.matchLosses}패 (부전승 제외)
@@ -317,8 +317,8 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* 최근 경기 목록 */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">🕒 최근 매칭 경기</h2>
+      <div className="surface p-6 rounded-2xl shadow-sm">
+        <h2 className="text-lg heading mb-4">🕒 최근 매칭 경기</h2>
         {recentMatches.length === 0 ? (
           <p className="text-sm text-slate-400">참여한 경기 기록이 없어요.</p>
         ) : (
