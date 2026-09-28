@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { isAdmin } from "@/app/actions/admin";
 import TennisMascot from "@/components/TennisMascot";
+import NotificationBell from "@/components/NotificationBell";
 import { Menu, X } from "lucide-react";
 
 const NAV = [
@@ -68,9 +69,12 @@ export default function SiteHeader() {
           })}
           <span className="w-px h-5 mx-1.5 bg-line" />
           {userId ? (
-            <Link href="/mypage" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
-              마이페이지
-            </Link>
+            <>
+              <NotificationBell />
+              <Link href="/mypage" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
+                마이페이지
+              </Link>
+            </>
           ) : (
             <>
               <Link href="/login" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
@@ -83,16 +87,19 @@ export default function SiteHeader() {
           )}
         </nav>
 
-        {/* 모바일 토글 */}
-        <button
-          type="button"
-          onClick={() => setIsOpen((v) => !v)}
-          className="sm:hidden p-2 -mr-2 text-court"
-          aria-label={isOpen ? "메뉴 닫기" : "메뉴 열기"}
-          aria-expanded={isOpen}
-        >
-          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {/* 모바일: 종 + 메뉴 토글 */}
+        <div className="sm:hidden flex items-center -mr-2">
+          <NotificationBell />
+          <button
+            type="button"
+            onClick={() => setIsOpen((v) => !v)}
+            className="p-2 text-court"
+            aria-label={isOpen ? "메뉴 닫기" : "메뉴 열기"}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* 모바일 메뉴 */}

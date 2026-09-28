@@ -102,30 +102,59 @@ export async function sendPushToUsers(userIds: string[], input: SendPushInput) {
   await Promise.all(userIds.map((id) => sendPushToUser(id, input)))
 }
 
-/** 마이페이지 등에서 인앱 알림함을 보여줄 때 사용 */
-export async function getMyNotifications(userId: string) {
+/** 인앱 알림함 목록 (최신순, 한 번에 30개) */
+export async function getMyNotifications(userId: string, cursor?: string) {
   try {
-    const notifications = await prisma.notification.findMany({
+    const rows = await prisma.notification.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 31, // 하나 더 가져와서 "다음 페이지 있음"을 판단
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     })
-    return { success: true, notifications }
+    const hasMore = rows.length > 30
+    return { success: true, notifications: rows.slice(0, 30), hasMore }
   } catch (error) {
     console.error("알림함 조회 에러:", error)
-    return { success: false, notifications: [] }
+    return { success: false, notifications: [], hasMore: false }
   }
 }
 
-export async function markNotificationAsRead(notificationId: string) {
+/** 헤더 종 아이콘의 안 읽은 알림 개수 */
+export async function getUnreadNotificationCount(userId: string) {
   try {
-    await prisma.notification.update({
-      where: { id: notificationId },
+    const count = await prisma.notification.count({ where: { userId, isRead: false } })
+    return { success: true, count }
+  } catch (error) {
+    console.error("안 읽은 알림 수 조회 에러:", error)
+    return { success: false, count: 0 }
+  }
+}
+
+/** 알림 하나를 읽음 처리 (본인 알림만 가능) */
+export async function markNotificationAsRead(userId: string, notificationId: string) {
+  try {
+    // id만으로 update하면 남의 알림도 바꿀 수 있어서, userId를 조건에 함께 건다
+    await prisma.notification.updateMany({
+      where: { id: notificationId, userId },
       data: { isRead: true },
     })
     return { success: true }
   } catch (error) {
     console.error("알림 읽음 처리 에러:", error)
+    return { success: false }
+  }
+}
+
+/** 모든 알림 읽음 처리 */
+export async function markAllNotificationsAsRead(userId: string) {
+  try {
+    await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true },
+    })
+    return { success: true }
+  } catch (error) {
+    console.error("전체 읽음 처리 에러:", error)
     return { success: false }
   }
 }

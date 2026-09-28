@@ -124,6 +124,11 @@
 .badge-win { background: var(--ball); color: var(--court); }
 .badge-lose { background: var(--muted-bg); color: var(--muted-fg); }
 .badge-live { background: var(--clay); color: var(--chalk); }
+/* 알림 */
+.notif-dot { background: var(--clay); color: #fff; }
+.notif-unread { background: var(--chalk); border-left: 4px solid var(--clay); }
+.notif-read { background: var(--mist); border-left: 4px solid transparent; }
+
 .badge-idle { background: var(--on-court-idle); color: var(--chalk); }
 .medal-1 { background: var(--ball); color: var(--court); }
 .medal-2 { background: var(--silver); color: var(--court); }
