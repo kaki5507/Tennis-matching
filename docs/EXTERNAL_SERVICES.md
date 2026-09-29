@@ -15,8 +15,9 @@
 | [Kakao Developers](https://developers.kakao.com) | 테니스장 검색/지도 표시 | ✅ 연동됨 (localhost만 등록) | 무료 | `NEXT_PUBLIC_KAKAO_MAP_APP_KEY` |
 | [Firebase](https://console.firebase.google.com) | 웹 푸시 알림(Cloud Messaging) | ✅ 연동됨 | 무료 | `NEXT_PUBLIC_FIREBASE_*` 6종, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` |
 | [부천시 공공서비스예약](https://reserv.bucheon.go.kr) | 테니스장 예약 빈자리 감지 (3시간마다 조회) | ✅ 조회 전용, 정식 계약 아님 | 무료 | 없음 (공개 페이지 조회) |
+| [cron-job.org](https://cron-job.org) | 예약 빈자리 확인 API를 3시간마다 호출 | ⏳ 배포 시 등록 예정 | 무료 | `CRON_SECRET` (호출 시 인증 헤더로 사용) |
 | [GitHub](https://github.com/kaki5507/Tennis-matching) | 코드 저장소 | ✅ 사용 중 | 무료 | 없음 (push용 PAT는 개인 보관) |
-| Vercel | 배포 + 크론(예약 알림) 실행 | ⏳ 예정 | 무료 티어로 시작 예정 | 배포 시 위 변수들 전부 등록 필요 |
+| Vercel | 배포 + 호스팅 | ⏳ 예정 | 무료 티어(Hobby)로 시작 예정 | 배포 시 위 변수들 전부 등록 필요 |
 
 ## 업체별 상세
 
@@ -51,7 +52,11 @@
 - **주의사항**: 정식 API가 아니라 공개 조회 페이지를 읽는 방식. 매크로 예약 금지 정책을
   지키기 위해 3시간 간격으로만 조회하고, 예약 신청은 절대 자동화하지 않음
   (`lib/bucheonScraper.ts` 상단 주석 참고)
-- **다음 할 일**: 없음 (배포되어야 크론이 실제로 돎)
+- **왜 Vercel 자체 크론이 아니라 cron-job.org를 쓰는지**: Vercel 무료(Hobby) 플랜은
+  크론을 하루 1번까지만 허용해서, 3시간마다 도는 이 기능은 자체 크론으로 못 돌림.
+  대신 cron-job.org(무료)에서 `https://[배포도메인]/api/cron/check-court-availability`를
+  3시간마다 호출하도록 등록. `Authorization: Bearer {CRON_SECRET}` 헤더 필요
+- **다음 할 일**: 없음 (배포 후 cron-job.org에 등록하면 끝)
 
 ### Vercel (예정)
 - **역할**: 배포 + 예약 알림 크론(`vercel.json`) 실행
