@@ -4,6 +4,7 @@
 "use server"
 
 import { isAdmin } from "@/app/actions/admin"
+import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
 import { sendPushToUsers } from "@/app/actions/notification"
 import { checkPlayer } from "@/lib/tournamentRules"
 import { prisma, findTeamOf, getPlayer, toRule } from "@/lib/tournamentData"
@@ -82,6 +83,15 @@ export async function createTournament(adminId: string, data: CreateTournamentIn
         }
       )
     }
+
+    await logAdminAction({
+      adminId,
+      action: "TOURNAMENT_CREATE",
+      targetType: "tournament",
+      targetId: tournament.id,
+      targetLabel: data.title,
+      detail: `${data.format === "DOUBLES" ? "복식" : "단식"} / 정원 ${data.maxParticipants} / 알림 ${eligibleUsers.length}명`,
+    })
 
     return { success: true, tournamentId: tournament.id, notifiedCount: eligibleUsers.length }
   } catch (error) {
@@ -300,6 +310,14 @@ export async function updateTournamentStatus(adminId: string, tournamentId: stri
 
   try {
     await prisma.tournament.update({ where: { id: tournamentId }, data: { status } })
+    await logAdminAction({
+      adminId,
+      action: "TOURNAMENT_STATUS",
+      targetType: "tournament",
+      targetId: tournamentId,
+      targetLabel: await tournamentTitle(tournamentId),
+      detail: `상태 → ${status}`,
+    })
     return { success: true }
   } catch (error) {
     console.error("대회 상태 변경 에러:", error)

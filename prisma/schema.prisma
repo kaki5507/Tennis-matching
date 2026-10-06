@@ -443,3 +443,23 @@ model MatchChat {
 
   @@index([matchId])
 }
+
+// 관리자 작업 기록(감사 로그): 누가, 언제, 누구/무엇에게, 어떤 작업을 했는지.
+// 수정/삭제 기능을 일부러 만들지 않는 "추가 전용" 테이블이며, 관리자/대상이 나중에 삭제돼도
+// 기록이 남도록 FK 없이 이름/라벨을 그 시점 값으로 함께 저장합니다.
+model AdminAuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  adminId       String   @map("admin_id") @db.Uuid
+  adminNickname String   @map("admin_nickname")
+  action        String // lib/auditActions.ts의 코드 (예: USER_BAN)
+  targetType    String?  @map("target_type") // "user" | "tournament" | "match"
+  targetId      String?  @map("target_id")
+  targetLabel   String?  @map("target_label") // 대상 이름(그 시점 값)
+  detail        String? // 사유, 변경 내용 등
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([adminId])
+  @@map("admin_audit_logs")
+}

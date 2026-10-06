@@ -8,6 +8,7 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireAdmin } from "@/lib/adminAuth"
+import { logAdminAction } from "@/lib/auditLog"
 
 const PAGE_SIZE = 20
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -91,6 +92,11 @@ export async function searchUsers(
   if (filter === "admin") where.role = "ADMIN"
   if (filter === "mismatch") where.levelMismatchCount = { gt: 0 }
 
+  // 개인정보(이메일 등)가 노출되는 검색은 기록 (검색어가 있을 때만 — 목록 넘기기까지 남기면 너무 많아짐)
+  if (q && page === 1) {
+    await logAdminAction({ adminId: auth.userId, action: "USER_SEARCH", detail: `검색어: ${q}${filter !== "all" ? ` / 필터: ${filter}` : ""}` })
+  }
+
   const [total, users] = await Promise.all([
     prisma.user.count({ where }),
     prisma.user.findMany({
@@ -137,6 +143,14 @@ export async function getUserDetail(accessToken: string | null, userId: string) 
     }),
   ])
 
+  await logAdminAction({
+    adminId: auth.userId,
+    action: "USER_VIEW",
+    targetType: "user",
+    targetId: user.id,
+    targetLabel: user.nickname,
+  })
+
   return {
     success: true as const,
     user: toRow(user),
@@ -159,7 +173,7 @@ export async function setUserBan(accessToken: string | null, userId: string, ban
   if (!UUID_RE.test(userId)) return { success: false as const, error: "잘못된 회원 ID입니다." }
   if (userId === auth.userId) return { success: false as const, error: "본인 계정은 정지할 수 없습니다." }
 
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, ciDi: true } })
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, ciDi: true, nickname: true } })
   if (!target) return { success: false as const, error: "회원을 찾을 수 없습니다." }
   if (target.role === "ADMIN") return { success: false as const, error: "다른 관리자는 정지할 수 없습니다." }
 
@@ -180,6 +194,14 @@ export async function setUserBan(accessToken: string | null, userId: string, ban
         prisma.bannedIdentity.deleteMany({ where: { ciDi: target.ciDi } }),
       ])
     }
+    await logAdminAction({
+      adminId: auth.userId,
+      action: ban ? "USER_BAN" : "USER_UNBAN",
+      targetType: "user",
+      targetId: userId,
+      targetLabel: target.nickname,
+      detail: ban ? (reason ?? "").trim() || "사유 없음" : null,
+    })
     return { success: true as const }
   } catch (e) {
     console.error("[setUserBan] 실패:", e)

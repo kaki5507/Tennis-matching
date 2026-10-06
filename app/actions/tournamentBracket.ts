@@ -5,6 +5,7 @@
 "use server"
 
 import { isAdmin } from "@/app/actions/admin"
+import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
 import { sendPushToUsers } from "@/app/actions/notification"
 import { buildBracket } from "@/lib/bracket"
 import { prisma, getSeededEntrants, getPlayerIdsOfEntrant } from "@/lib/tournamentData"
@@ -21,6 +22,14 @@ export async function recordTournamentResult(
 
   try {
     await finalizeTournament(tournamentId, result.championId, result.runnerUpId || null, result.thirdPlaceId || null)
+    await logAdminAction({
+      adminId,
+      action: "TOURNAMENT_RESULT",
+      targetType: "tournament",
+      targetId: tournamentId,
+      targetLabel: await tournamentTitle(tournamentId),
+      detail: "1~3위 직접 기록",
+    })
     return { success: true }
   } catch (error) {
     console.error("대회 결과 기록 에러:", error)
@@ -138,6 +147,15 @@ export async function generateBracket(adminId: string, tournamentId: string) {
       }
     )
 
+    await logAdminAction({
+      adminId,
+      action: "BRACKET_GENERATE",
+      targetType: "tournament",
+      targetId: tournamentId,
+      targetLabel: tournament.title,
+      detail: `경기 ${rows.length}개 생성`,
+    })
+
     return { success: true, matchCount: rows.length }
   } catch (error) {
     console.error("대진표 생성 에러:", error)
@@ -162,6 +180,13 @@ export async function resetBracket(adminId: string, tournamentId: string) {
       prisma.tournamentMatch.deleteMany({ where: { tournamentId } }),
       prisma.tournament.update({ where: { id: tournamentId }, data: { status: "CLOSED" } }),
     ])
+    await logAdminAction({
+      adminId,
+      action: "BRACKET_RESET",
+      targetType: "tournament",
+      targetId: tournamentId,
+      targetLabel: await tournamentTitle(tournamentId),
+    })
     return { success: true }
   } catch (error) {
     console.error("대진표 초기화 에러:", error)
@@ -183,9 +208,19 @@ export async function setMatchWinner(adminId: string, matchId: string, winnerId:
   try {
     const match = await prisma.tournamentMatch.findUnique({
       where: { id: matchId },
-      include: { tournament: { select: { status: true } } },
+      include: { tournament: { select: { status: true, title: true } } },
     })
     if (!match) return { success: false, error: "경기를 찾을 수 없습니다." }
+
+    const logMatchResult = () =>
+      logAdminAction({
+        adminId,
+        action: "MATCH_RESULT",
+        targetType: "match",
+        targetId: matchId,
+        targetLabel: match.tournament.title,
+        detail: `${match.isThirdPlace ? "3·4위전" : `${match.round}라운드 ${match.position}번 경기`} / 스코어 ${score?.trim() || "-"}`,
+      })
     if (match.tournament.status === "COMPLETED") return { success: false, error: "이미 종료된 대회입니다." }
     if (match.isBye) return { success: false, error: "부전승 경기는 결과를 입력할 수 없습니다." }
     if (!match.player1Id || !match.player2Id) return { success: false, error: "아직 두 선수가 모두 정해지지 않은 경기입니다." }
@@ -298,10 +333,12 @@ export async function setMatchWinner(adminId: string, matchId: string, winnerId:
         }
 
         await finalizeTournament(match.tournamentId, finalMatch.winnerId, runnerUp, thirdPlaceId)
+        await logMatchResult()
         return { success: true, completed: true }
       }
     }
 
+    await logMatchResult()
     return { success: true, completed: false }
   } catch (error) {
     console.error("경기 결과 입력 에러:", error)
