@@ -9,6 +9,7 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireAdmin } from "@/lib/adminAuth"
 import { logAdminAction } from "@/lib/auditLog"
+import { isIdentityVerified } from "@/lib/portone"
 
 const PAGE_SIZE = 20
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -26,6 +27,7 @@ export interface AdminUserRow {
   ntrpCount: number
   levelMismatchCount: number
   isBanned: boolean
+  identityVerified: boolean // 본인인증을 거친 계정인지 (임시 가입이면 false)
   role: "USER" | "ADMIN"
   createdAt: string
   deletedAt: string | null
@@ -42,6 +44,7 @@ const userSelect = {
   ntrpCount: true,
   levelMismatchCount: true,
   isBanned: true,
+  ciDi: true, // 화면에는 내려보내지 않고, 본인인증 여부(identityVerified) 계산에만 사용
   role: true,
   createdAt: true,
   deletedAt: true,
@@ -59,6 +62,7 @@ function toRow(u: Prisma.UserGetPayload<{ select: typeof userSelect }>): AdminUs
     ntrpCount: u.ntrpCount,
     levelMismatchCount: u.levelMismatchCount,
     isBanned: u.isBanned,
+    identityVerified: isIdentityVerified(u.ciDi),
     role: u.role,
     createdAt: u.createdAt.toISOString(),
     deletedAt: u.deletedAt ? u.deletedAt.toISOString() : null,
@@ -252,7 +256,7 @@ export async function exportUsersCsv(accessToken: string | null, params: { q?: s
   const truncated = users.length > EXPORT_LIMIT
   const rows = users.slice(0, EXPORT_LIMIT).map(toRow)
 
-  const header = ["가입일(KST)", "닉네임", "이메일", "성별", "자기신고 구력", "NTRP", "평가받은 횟수", "매너온도", "구력 자동조정 횟수", "상태", "권한", "탈퇴일(KST)", "회원 ID"]
+  const header = ["가입일(KST)", "닉네임", "이메일", "성별", "자기신고 구력", "NTRP", "평가받은 횟수", "매너온도", "구력 자동조정 횟수", "상태", "본인인증", "권한", "탈퇴일(KST)", "회원 ID"]
   const lines = [header.map(csvCell).join(",")]
   for (const u of rows) {
     lines.push(
@@ -267,6 +271,7 @@ export async function exportUsersCsv(accessToken: string | null, params: { q?: s
         u.mannerScore.toFixed(1),
         u.levelMismatchCount,
         u.deletedAt ? "탈퇴" : u.isBanned ? "정지" : "활성",
+        u.identityVerified ? "완료" : "미인증(임시 가입)",
         u.role === "ADMIN" ? "관리자" : "일반",
         kst(u.deletedAt),
         u.id,

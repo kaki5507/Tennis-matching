@@ -3,7 +3,7 @@
 import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/tournamentData"
 import { verifyToken } from "@/lib/serverAuth"
-import { fetchVerifiedIdentity, devBypassAllowed } from "@/lib/portone"
+import { fetchVerifiedIdentity, unverifiedSignupAllowed, unverifiedIdentityFor } from "@/lib/portone"
 
 function safeEqual(a: string, b: string) {
   const ba = Buffer.from(a)
@@ -58,10 +58,11 @@ export async function createUserInDB(data: {
     // CI/DI 결정 (서버에서만)
     let ciDi: string
     if (data.devBypass) {
-      if (!devBypassAllowed()) {
+      // 임시 가입: 서버가 허용 중일 때만. 이메일 기반 고정 식별값을 써서 중복 가입/정지 회원 재가입을 막습니다.
+      if (!unverifiedSignupAllowed()) {
         return { success: false, error: "본인인증을 완료해주세요." }
       }
-      ciDi = `dev_bypass_${crypto.randomUUID()}`
+      ciDi = await unverifiedIdentityFor(data.email)
     } else {
       const verified = await fetchVerifiedIdentity(data.identityVerificationId ?? "")
       if (!verified.ok) return { success: false, error: verified.error }

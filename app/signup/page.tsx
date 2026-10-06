@@ -1,6 +1,6 @@
 "use client"; // 상태 관리(useState)를 쓰기 위해 맨 위에 추가!
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { createUserInDB } from "@/app/actions/auth";
-import { completeIdentityVerification, devBypassIdentityVerification } from "@/app/actions/verification";
+import { completeIdentityVerification, devBypassIdentityVerification, getSignupMode } from "@/app/actions/verification";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
@@ -19,6 +19,12 @@ export default function SignupPage() {
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+
+  // 서버가 "본인인증 없이 가입"을 허용 중인지 (운영에서는 ALLOW_UNVERIFIED_SIGNUP 스위치)
+  const [unverifiedAllowed, setUnverifiedAllowed] = useState(false);
+  useEffect(() => {
+    getSignupMode().then((m) => setUnverifiedAllowed(m.unverifiedAllowed));
+  }, []);
 
   // [NEW] 본인인증 관련 상태
   const [isVerifying, setIsVerifying] = useState(false);
@@ -64,7 +70,9 @@ export default function SignupPage() {
         // 개발 환경에서 PG 계약 전이라면, 본인인증 버튼 자체를 우회 버튼으로 대체합니다.
         // (아래 handleDevBypass 참고 — 이 분기는 프로덕션에서는 절대 안 그려집니다)
         setErrorMsg(
-          "본인인증 서비스가 아직 설정되지 않았습니다. 아래 개발용 버튼을 이용해주세요."
+          unverifiedAllowed
+            ? "본인인증 서비스가 아직 준비 중이에요. 아래 '본인인증 없이 가입하기'를 이용해주세요."
+            : "본인인증 서비스가 아직 준비 중이에요. 잠시 후 다시 시도해주세요."
         );
         setIsVerifying(false);
         return;
@@ -216,21 +224,20 @@ export default function SignupPage() {
           ) : (
             <div className="flex items-center gap-2 p-3 badge-ok text-sm rounded-lg">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
-              본인인증이 완료되었습니다{verifiedName ? ` (${verifiedName}님)` : ""}.
+              {verifiedId === "dev" ? "본인인증 없이 가입합니다 (임시)." : <>본인인증이 완료되었습니다{verifiedName ? ` (${verifiedName}님)` : ""}.</>}
             </div>
           )}
 
-          {/* ⚠️ 개발 환경(NODE_ENV !== production)에서만 노출됩니다.
-              프로덕션 빌드에서는 이 블록 자체가 렌더링되지 않고,
-              혹시 남아있어도 서버 액션이 production에서 항상 실패를 반환합니다. */}
-          {!verifiedId && process.env.NODE_ENV !== "production" && (
+          {/* 서버가 임시 가입을 허용 중일 때만 노출됩니다. (포트원 계약 후 PORTONE_API_SECRET을 넣으면 자동으로 사라짐)
+              버튼이 보여도 실제 허용 여부는 가입 시 서버가 다시 검사합니다. */}
+          {!verifiedId && unverifiedAllowed && (
             <button
               type="button"
               onClick={handleDevBypass}
               disabled={isVerifying}
               className="w-full mt-2 text-xs text-amber-700 bg-amber-50 border border-dashed border-amber-300 rounded-lg py-2 hover:bg-amber-100"
             >
-              🛠️ [개발용] 포트원 PG 계약 전 — 본인인증 건너뛰고 테스트하기
+              본인인증 없이 가입하기 (임시)
             </button>
           )}
         </div>

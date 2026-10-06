@@ -4,7 +4,7 @@
 "use server"
 
 import { prisma } from "@/lib/tournamentData"
-import { fetchVerifiedIdentity, devBypassAllowed } from "@/lib/portone"
+import { fetchVerifiedIdentity, unverifiedSignupAllowed } from "@/lib/portone"
 
 interface VerificationResult {
   success: boolean
@@ -31,14 +31,18 @@ export async function completeIdentityVerification(identityVerificationId: strin
   return { success: true, name: verified.name }
 }
 
+/** 가입 화면이 "본인인증 없이 가입" 버튼을 보여줄지 알려줍니다. (실제 허용 여부는 서버가 가입 시 다시 검사) */
+export async function getSignupMode(): Promise<{ unverifiedAllowed: boolean }> {
+  return { unverifiedAllowed: unverifiedSignupAllowed() }
+}
+
 /**
- * ⚠️ 개발 환경 전용 — 포트원 PG 계약 전 가입 흐름을 테스트하기 위한 우회.
- * production이거나 PORTONE_API_SECRET이 설정돼 있으면 항상 거부됩니다.
- * (실제 우회 가입은 createUserInDB가 devBypass 플래그로 서버에서 다시 한 번 같은 조건을 검사합니다)
+ * 임시 가입(본인인증 건너뛰기) 사전 확인. PORTONE_API_SECRET이 있거나, 운영에서 ALLOW_UNVERIFIED_SIGNUP이 꺼져 있으면 거부됩니다.
+ * (실제 가입은 createUserInDB가 devBypass 플래그로 서버에서 다시 한 번 같은 조건을 검사합니다)
  */
 export async function devBypassIdentityVerification(): Promise<VerificationResult> {
-  if (!devBypassAllowed()) {
-    return { success: false, error: "이 기능은 개발 환경에서만 사용할 수 있습니다." }
+  if (!unverifiedSignupAllowed()) {
+    return { success: false, error: "지금은 본인인증 없이 가입할 수 없습니다." }
   }
-  return { success: true, name: "테스트유저" }
+  return { success: true }
 }

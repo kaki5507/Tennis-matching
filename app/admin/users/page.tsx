@@ -35,6 +35,7 @@ function StatusBadges({ u }: { u: AdminUserRow }) {
     <span className="inline-flex gap-1 flex-wrap">
       {u.role === "ADMIN" && <span className="chip-on text-[10px] font-bold px-2 py-0.5 rounded-full">관리자</span>}
       {u.isBanned && <span className="badge-live text-[10px] font-bold px-2 py-0.5 rounded-full">정지</span>}
+      {!u.identityVerified && <span className="badge-idle text-[10px] font-bold px-2 py-0.5 rounded-full">미인증</span>}
       {u.deletedAt && <span className="badge-lose text-[10px] font-bold px-2 py-0.5 rounded-full">탈퇴</span>}
       {u.levelMismatchCount > 0 && (
         <span className="badge-win text-[10px] font-bold px-2 py-0.5 rounded-full">구력조정 {u.levelMismatchCount}</span>
@@ -212,6 +213,7 @@ export default function AdminUsersPage() {
               <div className="flex justify-between"><dt className="text-ink-muted">자기신고 구력</dt><dd>{d.user.tennisLevel}</dd></div>
               <div className="flex justify-between"><dt className="text-ink-muted">실력(NTRP)</dt><dd>{d.user.ntrpScore?.toFixed(1) ?? "-"} ({d.user.ntrpCount}회)</dd></div>
               <div className="flex justify-between"><dt className="text-ink-muted">매너 온도</dt><dd>{d.user.mannerScore.toFixed(1)}도</dd></div>
+              <div className="flex justify-between"><dt className="text-ink-muted">본인인증</dt><dd>{d.user.identityVerified ? "완료" : "미인증 (임시 가입)"}</dd></div>
               <div className="flex justify-between"><dt className="text-ink-muted">가입일</dt><dd>{fmtDate(d.user.createdAt)}</dd></div>
               <div className="flex justify-between"><dt className="text-ink-muted">마지막 접속</dt><dd>{fmtDate(d.lastSeenAt)}</dd></div>
               {d.user.deletedAt && (
