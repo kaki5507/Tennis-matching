@@ -429,3 +429,12 @@
   a[href].card-link:hover { box-shadow: 0 6px 18px rgba(47, 74, 51, 0.14); transform: translateY(-1px); }
   a[href].row-link:hover { background: var(--mist); }
 }
+
+/* 코트그린 배경 위의 보조 버튼 (메인 하단 CTA 등) */
+.chip-off-on-court {
+  background: transparent;
+  color: var(--chalk);
+  border: 2px solid var(--on-court-border);
+  transition: background-color 150ms;
+}
+.chip-off-on-court:hover { background: rgba(255, 255, 255, 0.12); }
