@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { searchUsers, getUserDetail, setUserBan, type AdminUserRow, type UserFilter } from "@/app/actions/adminUsers";
+import { searchUsers, getUserDetail, setUserBan, exportUsersCsv, type AdminUserRow, type UserFilter } from "@/app/actions/adminUsers";
 import TennisLoader from "@/components/TennisLoader";
 
 const FILTERS: { value: UserFilter; label: string }[] = [
@@ -60,6 +60,8 @@ export default function AdminUsersPage() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState("");
 
   const load = useCallback(
     async (tk: string, query: string, f: UserFilter, p: number) => {
@@ -111,6 +113,29 @@ export default function AdminUsersPage() {
     setReason("");
     setDetail(await getUserDetail(token, id));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const downloadCsv = async () => {
+    if (!token || exporting) return;
+    setExporting(true);
+    setExportMsg("");
+    const res = await exportUsersCsv(token, { q, filter });
+    setExporting(false);
+    if (!res.success) {
+      setExportMsg(res.error);
+      return;
+    }
+    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `회원목록_${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setExportMsg(`${res.count.toLocaleString()}명을 내보냈어요.${res.truncated ? " (1만 명까지만 포함)" : ""}`);
   };
 
   const toggleBan = async (id: string, ban: boolean) => {
@@ -278,8 +303,19 @@ export default function AdminUsersPage() {
 
         {/* 목록 */}
         <div className="surface rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 text-sm text-ink-muted border-b border-line">
-            {loading ? "불러오는 중..." : `총 ${total.toLocaleString()}명`}
+          <div className="px-4 py-3 text-sm text-ink-muted border-b border-line flex items-center justify-between gap-3 flex-wrap">
+            <span>{loading ? "불러오는 중..." : `총 ${total.toLocaleString()}명`}</span>
+            <span className="flex items-center gap-3">
+              {exportMsg && <span className="text-xs text-court">{exportMsg}</span>}
+              <button
+                type="button"
+                onClick={downloadCsv}
+                disabled={exporting || loading || total === 0}
+                className="btn-outline-court border text-xs font-bold px-3 py-1.5 rounded-lg disabled:opacity-40"
+              >
+                {exporting ? "만드는 중..." : "⬇ CSV 내보내기"}
+              </button>
+            </span>
           </div>
           {rows.length === 0 && !loading ? (
             <p className="py-12 text-center text-sm text-ink-muted">조건에 맞는 회원이 없어요.</p>

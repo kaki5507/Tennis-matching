@@ -65,18 +65,8 @@ function toRow(u: Prisma.UserGetPayload<{ select: typeof userSelect }>): AdminUs
   }
 }
 
-/** 닉네임 / 이메일 / 회원 ID(UUID)로 검색 + 상태 필터 + 페이지네이션 */
-export async function searchUsers(
-  accessToken: string | null,
-  params: { q?: string; filter?: UserFilter; page?: number }
-) {
-  const auth = await requireAdmin(accessToken)
-  if (!auth.ok) return { success: false as const, error: auth.error }
-
-  const q = (params.q ?? "").trim().slice(0, 100)
-  const filter = params.filter ?? "all"
-  const page = Math.max(1, Math.floor(params.page ?? 1))
-
+/** 검색어 + 상태 필터 → 조회 조건 (목록과 CSV 내보내기가 같은 조건을 쓰도록 공통화) */
+function buildUserWhere(q: string, filter: UserFilter): Prisma.UserWhereInput {
   const where: Prisma.UserWhereInput = {}
   if (q) {
     const or: Prisma.UserWhereInput[] = [
@@ -91,6 +81,22 @@ export async function searchUsers(
   if (filter === "deleted") where.deletedAt = { not: null }
   if (filter === "admin") where.role = "ADMIN"
   if (filter === "mismatch") where.levelMismatchCount = { gt: 0 }
+  return where
+}
+
+/** 닉네임 / 이메일 / 회원 ID(UUID)로 검색 + 상태 필터 + 페이지네이션 */
+export async function searchUsers(
+  accessToken: string | null,
+  params: { q?: string; filter?: UserFilter; page?: number }
+) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+
+  const q = (params.q ?? "").trim().slice(0, 100)
+  const filter = params.filter ?? "all"
+  const page = Math.max(1, Math.floor(params.page ?? 1))
+
+  const where = buildUserWhere(q, filter)
 
   // 개인정보(이메일 등)가 노출되는 검색은 기록 (검색어가 있을 때만 — 목록 넘기기까지 남기면 너무 많아짐)
   if (q && page === 1) {
@@ -207,4 +213,75 @@ export async function setUserBan(accessToken: string | null, userId: string, ban
     console.error("[setUserBan] 실패:", e)
     return { success: false as const, error: "처리 중 오류가 발생했습니다." }
   }
+}
+
+// ---- CSV 내보내기 -----------------------------------------------------------
+
+const EXPORT_LIMIT = 10000
+
+/** CSV 한 칸 만들기: 따옴표 이스케이프 + 엑셀 수식 주입(=,+,-,@로 시작) 방지 */
+function csvCell(value: string | number | null | undefined): string {
+  let v = value === null || value === undefined ? "" : String(value)
+  if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`
+  return `"${v.replace(/"/g, '""')}"`
+}
+
+function kst(iso: string | null) {
+  if (!iso) return ""
+  return new Date(new Date(iso).getTime() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace("T", " ")
+}
+
+/**
+ * 현재 검색/필터 조건에 맞는 회원을 CSV 문자열로 반환합니다. (최대 1만 명)
+ * - 본인인증 해시(ci_di)와 출생연도 등은 포함하지 않습니다.
+ * - 개인정보(이메일)가 포함되므로 내보낼 때마다 작업 기록에 남깁니다.
+ */
+export async function exportUsersCsv(accessToken: string | null, params: { q?: string; filter?: UserFilter }) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+
+  const q = (params.q ?? "").trim().slice(0, 100)
+  const filter = params.filter ?? "all"
+
+  const users = await prisma.user.findMany({
+    where: buildUserWhere(q, filter),
+    orderBy: { createdAt: "desc" },
+    take: EXPORT_LIMIT + 1,
+    select: userSelect,
+  })
+  const truncated = users.length > EXPORT_LIMIT
+  const rows = users.slice(0, EXPORT_LIMIT).map(toRow)
+
+  const header = ["가입일(KST)", "닉네임", "이메일", "성별", "자기신고 구력", "NTRP", "평가받은 횟수", "매너온도", "구력 자동조정 횟수", "상태", "권한", "탈퇴일(KST)", "회원 ID"]
+  const lines = [header.map(csvCell).join(",")]
+  for (const u of rows) {
+    lines.push(
+      [
+        kst(u.createdAt),
+        u.nickname,
+        u.email,
+        u.gender === "MALE" ? "남" : u.gender === "FEMALE" ? "여" : "",
+        u.tennisLevel,
+        u.ntrpScore === null ? "" : u.ntrpScore.toFixed(1),
+        u.ntrpCount,
+        u.mannerScore.toFixed(1),
+        u.levelMismatchCount,
+        u.deletedAt ? "탈퇴" : u.isBanned ? "정지" : "활성",
+        u.role === "ADMIN" ? "관리자" : "일반",
+        kst(u.deletedAt),
+        u.id,
+      ]
+        .map(csvCell)
+        .join(",")
+    )
+  }
+
+  await logAdminAction({
+    adminId: auth.userId,
+    action: "USER_EXPORT",
+    detail: `${rows.length}명 내보냄${q ? ` / 검색어: ${q}` : ""}${filter !== "all" ? ` / 필터: ${filter}` : ""}${truncated ? " (1만 명 초과로 잘림)" : ""}`,
+  })
+
+  // 앞의 BOM(\uFEFF)은 엑셀이 한글을 깨지 않고 열도록 하기 위한 표시
+  return { success: true as const, csv: "\uFEFF" + lines.join("\r\n"), count: rows.length, truncated }
 }

@@ -7,6 +7,7 @@ export const AUDIT_ACTIONS = {
   USER_UNBAN: { label: "정지 해제", group: "회원", tone: "ok" },
   USER_VIEW: { label: "회원 상세 조회", group: "조회", tone: "info" },
   USER_SEARCH: { label: "회원 검색", group: "조회", tone: "info" },
+  USER_EXPORT: { label: "회원 CSV 내보내기", group: "조회", tone: "danger" },
   TOURNAMENT_CREATE: { label: "대회 개설", group: "대회", tone: "ok" },
   TOURNAMENT_STATUS: { label: "대회 상태 변경", group: "대회", tone: "info" },
   TOURNAMENT_RESULT: { label: "대회 결과 직접 기록", group: "대회", tone: "info" },
