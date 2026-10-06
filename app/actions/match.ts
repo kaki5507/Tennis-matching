@@ -30,17 +30,34 @@ export async function createMatchRoom(accessToken: string | null, data: CreateMa
     if (!Number.isFinite(cost) || cost < 0 || cost > 1_000_000) {
       return { success: false, error: "참가비는 0원 ~ 100만원 사이로 입력해주세요." }
     }
-    if (!data.matchDate || Number.isNaN(new Date(data.matchDate).getTime())) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.matchDate ?? "") || Number.isNaN(new Date(data.matchDate).getTime())) {
       return { success: false, error: "경기 날짜가 올바르지 않습니다." }
     }
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(data.startTime ?? "")) {
       return { success: false, error: "시작 시간이 올바르지 않습니다." }
+    }
+    // 과거 시각/너무 먼 미래 거부 (한국 시간 기준. 날짜·시간 모두 한국 시간으로 입력된 값)
+    const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString() // 'YYYY-MM-DDTHH:mm:ss.sssZ' (KST 벽시계)
+    if (`${data.matchDate}T${data.startTime}` < kstNow.slice(0, 16)) {
+      return { success: false, error: "이미 지난 날짜·시간에는 방을 만들 수 없습니다." }
+    }
+    const limit = new Date(Date.now() + (9 * 60 + 366 * 24 * 60) * 60 * 1000).toISOString().slice(0, 10)
+    if (data.matchDate > limit) {
+      return { success: false, error: "경기 날짜는 오늘로부터 1년 이내로 입력해주세요." }
     }
     if ((data.description ?? "").length > 2000) {
       return { success: false, error: "상세 설명은 2000자 이내로 작성해주세요." }
     }
     for (const v of [data.targetLevel, data.gameType, data.genderRequirement, data.ageRequirement]) {
       if (!v || v.length > 50) return { success: false, error: "모집 조건 값이 올바르지 않습니다." }
+    }
+
+    let minManner: number | null = null
+    if (data.minMannerScore !== undefined && data.minMannerScore !== null && data.minMannerScore !== "") {
+      minManner = typeof data.minMannerScore === "string" ? parseFloat(data.minMannerScore) : data.minMannerScore
+      if (!Number.isFinite(minManner) || minManner < 0 || minManner > 99) {
+        return { success: false, error: "최소 매너온도 값이 올바르지 않습니다." }
+      }
     }
 
     // 1. 코트 존재 여부 확인 (프론트에서 findOrCreateCourt로 미리 만들어서 넘겨주지만, 방어적으로 한 번 더 확인)
@@ -64,12 +81,7 @@ export async function createMatchRoom(accessToken: string | null, data: CreateMa
         ageRequirement: data.ageRequirement,
         costPerPerson: cost,
         description: data.description,
-        minMannerScore:
-          data.minMannerScore === undefined || data.minMannerScore === null || data.minMannerScore === ""
-            ? null
-            : typeof data.minMannerScore === "string"
-              ? parseFloat(data.minMannerScore)
-              : data.minMannerScore,
+        minMannerScore: minManner,
       }
     });
 
