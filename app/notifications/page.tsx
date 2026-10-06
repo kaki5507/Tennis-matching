@@ -14,6 +14,7 @@ import {
 } from "@/app/actions/notification";
 import TennisLoader from "@/components/TennisLoader";
 import TennisMascot from "@/components/TennisMascot";
+import { getAccessToken } from "@/lib/authToken";
 
 interface NotificationItem {
   id: string;
@@ -56,7 +57,7 @@ export default function NotificationsPage() {
         return;
       }
       setUserId(data.user.id);
-      const result = await getMyNotifications(data.user.id);
+      const result = await getMyNotifications(await getAccessToken());
       setItems(result.notifications as NotificationItem[]);
       setHasMore(result.hasMore);
       setIsLoading(false);
@@ -67,7 +68,7 @@ export default function NotificationsPage() {
   const loadMore = useCallback(async () => {
     if (!userId || items.length === 0) return;
     setIsLoadingMore(true);
-    const result = await getMyNotifications(userId, items[items.length - 1].id);
+    const result = await getMyNotifications(await getAccessToken(), items[items.length - 1].id);
     setItems((prev) => [...prev, ...(result.notifications as NotificationItem[])]);
     setHasMore(result.hasMore);
     setIsLoadingMore(false);
@@ -78,7 +79,7 @@ export default function NotificationsPage() {
     if (!userId) return;
     if (!item.isRead) {
       setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)));
-      await markNotificationAsRead(userId, item.id);
+      await markNotificationAsRead(await getAccessToken(), item.id);
     }
     if (!item.url) return;
     if (isExternal(item.url)) window.open(item.url, "_blank", "noopener,noreferrer");
@@ -88,7 +89,7 @@ export default function NotificationsPage() {
   const readAll = async () => {
     if (!userId) return;
     setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    await markAllNotificationsAsRead(userId);
+    await markAllNotificationsAsRead(await getAccessToken());
   };
 
   if (isLoading) {

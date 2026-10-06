@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { requestNotificationPermission } from "@/lib/firebase-client";
 import { registerDeviceToken } from "@/app/actions/notification";
 import { Bell, BellRing } from "lucide-react";
+import { getAccessToken } from "@/lib/authToken";
 
 interface Props {
-  userId: string;
   marketingAgreed: boolean; // 가입 시 알림 수신에 동의했는지
 }
 
@@ -16,7 +16,7 @@ interface Props {
  * 가입할 때 알림 수신에 동의하지 않은 유저에게는 굳이 브라우저 권한 팝업을
  * 띄우지 않고, 대신 동의를 안내합니다. (동의 없는 발송은 정책상 막혀있음)
  */
-export default function NotificationOptIn({ userId, marketingAgreed }: Props) {
+export default function NotificationOptIn({ marketingAgreed }: Props) {
   const [status, setStatus] = useState<"idle" | "loading" | "enabled" | "denied">("idle");
 
   const handleEnable = async () => {
@@ -28,7 +28,7 @@ export default function NotificationOptIn({ userId, marketingAgreed }: Props) {
       return;
     }
 
-    const result = await registerDeviceToken(userId, token);
+    const result = await registerDeviceToken(await getAccessToken(), token);
     if (result.success) {
       setStatus("enabled");
     } else {

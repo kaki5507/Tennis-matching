@@ -1,12 +1,15 @@
 // app/actions/user.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
 
-const prisma = new PrismaClient()
-
-export async function getMyMatches(userId: string) {
+export async function getMyMatches(accessToken: string | null) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, hostedMatches: [], joinedMatches: [] }
+    const userId = auth.userId
+
     // 1. 내가 방장(Host)인 방 목록 가져오기
     const hostedMatches = await prisma.match.findMany({
       where: { hostId: userId },

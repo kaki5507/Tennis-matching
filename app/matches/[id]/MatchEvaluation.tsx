@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { getEvaluatees, submitEvaluations } from "@/app/actions/evaluation";
+import { getAccessToken } from "@/lib/authToken";
 
 interface Evaluatee {
   id: string;
   nickname: string | null;
-  email: string;
 }
 
 // 💡 여러 명의 평가 데이터를 관리하기 위한 타입 설계
@@ -40,7 +40,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
       
       if (!userId) return;
 
-      const result = await getEvaluatees(matchId, userId);
+      const result = await getEvaluatees(await getAccessToken(), matchId);
       
       if (isMounted && result.success && result.evaluatees) {
         setCurrentUserId(userId);
@@ -87,7 +87,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
       winLoss: evalData[evaluateeId].winLoss,
     }));
 
-    const result = await submitEvaluations(matchId, currentUserId, evaluationsPayload);
+    const result = await submitEvaluations(await getAccessToken(), matchId, evaluationsPayload);
 
     if (result.success) {
       alert("평가가 완료되었습니다! 소중한 피드백 감사합니다. 🎾");
@@ -124,10 +124,10 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
             {/* 유저 정보 영역 */}
             <div className="flex items-center gap-3 md:w-1/4 shrink-0">
               <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
-                {(user.nickname || user.email).charAt(0).toUpperCase()}
+                {(user.nickname || "?").charAt(0).toUpperCase()}
               </div>
               <span className="font-bold text-slate-800 truncate">
-                {user.nickname || user.email.split('@')[0]}
+                {user.nickname || "익명"}
               </span>
             </div>
 

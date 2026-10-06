@@ -1,30 +1,31 @@
 // app/actions/notification.ts
+// 로그인한 본인의 알림함/기기 토큰만 다루는 서버 액션.
+// (알림 "발송" 함수는 외부에서 호출되면 안 되므로 lib/push.ts로 분리되어 있습니다)
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-import { getMessagingInstance } from "@/lib/firebase-admin"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
 
 /**
  * 브라우저에서 발급받은 FCM 토큰을 저장합니다.
- * 알림 수신에 동의(marketingAgreedAt)한 유저의 토큰만 저장합니다 —
- * 동의하지 않은 유저는 애초에 토큰을 등록할 이유가 없어야 정상 흐름입니다.
+ * 알림 수신에 동의(marketingAgreedAt)한 유저의 토큰만 저장합니다.
  */
-export async function registerDeviceToken(userId: string, token: string) {
+export async function registerDeviceToken(accessToken: string | null, deviceToken: string) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) {
-      return { success: false, error: "존재하지 않는 유저입니다." }
-    }
-    if (!user.marketingAgreedAt) {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    if (!deviceToken || deviceToken.length > 4096) return { success: false, error: "토큰이 올바르지 않습니다." }
+
+    const user = await prisma.user.findUnique({ where: { id: auth.userId }, select: { marketingAgreedAt: true } })
+    if (!user?.marketingAgreedAt) {
       return { success: false, error: "알림 수신에 동의하지 않은 계정입니다." }
     }
 
+    // 같은 기기에서 다른 계정으로 로그인한 경우 토큰의 주인이 바뀌는 것이 정상
     await prisma.deviceToken.upsert({
-      where: { token },
-      update: { userId },
-      create: { userId, token },
+      where: { token: deviceToken },
+      update: { userId: auth.userId },
+      create: { userId: auth.userId, token: deviceToken },
     })
 
     return { success: true }
@@ -34,79 +35,14 @@ export async function registerDeviceToken(userId: string, token: string) {
   }
 }
 
-interface SendPushInput {
-  title: string
-  body: string
-  url?: string
-}
-
-/**
- * 특정 유저 한 명에게 알림을 보냅니다.
- * - 마케팅/알림 수신에 동의한 유저에게만 실제 푸시를 발송합니다.
- * - 동의 여부와 무관하게, 인앱 알림함(Notification 테이블)에는 항상 기록을 남깁니다.
- *   (푸시는 거부해도 로그인해서 알림 목록은 볼 수 있게)
- * - FCM 발송이 실패해도(키 미설정 등) 앱 전체가 죽지 않도록 항상 안전하게 처리합니다.
- */
-export async function sendPushToUser(userId: string, input: SendPushInput) {
-  try {
-    const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return { success: false }
-
-    // 1. 인앱 알림함에는 동의 여부와 무관하게 항상 기록
-    await prisma.notification.create({
-      data: { userId, title: input.title, body: input.body, url: input.url },
-    })
-
-    // 2. 실제 웹 푸시는 알림 수신에 동의한 유저에게만
-    if (!user.marketingAgreedAt) {
-      return { success: true, pushed: false, reason: "not_consented" }
-    }
-
-    const tokens = await prisma.deviceToken.findMany({ where: { userId } })
-    if (tokens.length === 0) {
-      return { success: true, pushed: false, reason: "no_device" }
-    }
-
-    const messaging = getMessagingInstance()
-    if (!messaging) {
-      console.error("Firebase Admin이 설정되지 않아 푸시를 보낼 수 없습니다.")
-      return { success: true, pushed: false, reason: "firebase_not_configured" }
-    }
-
-    const response = await messaging.sendEachForMulticast({
-      tokens: tokens.map((t) => t.token),
-      notification: { title: input.title, body: input.body },
-      data: input.url ? { url: input.url } : undefined,
-      webpush: { fcmOptions: input.url ? { link: input.url } : undefined },
-    })
-
-    // 만료되어 더 이상 유효하지 않은 토큰은 정리
-    const invalidTokens = response.responses
-      .map((r, i) => (!r.success ? tokens[i].token : null))
-      .filter((t): t is string => t !== null)
-
-    if (invalidTokens.length > 0) {
-      await prisma.deviceToken.deleteMany({ where: { token: { in: invalidTokens } } })
-    }
-
-    return { success: true, pushed: response.successCount > 0 }
-  } catch (error) {
-    console.error("푸시 발송 에러:", error)
-    // 알림 발송 실패는 원래 하려던 작업(수락/거절 등)을 막으면 안 되므로 에러를 던지지 않습니다.
-    return { success: false }
-  }
-}
-
-/** 여러 유저에게 한 번에 같은 알림을 보낼 때 사용 (예: 경기 완료 → 전체 참여자에게 평가 요청) */
-export async function sendPushToUsers(userIds: string[], input: SendPushInput) {
-  await Promise.all(userIds.map((id) => sendPushToUser(id, input)))
-}
-
 /** 인앱 알림함 목록 (최신순, 한 번에 30개) */
-export async function getMyNotifications(userId: string, cursor?: string) {
+export async function getMyNotifications(accessToken: string | null, cursor?: string) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, notifications: [], hasMore: false }
+
     const rows = await prisma.notification.findMany({
-      where: { userId },
+      where: { userId: auth.userId },
       orderBy: { createdAt: "desc" },
       take: 31, // 하나 더 가져와서 "다음 페이지 있음"을 판단
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -120,9 +56,12 @@ export async function getMyNotifications(userId: string, cursor?: string) {
 }
 
 /** 헤더 종 아이콘의 안 읽은 알림 개수 */
-export async function getUnreadNotificationCount(userId: string) {
+export async function getUnreadNotificationCount(accessToken: string | null) {
   try {
-    const count = await prisma.notification.count({ where: { userId, isRead: false } })
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, count: 0 }
+
+    const count = await prisma.notification.count({ where: { userId: auth.userId, isRead: false } })
     return { success: true, count }
   } catch (error) {
     console.error("안 읽은 알림 수 조회 에러:", error)
@@ -131,11 +70,13 @@ export async function getUnreadNotificationCount(userId: string) {
 }
 
 /** 알림 하나를 읽음 처리 (본인 알림만 가능) */
-export async function markNotificationAsRead(userId: string, notificationId: string) {
+export async function markNotificationAsRead(accessToken: string | null, notificationId: string) {
   try {
-    // id만으로 update하면 남의 알림도 바꿀 수 있어서, userId를 조건에 함께 건다
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false }
+
     await prisma.notification.updateMany({
-      where: { id: notificationId, userId },
+      where: { id: notificationId, userId: auth.userId },
       data: { isRead: true },
     })
     return { success: true }
@@ -146,10 +87,13 @@ export async function markNotificationAsRead(userId: string, notificationId: str
 }
 
 /** 모든 알림 읽음 처리 */
-export async function markAllNotificationsAsRead(userId: string) {
+export async function markAllNotificationsAsRead(accessToken: string | null) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false }
+
     await prisma.notification.updateMany({
-      where: { userId, isRead: false },
+      where: { userId: auth.userId, isRead: false },
       data: { isRead: true },
     })
     return { success: true }

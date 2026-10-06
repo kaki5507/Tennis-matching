@@ -1,12 +1,11 @@
 // app/actions/account.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
 
 /**
- * 회원 탈퇴 처리.
+ * 회원 탈퇴 처리 (로그인한 본인만 가능).
  *
  * - 소프트 딜리트(deletedAt)로 처리합니다 (기록/히스토리 보존 목적).
  * - 밴(isBanned)된 유저라면, CI/DI를 블랙리스트 테이블에 영구 기록해
@@ -14,14 +13,16 @@ const prisma = new PrismaClient()
  * - 밴되지 않은 일반 유저는 CI/DI를 "회수"해서 나중에 이 사람이
  *   다시 정상적으로 가입할 수 있도록 unique 제약을 풀어줍니다.
  */
-export async function withdrawUser(userId: string) {
+export async function withdrawUser(accessToken: string | null) {
   try {
+    // 정지된 계정도 탈퇴는 할 수 있어야 하므로 allowBanned (탈퇴 시 블랙리스트에 기록됨)
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) {
       return { success: false, error: "존재하지 않는 유저입니다." }
-    }
-    if (user.deletedAt) {
-      return { success: false, error: "이미 탈퇴 처리된 계정입니다." }
     }
 
     await prisma.$transaction(async (tx) => {

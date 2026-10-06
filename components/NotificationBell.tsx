@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { Bell } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getUnreadNotificationCount } from "@/app/actions/notification";
+import { getAccessToken } from "@/lib/authToken";
 
 const POLL_MS = 60_000; // 1분마다 갱신
 
@@ -18,8 +19,8 @@ export default function NotificationBell({ className = "" }: { className?: strin
   const [userId, setUserId] = useState<string | null>(null);
   const [count, setCount] = useState(0);
 
-  const refresh = useCallback(async (uid: string) => {
-    const result = await getUnreadNotificationCount(uid);
+  const refresh = useCallback(async () => {
+    const result = await getUnreadNotificationCount(await getAccessToken());
     if (result.success) setCount(result.count);
   }, []);
 
@@ -37,8 +38,8 @@ export default function NotificationBell({ className = "" }: { className?: strin
   useEffect(() => {
     if (!userId) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    refresh(userId);
-    const timer = setInterval(() => refresh(userId), POLL_MS);
+    refresh();
+    const timer = setInterval(() => refresh(), POLL_MS);
     return () => clearInterval(timer);
   }, [userId, pathname, refresh]);
 

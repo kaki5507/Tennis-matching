@@ -1,9 +1,8 @@
 // app/actions/court.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
 
 interface FindOrCreateCourtInput {
   name: string
@@ -16,10 +15,22 @@ interface FindOrCreateCourtInput {
  * 카카오맵 검색으로 고른 장소를, 우리 DB의 courts 테이블에서 찾거나 새로 만듭니다.
  * 같은 테니스장이 여러 매칭 방에서 반복 사용되므로, 주소 기준으로 중복 생성을 막습니다.
  */
-export async function findOrCreateCourt(data: FindOrCreateCourtInput) {
+export async function findOrCreateCourt(accessToken: string | null, data: FindOrCreateCourtInput) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+
+    const name = (data.name ?? "").trim()
+    const address = (data.address ?? "").trim()
+    if (!name || !address || name.length > 100 || address.length > 200) {
+      return { success: false, error: "테니스장 정보가 올바르지 않습니다." }
+    }
+    if (!Number.isFinite(data.latitude) || !Number.isFinite(data.longitude) || Math.abs(data.latitude) > 90 || Math.abs(data.longitude) > 180) {
+      return { success: false, error: "테니스장 위치 정보가 올바르지 않습니다." }
+    }
+
     const existing = await prisma.court.findFirst({
-      where: { address: data.address },
+      where: { address },
     })
 
     if (existing) {
@@ -28,8 +39,8 @@ export async function findOrCreateCourt(data: FindOrCreateCourtInput) {
 
     const created = await prisma.court.create({
       data: {
-        name: data.name,
-        address: data.address,
+        name,
+        address,
         latitude: data.latitude,
         longitude: data.longitude,
       },

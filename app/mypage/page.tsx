@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import NotificationOptIn from "./NotificationOptIn";
 import CourtWatchList from "./CourtWatchList";
 import TennisLoader from "@/components/TennisLoader";
+import { getAccessToken } from "@/lib/authToken";
 
 interface CourtData {
   name: string;
@@ -58,7 +59,7 @@ export default function MyPage() {
       setUserEmail(data.user.email || "테니스인");
       setUserId(data.user.id);
 
-      const profileResult = await getProfile(data.user.id);
+      const profileResult = await getProfile(await getAccessToken());
       if (profileResult.success && profileResult.user) {
         setProfile({
           nickname: profileResult.user.nickname,
@@ -72,7 +73,7 @@ export default function MyPage() {
         setMarketingAgreed(!!profileResult.user.marketingAgreedAt);
       }
 
-      const matchResult = await getMyMatches(data.user.id);
+      const matchResult = await getMyMatches(await getAccessToken());
       if (matchResult.success) {
         setHosted(matchResult.hostedMatches || []);
         setJoined(matchResult.joinedMatches || []);
@@ -176,7 +177,7 @@ export default function MyPage() {
         {/* [NEW] 알림 설정 카드 */}
         <div className="surface p-6 rounded-2xl shadow-sm">
           <h2 className="text-lg heading mb-3">🔔 알림 설정</h2>
-          {userId && <NotificationOptIn userId={userId} marketingAgreed={marketingAgreed} />}
+          {userId && <NotificationOptIn marketingAgreed={marketingAgreed} />}
         </div>
 
         {/* [NEW] 관심 테니스장 예약 알림 */}

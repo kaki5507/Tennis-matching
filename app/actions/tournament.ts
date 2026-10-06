@@ -4,8 +4,9 @@
 "use server"
 
 import { requireAdmin } from "@/lib/adminAuth"
+import { requireUser } from "@/lib/serverAuth"
 import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
-import { sendPushToUsers } from "@/app/actions/notification"
+import { sendPushToUsers } from "@/lib/push"
 import { checkPlayer } from "@/lib/tournamentRules"
 import { prisma, findTeamOf, getPlayer, toRule } from "@/lib/tournamentData"
 
@@ -229,8 +230,12 @@ async function resolveViewerStatus(
 }
 
 /** 단식 대회 신청 (복식은 tournamentTeam.ts 의 createTeam 으로 신청) */
-export async function registerForTournament(userId: string, tournamentId: string) {
+export async function registerForTournament(accessToken: string | null, tournamentId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     const tournament = await prisma.tournament.findUnique({
       where: { id: tournamentId },
       include: { _count: { select: { participants: true, matches: true } } },
@@ -261,8 +266,12 @@ export async function registerForTournament(userId: string, tournamentId: string
  * 신청 취소. 단식은 본인 신청을, 복식은 본인이 속한 팀 전체를 취소합니다.
  * 복식에서는 한 명이 취소하면 팀이 사라지므로 상대 선수에게 알림을 보냅니다.
  */
-export async function cancelTournamentRegistration(userId: string, tournamentId: string) {
+export async function cancelTournamentRegistration(accessToken: string | null, tournamentId: string) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     const tournament = await prisma.tournament.findUnique({
       where: { id: tournamentId },
       include: { _count: { select: { matches: true } } },
@@ -285,7 +294,7 @@ export async function cancelTournamentRegistration(userId: string, tournamentId:
         prisma.tournamentTeam.delete({ where: { id: team.id } }),
       ])
 
-      const { sendPushToUser } = await import("@/app/actions/notification")
+      const { sendPushToUser } = await import("@/lib/push")
       await sendPushToUser(otherId, {
         title: "팀 신청이 취소됐어요",
         body: `${me?.nickname ?? "파트너"}님이 "${tournament.title}" 팀 신청을 취소했어요.`,

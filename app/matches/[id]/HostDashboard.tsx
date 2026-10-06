@@ -9,6 +9,7 @@ import { getMatchApplications, confirmPayment } from "@/app/actions/participant"
 import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
 import Link from "next/link";
 import TennisMascot from "@/components/TennisMascot";
+import { getAccessToken } from "@/lib/authToken";
 
 // 💡 1. 완벽한 타입 설계 (any 절대 금지!)
 interface Applicant {
@@ -18,7 +19,6 @@ interface Applicant {
   paymentConfirmed: boolean; // [NEW]
   user: {
     nickname: string | null;
-    email: string;
     tennisLevel: string;
     mannerScore: number;
     ntrpScore: number | null;
@@ -41,7 +41,7 @@ export default function HostDashboard({
 
   // 💡 2. 수락/거절 후 신청자 목록만 다시 불러오는 전용 함수
   const reloadApplicants = async () => {
-    const result = await getMatchApplications(matchId);
+    const result = await getMatchApplications(await getAccessToken(), matchId);
     if (result.success && result.participants) {
       // 🌟 any를 쓰지 않고, DB 데이터를 우리가 만든 타입(Applicant)에 맞게 수제 변환합니다.
       const formattedData: Applicant[] = result.participants.map((p) => ({
@@ -51,7 +51,6 @@ export default function HostDashboard({
         paymentConfirmed: p.paymentConfirmed,
         user: {
           nickname: p.user.nickname,
-          email: p.user.email,
           tennisLevel: p.user.tennisLevel,
           mannerScore: Number(p.user.mannerScore), // Decimal 타입을 Number로 안전하게 변환
           ntrpScore: p.user.ntrpScore ? Number(p.user.ntrpScore) : null,
@@ -67,7 +66,7 @@ export default function HostDashboard({
 
     const initData = async () => {
       const { data } = await supabase.auth.getUser();
-      const result = await getMatchApplications(matchId);
+      const result = await getMatchApplications(await getAccessToken(), matchId);
 
       if (isMounted) {
         if (data.user) setHostId(data.user.id);
@@ -80,8 +79,7 @@ export default function HostDashboard({
             paymentConfirmed: p.paymentConfirmed,
             user: {
               nickname: p.user.nickname,
-              email: p.user.email,
-              tennisLevel: p.user.tennisLevel,
+                  tennisLevel: p.user.tennisLevel,
               mannerScore: Number(p.user.mannerScore),
               ntrpScore: p.user.ntrpScore ? Number(p.user.ntrpScore) : null,
             }
@@ -101,7 +99,7 @@ export default function HostDashboard({
   // 신청자 수락/거절 처리
   const handleStatusChange = async (participantId: string, newStatus: "ACCEPTED" | "REJECTED") => {
     setIsLoading(true);
-    const result = await updateParticipantStatus(participantId, newStatus);
+    const result = await updateParticipantStatus(await getAccessToken(), participantId, newStatus);
     if (result.success) {
       await reloadApplicants(); // 👈 useCallback 없이 안전하게 다시 불러오기
       router.refresh();
@@ -115,7 +113,7 @@ export default function HostDashboard({
   const handleTogglePayment = async (participantId: string, current: boolean) => {
     if (!hostId) return;
     setIsLoading(true);
-    const result = await confirmPayment(participantId, hostId, !current);
+    const result = await confirmPayment(await getAccessToken(), participantId, !current);
     if (result.success) {
       await reloadApplicants();
     } else {
@@ -132,7 +130,7 @@ export default function HostDashboard({
     if (!isConfirm) return;
 
     setIsLoading(true);
-    const result = await completeMatchAction(matchId, hostId);
+    const result = await completeMatchAction(await getAccessToken(), matchId);
     if (result.success) {
       alert("경기가 완료되었습니다! 동료 평가를 진행해 주세요.");
       router.refresh(); 
@@ -181,7 +179,7 @@ export default function HostDashboard({
                     href={`/users/${applicant.userId}`}
                     className="font-bold text-slate-900 text-lg hover:text-[color:var(--ok)] hover:underline"
                   >
-                    {applicant.user.nickname || applicant.user.email.split('@')[0]}
+                    {applicant.user.nickname || "익명"}
                   </Link>
                   <span className={`text-xs px-2 py-1 rounded-full font-bold ${
                     applicant.status === "ACCEPTED" ? "badge-ok" :

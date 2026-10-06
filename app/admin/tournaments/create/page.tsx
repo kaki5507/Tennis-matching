@@ -61,7 +61,7 @@ export default function CreateTournamentPage() {
     }
 
     setIsLoading(true);
-    const courtResult = await findOrCreateCourt(selectedCourt);
+    const courtResult = await findOrCreateCourt(await getAccessToken(), selectedCourt);
     if (!courtResult.success || !courtResult.courtId) {
       setErrorMsg(courtResult.error ?? "테니스장 저장에 실패했습니다.");
       setIsLoading(false);

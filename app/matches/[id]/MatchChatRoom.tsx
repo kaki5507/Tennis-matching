@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMatchChats, sendMatchChat } from "@/app/actions/chat";
+import { getAccessToken } from "@/lib/authToken";
 
 // 서버에서 막 도착했을 때의 데이터 모양 (날짜가 문자열일 수 있음)
 interface RawChatMessage {
@@ -38,7 +39,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
 
   // 1. 메시지 전송 후 화면 갱신용 (any 대신 RawChatMessage 사용!)
   const fetchChatsForAction = async () => {
-    const res = await getMatchChats(matchId);
+    const res = await getMatchChats(await getAccessToken(), matchId);
     if (res.success && res.chats) {
       setChats(res.chats.map((chat: RawChatMessage) => ({
         ...chat,
@@ -52,7 +53,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
     let isMounted = true;
 
     const pollChats = async () => {
-      const res = await getMatchChats(matchId);
+      const res = await getMatchChats(await getAccessToken(), matchId);
       if (res.success && res.chats && isMounted) {
         // any 대신 RawChatMessage 사용!
         setChats(res.chats.map((chat: RawChatMessage) => ({
@@ -87,7 +88,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
     if (!message.trim() || isSending) return;
 
     setIsSending(true);
-    const res = await sendMatchChat(matchId, currentUserId, message);
+    const res = await sendMatchChat(await getAccessToken(), matchId, message);
     
     if (res.success) {
       setMessage(""); 

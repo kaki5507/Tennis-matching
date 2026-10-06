@@ -1,31 +1,46 @@
 // app/actions/participant.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-import { sendPushToUser } from "@/app/actions/notification"
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
+import { sendPushToUser } from "@/lib/push"
 
-const prisma = new PrismaClient()
 
-// 💡 특정 매칭 방의 모든 참여 신청자 목록을 가져오는 함수
-export async function getMatchApplications(matchId: string) {
+// 💡 특정 매칭 방의 모든 참여 신청자 목록 (방장만 조회 가능, 이메일 등 개인정보는 내려주지 않음)
+export async function getMatchApplications(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, participants: [] }
+
+    const match = await prisma.match.findUnique({ where: { id: matchId }, select: { hostId: true } })
+    if (!match || match.hostId !== auth.userId) return { success: false, participants: [] }
+
     const participants = await prisma.matchParticipant.findMany({
       where: { matchId: matchId },
       include: {
         user: {
-          select: { 
-            nickname: true, 
-            email: true, 
-            tennisLevel: true, 
-            mannerScore: true, 
+          select: {
+            nickname: true,
+            tennisLevel: true,
+            mannerScore: true,
             ntrpScore: true // 진짜 실력도 같이 불러옵니다
           }
         }
       },
       orderBy: { createdAt: 'asc' } // 먼저 신청한 사람 순서대로
     });
-    
-    return { success: true, participants };
+
+    return {
+      success: true,
+      participants: participants.map((p) => ({
+        ...p,
+        user: {
+          ...p.user,
+          mannerScore: Number(p.user.mannerScore),
+          ntrpScore: p.user.ntrpScore === null ? null : Number(p.user.ntrpScore),
+        },
+      })),
+    };
   } catch (error) {
     console.error("신청자 목록 불러오기 에러:", error);
     return { success: false, participants: [] };
@@ -33,8 +48,12 @@ export async function getMatchApplications(matchId: string) {
 }
 
 // [NEW] 방장이 특정 참가자의 입금을 수동으로 확인 처리 (토스페이먼츠 연동 전까지의 임시 방식)
-export async function confirmPayment(participantId: string, hostId: string, confirmed: boolean) {
+export async function confirmPayment(accessToken: string | null, participantId: string, confirmed: boolean) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const hostId = auth.userId
+
     const participant = await prisma.matchParticipant.findUnique({
       where: { id: participantId },
       include: { match: { select: { hostId: true, costPerPerson: true, id: true } } },
@@ -74,8 +93,12 @@ export async function confirmPayment(participantId: string, hostId: string, conf
 // app/actions/participant.ts 파일 맨 아래에 추가해 주세요!
 
 // 💡 [NEW] 현재 로그인한 유저가 이 방에 참여 중인지(또는 방장인지) 확인하는 함수
-export async function checkParticipation(matchId: string, userId: string) {
+export async function checkParticipation(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, isHost: false, isParticipating: false }
+    const userId = auth.userId
+
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) return { success: false };
     
@@ -97,8 +120,12 @@ export async function checkParticipation(matchId: string, userId: string) {
 }
 
 // 💡 [NEW] 유저가 스스로 참여 신청을 취소(삭제)하는 함수
-export async function cancelMatchApplication(matchId: string, userId: string) {
+export async function cancelMatchApplication(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken, { allowBanned: true })
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     // 신청 내역 찾기
     const participant = await prisma.matchParticipant.findFirst({
       where: { matchId, userId }

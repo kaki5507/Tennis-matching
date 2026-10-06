@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import { fetchAvailableSlots } from "@/lib/bucheonScraper"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
-import { sendPushToUsers } from "@/app/actions/notification"
+import { sendPushToUsers } from "@/lib/push"
 
 const prisma = new PrismaClient()
 

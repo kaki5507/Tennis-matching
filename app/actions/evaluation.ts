@@ -1,10 +1,9 @@
 // app/actions/evaluation.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-import { checkLevelIntegrity } from "@/app/actions/levelIntegrity"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
+import { checkLevelIntegrity } from "@/lib/levelIntegrity"
 
 interface EvaluationInput {
   evaluateeId: string;
@@ -14,25 +13,38 @@ interface EvaluationInput {
   winLoss?: "WIN" | "LOSS" | "DRAW"; // [NEW] 이 사람이 이 경기에서 이겼는지 여부 (평가자 관점에서 기록)
 }
 
-export async function getEvaluatees(matchId: string, currentUserId: string) {
+/**
+ * 이 경기에서 평가를 남길 수 있는 사람인지(방장 또는 수락된 참가자)와,
+ * 평가할 수 있는 대상(수락된 참가자 중 본인 제외)을 한 번에 구합니다.
+ * 경기가 완료(COMPLETED)된 뒤에만 평가할 수 있습니다.
+ */
+async function resolveEvaluationScope(matchId: string, userId: string) {
+  const match = await prisma.match.findUnique({ where: { id: matchId }, select: { hostId: true, status: true } })
+  if (!match) return { ok: false as const, error: "경기를 찾을 수 없습니다." }
+  if (match.status !== "COMPLETED") return { ok: false as const, error: "경기가 완료된 뒤에 평가할 수 있어요." }
+
+  const accepted = await prisma.matchParticipant.findMany({
+    where: { matchId, status: "ACCEPTED" },
+    select: { userId: true, user: { select: { id: true, nickname: true } } },
+  })
+  const isMember = match.hostId === userId || accepted.some((p) => p.userId === userId)
+  if (!isMember) return { ok: false as const, error: "이 경기에 참여한 사람만 평가할 수 있어요." }
+
+  return { ok: true as const, evaluatees: accepted.filter((p) => p.userId !== userId).map((p) => p.user) }
+}
+
+export async function getEvaluatees(accessToken: string | null, matchId: string) {
   try {
-    const participants = await prisma.matchParticipant.findMany({
-      where: {
-        matchId,
-        status: "ACCEPTED",
-        userId: { not: currentUserId }
-      },
-      include: {
-        user: {
-          select: { id: true, nickname: true, email: true }
-        }
-      }
-    });
-    
-    return { success: true, evaluatees: participants.map(p => p.user) };
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, evaluatees: [] }
+
+    const scope = await resolveEvaluationScope(matchId, auth.userId)
+    if (!scope.ok) return { success: false, evaluatees: [] }
+
+    return { success: true, evaluatees: scope.evaluatees }
   } catch (error) {
-    console.error("평가 대상자 조회 에러:", error);
-    return { success: false, evaluatees: [] };
+    console.error("평가 대상자 조회 에러:", error)
+    return { success: false, evaluatees: [] }
   }
 }
 
@@ -51,11 +63,40 @@ function calculateMannerDelta(rating: number, isNoShow: boolean) {
 }
 
 export async function submitEvaluations(
-  matchId: string, 
-  evaluatorId: string, 
+  accessToken: string | null,
+  matchId: string,
   evaluations: EvaluationInput[]
 ) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const evaluatorId = auth.userId
+
+    // 평가는 매너/실력/적발 로직의 근거 데이터라, 누가 누구를 평가할 수 있는지와 값의 범위를 엄격하게 검사합니다.
+    const scope = await resolveEvaluationScope(matchId, evaluatorId)
+    if (!scope.ok) return { success: false, error: scope.error }
+    const allowedIds = new Set(scope.evaluatees.map((u) => u.id))
+
+    if (!Array.isArray(evaluations) || evaluations.length === 0 || evaluations.length > 20) {
+      return { success: false, error: "평가 내용이 올바르지 않습니다." }
+    }
+    const seen = new Set<string>()
+    for (const e of evaluations) {
+      if (!allowedIds.has(e.evaluateeId) || seen.has(e.evaluateeId)) {
+        return { success: false, error: "평가할 수 없는 대상이 포함되어 있습니다." }
+      }
+      seen.add(e.evaluateeId)
+      if (!Number.isInteger(e.mannerRating) || e.mannerRating < 1 || e.mannerRating > 5) {
+        return { success: false, error: "매너 점수는 1~5점이어야 합니다." }
+      }
+      if (typeof e.ntrpRating !== "number" || !Number.isFinite(e.ntrpRating) || e.ntrpRating < 1 || e.ntrpRating > 7) {
+        return { success: false, error: "실력(NTRP) 점수는 1.0~7.0 사이여야 합니다." }
+      }
+      if (e.winLoss !== undefined && !["WIN", "LOSS", "DRAW"].includes(e.winLoss)) {
+        return { success: false, error: "승패 값이 올바르지 않습니다." }
+      }
+    }
+
     for (const evalData of evaluations) {
       
       // 1. 평가 기록 DB에 저장 (이미 평가했으면 덮어쓰기)
@@ -69,8 +110,8 @@ export async function submitEvaluations(
         },
         update: {
           mannerRating: evalData.mannerRating,
-          ntrpRating: evalData.ntrpRating,
-          isNoShow: evalData.isNoShow || false,
+          ntrpRating: Math.round(evalData.ntrpRating * 10) / 10,
+          isNoShow: evalData.isNoShow === true,
           winLoss: evalData.winLoss,
         },
         create: {
@@ -78,8 +119,8 @@ export async function submitEvaluations(
           evaluatorId,
           evaluateeId: evalData.evaluateeId,
           mannerRating: evalData.mannerRating,
-          ntrpRating: evalData.ntrpRating,
-          isNoShow: evalData.isNoShow || false,
+          ntrpRating: Math.round(evalData.ntrpRating * 10) / 10,
+          isNoShow: evalData.isNoShow === true,
           winLoss: evalData.winLoss,
         }
       });

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { checkParticipation } from "@/app/actions/participant";
 import MatchChatRoom from "./MatchChatRoom";
+import { getAccessToken } from "@/lib/authToken";
 
 export default function MatchChatWrapper({ matchId }: { matchId: string }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export default function MatchChatWrapper({ matchId }: { matchId: string }) {
       if (data?.user) {
         setCurrentUserId(data.user.id);
         // 내 참여 상태를 DB에서 확인합니다.
-        const res = await checkParticipation(matchId, data.user.id);
+        const res = await checkParticipation(await getAccessToken(), matchId);
         
         // 🌟 핵심 로직: 방장이거나, 상태가 ACCEPTED인 사람만 통과!
         if (res.isHost || res.status === "ACCEPTED") {

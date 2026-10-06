@@ -6,7 +6,7 @@
 
 import { requireAdmin } from "@/lib/adminAuth"
 import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
-import { sendPushToUsers } from "@/app/actions/notification"
+import { sendPushToUsers } from "@/lib/push"
 import { buildBracket } from "@/lib/bracket"
 import { prisma, getSeededEntrants, getPlayerIdsOfEntrant } from "@/lib/tournamentData"
 import { teamLabel } from "@/lib/tournamentRules"

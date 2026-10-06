@@ -4,7 +4,8 @@
 // 확정되는 순간 두 선수 모두 참가자(TournamentParticipant)로 등록됩니다.
 "use server"
 
-import { sendPushToUser } from "@/app/actions/notification"
+import { sendPushToUser } from "@/lib/push"
+import { requireUser } from "@/lib/serverAuth"
 import { checkTeam } from "@/lib/tournamentRules"
 import { prisma, findTeamOf, getPlayer, toRule } from "@/lib/tournamentData"
 
@@ -14,8 +15,12 @@ import { prisma, findTeamOf, getPlayer, toRule } from "@/lib/tournamentData"
  * 닉네임은 참가자 명단에도 공개되는 정보라 검색 결과로 내려줘도 되지만,
  * 이메일 같은 개인정보는 절대 포함하지 않습니다.
  */
-export async function searchPartnerCandidates(userId: string, tournamentId: string, query: string) {
-  const q = query.trim()
+export async function searchPartnerCandidates(accessToken: string | null, tournamentId: string, query: string) {
+  const auth = await requireUser(accessToken)
+  if (!auth.ok) return { success: false, candidates: [] }
+  const userId = auth.userId
+
+  const q = (query ?? "").trim().slice(0, 50)
   if (q.length < 2) return { success: true, candidates: [] }
 
   try {
@@ -54,8 +59,12 @@ export async function searchPartnerCandidates(userId: string, tournamentId: stri
 }
 
 /** 신청자가 파트너를 지목해 팀을 만듭니다. 파트너가 수락하기 전까지는 '대기' 상태입니다. */
-export async function createTeam(userId: string, tournamentId: string, partnerId: string) {
+export async function createTeam(accessToken: string | null, tournamentId: string, partnerId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     if (userId === partnerId) return { success: false, error: "본인을 파트너로 지정할 수 없어요." }
 
     const tournament = await prisma.tournament.findUnique({
@@ -103,8 +112,12 @@ export async function createTeam(userId: string, tournamentId: string, partnerId
 }
 
 /** 파트너가 초대를 수락/거절합니다. 수락하면 팀 확정 + 두 선수 모두 참가자로 등록됩니다. */
-export async function respondToTeamInvite(userId: string, teamId: string, accept: boolean) {
+export async function respondToTeamInvite(accessToken: string | null, teamId: string, accept: boolean) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     const team = await prisma.tournamentTeam.findUnique({
       where: { id: teamId },
       include: {

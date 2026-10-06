@@ -5,6 +5,7 @@ import { BUCHEON_COURTS } from "@/lib/bucheonCourts";
 import { subscribeCourtWatch, unsubscribeCourtWatch, getMyCourtWatches } from "@/app/actions/courtWatch";
 import TennisLoader from "@/components/TennisLoader";
 import { Bell, BellOff } from "lucide-react";
+import { getAccessToken } from "@/lib/authToken";
 
 interface Props {
   userId: string;
@@ -17,7 +18,7 @@ export default function CourtWatchList({ userId }: Props) {
 
   useEffect(() => {
     let isMounted = true;
-    getMyCourtWatches(userId).then((result) => {
+    getAccessToken().then((tk) => getMyCourtWatches(tk)).then((result) => {
       if (!isMounted) return;
       setWatchedIds(new Set(result.facilityIds));
       setIsLoading(false);
@@ -30,8 +31,8 @@ export default function CourtWatchList({ userId }: Props) {
     const isWatching = watchedIds.has(facilityId);
 
     const result = isWatching
-      ? await unsubscribeCourtWatch(userId, facilityId)
-      : await subscribeCourtWatch(userId, facilityId, facilityName);
+      ? await unsubscribeCourtWatch(await getAccessToken(), facilityId)
+      : await subscribeCourtWatch(await getAccessToken(), facilityId, facilityName);
 
     if (result.success) {
       setWatchedIds((prev) => {

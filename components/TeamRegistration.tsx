@@ -16,6 +16,7 @@ import type { ViewerStatus } from "@/app/actions/tournament";
 import TennisMascot from "@/components/TennisMascot";
 import { teamKind, teamKindLabel, genderBadgeClass, singleKind } from "@/lib/gender";
 import { teamAvgNtrp, formatNtrp } from "@/lib/tournamentRules";
+import { getAccessToken } from "@/lib/authToken";
 
 interface Candidate {
   id: string;
@@ -62,7 +63,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
     let cancelled = false;
     const timer = setTimeout(async () => {
       setIsSearching(true);
-      const result = await searchPartnerCandidates(userId, tournamentId, query);
+      const result = await searchPartnerCandidates(await getAccessToken(), tournamentId, query);
       if (!cancelled) {
         setCandidates(result.candidates);
         setIsSearching(false);
@@ -100,7 +101,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
           disabled={isBusy}
           onClick={() => {
             if (confirm("팀 신청을 취소할까요? 파트너의 신청도 함께 취소돼요.")) {
-              run(() => cancelTournamentRegistration(userId, tournamentId));
+              run(async () => cancelTournamentRegistration(await getAccessToken(), tournamentId));
             }
           }}
           className="text-sm px-4 py-2 rounded-lg border border-line text-court"
@@ -120,7 +121,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
         <button
           type="button"
           disabled={isBusy}
-          onClick={() => run(() => cancelTournamentRegistration(userId, tournamentId))}
+          onClick={() => run(async () => cancelTournamentRegistration(await getAccessToken(), tournamentId))}
           className="text-sm px-4 py-2 rounded-lg border border-line text-court"
         >
           제안 취소
@@ -139,7 +140,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
           <button
             type="button"
             disabled={isBusy}
-            onClick={() => run(() => respondToTeamInvite(userId, viewer.teamId, true))}
+            onClick={() => run(async () => respondToTeamInvite(await getAccessToken(), viewer.teamId, true))}
             className="px-6 py-2.5 rounded-lg text-sm font-bold btn-clay"
           >
             수락하기
@@ -147,7 +148,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
           <button
             type="button"
             disabled={isBusy}
-            onClick={() => run(() => respondToTeamInvite(userId, viewer.teamId, false))}
+            onClick={() => run(async () => respondToTeamInvite(await getAccessToken(), viewer.teamId, false))}
             className="px-6 py-2.5 rounded-lg text-sm font-medium border border-line text-court"
           >
             거절
@@ -267,7 +268,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
       <button
         type="button"
         disabled={!picked || isBusy || !!preview?.overCap || !!preview?.outOfRange}
-        onClick={() => picked && run(() => createTeam(userId, tournamentId, picked.id))}
+        onClick={() => picked && run(async () => createTeam(await getAccessToken(), tournamentId, picked.id))}
         className="w-full h-12 mt-4 rounded-lg text-base font-bold btn-clay disabled:opacity-40"
       >
         {isBusy ? "신청 중..." : picked ? `${picked.nickname ?? "파트너"}님께 팀 제안하기` : "파트너를 먼저 골라주세요"}

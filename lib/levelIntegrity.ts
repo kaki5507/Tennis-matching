@@ -1,10 +1,9 @@
-// app/actions/levelIntegrity.ts
-"use server"
+// lib/levelIntegrity.ts
+// 허위 구력 자동 적발. 서버 내부 전용입니다 — "use server"를 붙이면 외부에서 임의 점수로 호출해
+// 아무 유저나 정지시킬 수 있게 되므로, 반드시 서버 코드(evaluation.ts)에서만 호출하세요.
 
-import { PrismaClient } from "@prisma/client"
-import { sendPushToUser } from "@/app/actions/notification"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/tournamentData"
+import { sendPushToUser } from "@/lib/push"
 
 // 자기신고 구력(문자열)을 숫자로 환산하는 표 (profile 페이지의 선택지와 반드시 일치시켜야 함)
 const LEVEL_BUCKETS: { label: string; value: number }[] = [

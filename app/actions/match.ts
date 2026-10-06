@@ -1,13 +1,13 @@
 // app/actions/match.ts
 "use server"
-import { PrismaClient, MatchStatus } from "@prisma/client"
-import { sendPushToUser, sendPushToUsers } from "@/app/actions/notification"
+import { MatchStatus } from "@prisma/client"
+import { prisma } from "@/lib/tournamentData"
+import { requireUser } from "@/lib/serverAuth"
+import { sendPushToUser, sendPushToUsers } from "@/lib/push"
 
-const prisma = new PrismaClient()
 
 // 💡 폼에서 넘어오는 데이터들의 '타입 설계도'를 만들어 줍니다.
 interface CreateMatchInput {
-  hostId: string;
   courtId: string; // [변경] 더 이상 자동으로 첫 코트를 쓰지 않고, 검색해서 선택한 코트를 받습니다.
   matchDate: string;
   startTime: string;
@@ -20,8 +20,29 @@ interface CreateMatchInput {
   minMannerScore?: string | number | null; // [NEW] 참여 최소 매너온도, 빈 값이면 제한없음
 }
 
-export async function createMatchRoom(data: CreateMatchInput) {
+export async function createMatchRoom(accessToken: string | null, data: CreateMatchInput) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+
+    // 입력값 검증 (화면 검증은 우회될 수 있으므로 서버에서도 확인)
+    const cost = typeof data.costPerPerson === "string" ? parseInt(data.costPerPerson) || 0 : data.costPerPerson
+    if (!Number.isFinite(cost) || cost < 0 || cost > 1_000_000) {
+      return { success: false, error: "참가비는 0원 ~ 100만원 사이로 입력해주세요." }
+    }
+    if (!data.matchDate || Number.isNaN(new Date(data.matchDate).getTime())) {
+      return { success: false, error: "경기 날짜가 올바르지 않습니다." }
+    }
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(data.startTime ?? "")) {
+      return { success: false, error: "시작 시간이 올바르지 않습니다." }
+    }
+    if ((data.description ?? "").length > 2000) {
+      return { success: false, error: "상세 설명은 2000자 이내로 작성해주세요." }
+    }
+    for (const v of [data.targetLevel, data.gameType, data.genderRequirement, data.ageRequirement]) {
+      if (!v || v.length > 50) return { success: false, error: "모집 조건 값이 올바르지 않습니다." }
+    }
+
     // 1. 코트 존재 여부 확인 (프론트에서 findOrCreateCourt로 미리 만들어서 넘겨주지만, 방어적으로 한 번 더 확인)
     const court = await prisma.court.findUnique({ where: { id: data.courtId } });
     if (!court) {
@@ -31,7 +52,7 @@ export async function createMatchRoom(data: CreateMatchInput) {
     // 2. 사용자가 입력한 데이터로 매칭 방(Match) 생성
     const newMatch = await prisma.match.create({
       data: {
-        hostId: data.hostId, 
+        hostId: auth.userId,
         courtId: court.id,   
         
         matchDate: new Date(data.matchDate),
@@ -41,7 +62,7 @@ export async function createMatchRoom(data: CreateMatchInput) {
         gameType: data.gameType,
         genderRequirement: data.genderRequirement,
         ageRequirement: data.ageRequirement,
-        costPerPerson: typeof data.costPerPerson === 'string' ? parseInt(data.costPerPerson) || 0 : data.costPerPerson, 
+        costPerPerson: cost,
         description: data.description,
         minMannerScore:
           data.minMannerScore === undefined || data.minMannerScore === null || data.minMannerScore === ""
@@ -59,8 +80,12 @@ export async function createMatchRoom(data: CreateMatchInput) {
   }
 }
 
-export async function joinMatchRoom(matchId: string, userId: string) {
+export async function joinMatchRoom(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    const userId = auth.userId
+
     const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match || match.status !== "OPEN") {
       return { success: false, error: "모집이 마감되었거나 존재하지 않는 방입니다." };
@@ -133,8 +158,24 @@ export async function joinMatchRoom(matchId: string, userId: string) {
 }
 
 // 🟢 1. 신청자 수락/거절 상태 변경 함수
-export async function updateParticipantStatus(participantId: string, status: 'ACCEPTED' | 'REJECTED') {
+export async function updateParticipantStatus(accessToken: string | null, participantId: string, status: 'ACCEPTED' | 'REJECTED') {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+    if (status !== 'ACCEPTED' && status !== 'REJECTED') return { success: false, error: "잘못된 요청입니다." }
+
+    // 방장만 수락/거절할 수 있습니다.
+    const target = await prisma.matchParticipant.findUnique({
+      where: { id: participantId },
+      include: { match: { select: { hostId: true, status: true } } },
+    })
+    if (!target) return { success: false, error: "신청 내역을 찾을 수 없습니다." }
+    if (target.match.hostId !== auth.userId) return { success: false, error: "방장만 수락/거절할 수 있습니다." }
+    if (target.match.status === "COMPLETED" || target.match.status === "CANCELED") {
+      return { success: false, error: "이미 끝났거나 취소된 방입니다." }
+    }
+    if (target.status === status) return { success: true } // 변화 없음: 알림 중복 발송 방지
+
     const participant = await prisma.matchParticipant.update({
       where: { id: participantId },
       data: { status },
@@ -162,10 +203,13 @@ export async function updateParticipantStatus(participantId: string, status: 'AC
 }
 
 // 🔴 2. 모집 마감 처리 함수
-export async function closeMatch(matchId: string, userId: string) {
+export async function closeMatch(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+
     const match = await prisma.match.findUnique({ where: { id: matchId } });
-    if (!match || match.hostId !== userId) {
+    if (!match || match.hostId !== auth.userId) {
       return { success: false, error: "방장만 마감할 수 있습니다." };
     }
 
@@ -181,16 +225,21 @@ export async function closeMatch(matchId: string, userId: string) {
 }
 
 // 🌟 3. [NEW] 경기 완료 처리 함수 (동료 평가 시작용)
-export async function completeMatchAction(matchId: string, hostId: string) {
+export async function completeMatchAction(accessToken: string | null, matchId: string) {
   try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+
     const match = await prisma.match.findUnique({
       where: { id: matchId },
-      select: { hostId: true }
+      select: { hostId: true, status: true }
     });
 
-    if (!match || match.hostId !== hostId) {
+    if (!match || match.hostId !== auth.userId) {
       return { success: false, error: "권한이 없습니다. (방장만 가능)" };
     }
+    if (match.status === "COMPLETED") return { success: false, error: "이미 완료 처리된 경기입니다." };
+    if (match.status === "CANCELED") return { success: false, error: "취소된 경기입니다." };
 
     await prisma.match.update({
       where: { id: matchId },

@@ -8,11 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getProfile, updateProfile } from "@/app/actions/profile";
+import { getAccessToken } from "@/lib/authToken";
 import { Position } from "@prisma/client"; // 💡 [추가] any 대신 사용할 정확한 스키마 타입
 
 export default function ProfileEditPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // 💡 [수정] preferredPos에 as Position을 선언하여 TypeScript에게 타입을 확실히 알려줍니다.
@@ -33,11 +33,10 @@ export default function ProfileEditPage() {
         return;
       }
 
-      setUserId(authData.user.id);
       setFormData((prev) => ({ ...prev, email: authData.user?.email || "" }));
 
       // DB에서 기존 프로필 정보 불러오기
-      const result = await getProfile(authData.user.id);
+      const result = await getProfile(await getAccessToken());
       if (result.success && result.user) {
         setFormData({
           email: result.user.email,
@@ -61,7 +60,7 @@ export default function ProfileEditPage() {
     setIsLoading(true);
 
     // 💡 [수정] 밉상이었던 as any를 완전히 제거하고, 정확한 형태의 객체를 넘겨줍니다.
-    const result = await updateProfile(userId, {
+    const result = await updateProfile(await getAccessToken(), {
       email: formData.email,
       nickname: formData.nickname,
       gender: formData.gender,

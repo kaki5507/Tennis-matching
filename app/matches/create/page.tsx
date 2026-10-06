@@ -12,12 +12,12 @@ import { findOrCreateCourt } from "@/app/actions/court";
 import { getProfile } from "@/app/actions/profile"; // 👈 유저 진짜 점수 가져오기용
 import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
 import { ChevronDown } from "lucide-react";
+import { getAccessToken } from "@/lib/authToken";
 
 export default function CreateMatchPage() {
   const router = useRouter();
   
   // 로그인한 유저 ID 및 상태
-  const [hostId, setHostId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // 🌟 내 진짜 NTRP를 저장할 상태
@@ -50,10 +50,9 @@ export default function CreateMatchPage() {
         router.push("/login");
         return;
       }
-      setHostId(data.user.id);
 
       // 내 프로필에서 평가 횟수와 점수를 가져옵니다.
-      const profileResult = await getProfile(data.user.id);
+      const profileResult = await getProfile(await getAccessToken());
       if (profileResult.success && profileResult.user) {
         const evalCount = profileResult.user.ntrpCount || 0;
         const rawScore = profileResult.user.ntrpScore ? Number(profileResult.user.ntrpScore) : 2.0;
@@ -93,14 +92,14 @@ export default function CreateMatchPage() {
     setIsLoading(true);
 
     // [NEW] 선택한 장소를 courts 테이블에서 찾거나 새로 생성
-    const courtResult = await findOrCreateCourt(selectedCourt);
+    const courtResult = await findOrCreateCourt(await getAccessToken(), selectedCourt);
     if (!courtResult.success || !courtResult.courtId) {
       alert(courtResult.error ?? "테니스장 정보를 저장하지 못했습니다.");
       setIsLoading(false);
       return;
     }
 
-    const result = await createMatchRoom({ ...formData, hostId, courtId: courtResult.courtId });
+    const result = await createMatchRoom(await getAccessToken(), { ...formData, courtId: courtResult.courtId });
 
     if (result.success) {
       alert("매칭 방이 성공적으로 만들어졌습니다! 🎾");

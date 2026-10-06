@@ -84,7 +84,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const handleRegister = async () => {
     if (!userId) return alert("로그인이 필요합니다.");
     setIsSubmitting(true);
-    const result = await registerForTournament(userId, id);
+    const result = await registerForTournament(await getAccessToken(), id);
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
@@ -94,7 +94,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!userId) return;
     if (!confirm("대회 신청을 취소하시겠어요?")) return;
     setIsSubmitting(true);
-    await cancelTournamentRegistration(userId, id);
+    await cancelTournamentRegistration(await getAccessToken(), id);
     await load();
     setIsSubmitting(false);
   };

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { getComments, addComment } from "@/app/actions/comment";
+import { getAccessToken } from "@/lib/authToken";
 
 interface CommentData {
   id: string;
@@ -14,7 +15,6 @@ interface CommentData {
   createdAt: Date;
   user: {
     nickname: string | null;
-    email: string;
   };
 }
 
@@ -75,7 +75,7 @@ export default function MatchComments({ matchId }: { matchId: string }) {
     if (!newComment.trim()) return;
 
     setIsLoading(true);
-    const result = await addComment(matchId, currentUserId, newComment);
+    const result = await addComment(await getAccessToken(), matchId, newComment);
     
     if (result.success) {
       setNewComment(""); // 입력창 비우기
@@ -103,12 +103,12 @@ export default function MatchComments({ matchId }: { matchId: string }) {
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-4 p-4 tint rounded-lg border border-slate-100">
               <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold shrink-0">
-                {(comment.user.nickname || comment.user.email).charAt(0).toUpperCase()}
+                {(comment.user.nickname || "?").charAt(0).toUpperCase()}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-slate-800 text-sm">
-                    {comment.user.nickname || comment.user.email.split('@')[0]}
+                    {comment.user.nickname || "익명"}
                   </span>
                   <span className="text-xs text-slate-400">
                     {new Date(comment.createdAt).toLocaleString("ko-KR", { 

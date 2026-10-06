@@ -22,7 +22,9 @@ export default function SignupPage() {
 
   // [NEW] 본인인증 관련 상태
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verifiedCiDi, setVerifiedCiDi] = useState<string | null>(null);
+  // 본인인증 완료 표시: 포트원 인증 ID(운영) 또는 "dev"(개발용 우회). CI/DI 같은 민감 값은 화면에 오지 않고,
+  // 가입 시 서버가 인증 ID로 포트원에 직접 다시 확인합니다.
+  const [verifiedId, setVerifiedId] = useState<string | null>(null);
   const [verifiedName, setVerifiedName] = useState<string | null>(null);
 
   // [NEW] 약관/개인정보처리방침 동의 상태
@@ -84,13 +86,13 @@ export default function SignupPage() {
       // 프론트에서 받은 결과는 절대 그대로 믿지 않고, 서버에서 재검증합니다.
       const result = await completeIdentityVerification(response.identityVerificationId);
 
-      if (!result.success || !result.ciDi) {
+      if (!result.success) {
         setErrorMsg(result.error ?? "본인인증에 실패했습니다.");
         setIsVerifying(false);
         return;
       }
 
-      setVerifiedCiDi(result.ciDi);
+      setVerifiedId(response.identityVerificationId);
       setVerifiedName(result.name ?? null);
     } catch (error) {
       console.error("본인인증 에러:", error);
@@ -107,12 +109,12 @@ export default function SignupPage() {
     setErrorMsg("");
     setIsVerifying(true);
     const result = await devBypassIdentityVerification();
-    if (!result.success || !result.ciDi) {
+    if (!result.success) {
       setErrorMsg(result.error ?? "개발용 우회에 실패했습니다.");
       setIsVerifying(false);
       return;
     }
-    setVerifiedCiDi(result.ciDi);
+    setVerifiedId("dev");
     setVerifiedName(result.name ?? null);
     setIsVerifying(false);
   };
@@ -122,7 +124,7 @@ export default function SignupPage() {
     setErrorMsg("");
 
     // 0. 본인인증 완료 여부 확인 (재가입 방지의 최소 조건)
-    if (!verifiedCiDi) {
+    if (!verifiedId) {
       return setErrorMsg("먼저 본인인증을 완료해주세요.");
     }
 
@@ -149,12 +151,15 @@ export default function SignupPage() {
       if (!data.user) throw new Error("유저 생성 실패");
 
       // 3. 성공했다면, Prisma를 통해 우리 DB(users 테이블)에 프로필 저장
-      //    이때 더미값이 아닌, 위에서 검증된 실제 ciDi를 넣습니다.
+      //    본인인증 값은 서버가 인증 ID로 포트원에서 직접 확인합니다. (이메일 인증 없이 바로 로그인되는
+      //    설정이라면 토큰도 같이 보내 가입 계정과 일치하는지 확인)
       const dbResult = await createUserInDB({
         id: data.user.id,
         email: data.user.email!,
         nickname,
-        ciDi: verifiedCiDi,
+        identityVerificationId: verifiedId === "dev" ? undefined : verifiedId,
+        devBypass: verifiedId === "dev",
+        accessToken: data.session?.access_token ?? null,
         termsAgreed,
         privacyAgreed,
         marketingAgreed,
@@ -197,7 +202,7 @@ export default function SignupPage() {
 
         {/* [NEW] 본인인증 단계 */}
         <div className="mb-6">
-          {!verifiedCiDi ? (
+          {!verifiedId ? (
             <Button
               type="button"
               onClick={handleVerifyIdentity}
@@ -218,7 +223,7 @@ export default function SignupPage() {
           {/* ⚠️ 개발 환경(NODE_ENV !== production)에서만 노출됩니다.
               프로덕션 빌드에서는 이 블록 자체가 렌더링되지 않고,
               혹시 남아있어도 서버 액션이 production에서 항상 실패를 반환합니다. */}
-          {!verifiedCiDi && process.env.NODE_ENV !== "production" && (
+          {!verifiedId && process.env.NODE_ENV !== "production" && (
             <button
               type="button"
               onClick={handleDevBypass}
@@ -306,7 +311,7 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-6">
-          <fieldset disabled={!verifiedCiDi} className="space-y-6 disabled:opacity-50">
+          <fieldset disabled={!verifiedId} className="space-y-6 disabled:opacity-50">
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -328,7 +333,7 @@ export default function SignupPage() {
             </div>
           </fieldset>
 
-          <Button type="submit" disabled={isLoading || !verifiedCiDi || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
+          <Button type="submit" disabled={isLoading || !verifiedId || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
             {isLoading ? "가입 처리 중..." : "가입하기"}
           </Button>
         </form>

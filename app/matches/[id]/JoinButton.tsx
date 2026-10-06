@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { joinMatchRoom } from "@/app/actions/match";
 import { cancelMatchApplication, checkParticipation } from "@/app/actions/participant";
+import { getAccessToken } from "@/lib/authToken";
 
 export default function JoinButton({ matchId }: { matchId: string }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
       
       if (data.user) {
         const uid = data.user.id;
-        const res = await checkParticipation(matchId, uid);
+        const res = await checkParticipation(await getAccessToken(), matchId);
         
         // 🌟 컴포넌트가 살아있을 때만 상태 업데이트
         if (isMounted) {
@@ -60,7 +61,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
     }
     
     setIsLoading(true);
-    const res = await joinMatchRoom(matchId, userId);
+    const res = await joinMatchRoom(await getAccessToken(), matchId);
     
     if (res.success) {
       alert("참여 신청이 완료되었습니다! 방장의 수락을 기다려주세요.");
@@ -85,7 +86,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
     if (!window.confirm(confirmMsg)) return;
 
     setIsLoading(true);
-    const res = await cancelMatchApplication(matchId, userId);
+    const res = await cancelMatchApplication(await getAccessToken(), matchId);
     
     if (res.success) {
       alert("참여 신청이 취소되었습니다.");
