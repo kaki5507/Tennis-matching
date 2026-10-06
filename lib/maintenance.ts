@@ -7,6 +7,8 @@ import { prisma } from "@/lib/tournamentData"
 
 export const MAINTENANCE_TAG = "maintenance"
 
+export const MAINTENANCE_BLOCK_MESSAGE = "서비스 점검 중입니다. 잠시 후 다시 이용해주세요."
+
 export interface MaintenanceState {
   enabled: boolean
   message: string | null

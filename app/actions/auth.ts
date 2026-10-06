@@ -1,5 +1,6 @@
 "use server"
 
+import { getMaintenanceState, MAINTENANCE_BLOCK_MESSAGE } from "@/lib/maintenance"
 import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/tournamentData"
 import { verifyToken } from "@/lib/serverAuth"
@@ -32,6 +33,10 @@ export async function createUserInDB(data: {
   accessToken?: string | null
 }) {
   try {
+    // 점검 중에는 신규 가입도 막음 (관리자 초대코드를 입력한 경우만 통과 — 코드 자체는 아래에서 검증)
+    if (!data.adminCode && (await getMaintenanceState()).enabled) {
+      return { success: false, error: MAINTENANCE_BLOCK_MESSAGE }
+    }
     if (!data.termsAgreed || !data.privacyAgreed) {
       return { success: false, error: "이용약관과 개인정보처리방침에 동의해야 가입할 수 있습니다." }
     }

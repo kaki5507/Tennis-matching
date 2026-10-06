@@ -6,6 +6,7 @@
 
 import { supabase } from "@/lib/supabase"
 import { prisma } from "@/lib/tournamentData"
+import { getMaintenanceState, MAINTENANCE_BLOCK_MESSAGE } from "@/lib/maintenance"
 
 export type UserCheck = { ok: true; userId: string } | { ok: false; error: string }
 
@@ -32,10 +33,14 @@ export async function requireUser(
 
   const user = await prisma.user.findUnique({
     where: { id: t.id },
-    select: { deletedAt: true, isBanned: true },
+    select: { deletedAt: true, isBanned: true, role: true },
   })
   if (!user) return { ok: false, error: "가입이 완료되지 않은 계정입니다." }
   if (user.deletedAt) return { ok: false, error: "탈퇴한 계정입니다." }
   if (user.isBanned && !opts.allowBanned) return { ok: false, error: "이용이 제한된 계정입니다." }
+  // 점검 모드: 관리자를 제외한 모든 사용자 액션을 서버에서도 차단 (화면 차단을 우회한 직접 호출 방지)
+  if (user.role !== "ADMIN" && (await getMaintenanceState()).enabled) {
+    return { ok: false, error: MAINTENANCE_BLOCK_MESSAGE }
+  }
   return { ok: true, userId: t.id }
 }
