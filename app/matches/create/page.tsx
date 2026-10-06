@@ -30,7 +30,7 @@ export default function CreateMatchPage() {
   const [selectedCourt, setSelectedCourt] = useState<SelectedCourt | null>(null);
 
   // 폼에 입력할 데이터들 상태 관리
-  const todayStr = new Date().toISOString().slice(0, 10); // [NEW] 오늘 날짜 (YYYY-MM-DD)
+  const todayStr = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10); // 오늘 날짜 (한국 시간 기준, YYYY-MM-DD)
   const [formData, setFormData] = useState({
     matchDate: todayStr, // [NEW] 오늘 날짜를 기본값으로
     startTime: "19:00", // [NEW] 저녁 시간대를 기본값으로 (직접 수정 가능)
