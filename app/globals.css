@@ -205,9 +205,9 @@
 /* --- 9. 애니메이션 (로딩: 라켓에 공이 튕기는 모습) ------------------------ */
 @keyframes tennis-ball-bounce {
   0%, 100% { transform: translateY(0) scale(1, 1); }
-  38% { transform: translateY(-52px) scale(1, 1); }
-  50% { transform: translateY(-58px) scale(1.05, 0.95); }
-  62% { transform: translateY(-52px) scale(1, 1); }
+  38% { transform: translateY(-44px) scale(1, 1); }
+  50% { transform: translateY(-50px) scale(1.05, 0.95); }
+  62% { transform: translateY(-44px) scale(1, 1); }
   92% { transform: translateY(0) scale(1.18, 0.82); }
 }
 @keyframes tennis-ball-shadow {

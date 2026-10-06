@@ -59,34 +59,46 @@ export default function TennisMascot({ pose = "wave", className }: Props) {
 
       {/* 라켓 (서브 포즈일 때만) */}
       {pose === "serve" && (
-        <g transform="translate(150,10) rotate(18)">
-          <ellipse cx="20" cy="16" rx="17" ry="21" fill="none" stroke="#2F4A33" strokeWidth="5" />
-          <line x1="20" y1="36" x2="20" y2="66" stroke="#2F4A33" strokeWidth="6" strokeLinecap="round" />
-          <path d="M6 8 L34 24 M6 24 L34 8 M13 -2 L13 34 M27 -2 L27 34" stroke="#2F4A33" strokeWidth="1.6" opacity="0.55" />
+        <g transform="translate(146,6) rotate(18)">
+          <defs>
+            <clipPath id="mascot-racket-strings">
+              <ellipse cx="20" cy="17" rx="14.5" ry="18.5" />
+            </clipPath>
+          </defs>
+          <path d="M 20 36 L 20 52" stroke="#2F4A33" strokeWidth="4" strokeLinecap="round" />
+          <rect x="16" y="48" width="8" height="20" rx="4" fill="#C1512F" />
+          <ellipse cx="20" cy="17" rx="14.5" ry="18.5" fill="#F7F9E4" fillOpacity="0.35" />
+          <g clipPath="url(#mascot-racket-strings)" stroke="#2F4A33" strokeWidth="0.9" opacity="0.5">
+            <path d="M 8 -2 V 40 M 14 -2 V 40 M 20 -2 V 40 M 26 -2 V 40 M 32 -2 V 40" />
+            <path d="M 0 6 H 40 M 0 12 H 40 M 0 18 H 40 M 0 24 H 40 M 0 30 H 40" />
+          </g>
+          <ellipse cx="20" cy="17" rx="16" ry="20" fill="none" stroke="#2F4A33" strokeWidth="4" />
         </g>
       )}
 
       {/* 몸통 (테니스공) */}
-      <circle cx="100" cy="120" r="62" fill="#D7DE23" stroke="#B7C21E" strokeWidth="3" />
+      <defs>
+        {/* 공 안쪽으로만 그리도록 자르는 영역: 솔기/머리띠가 윤곽 밖으로 튀어나오지 않게 */}
+        <clipPath id="mascot-ball-clip">
+          <circle cx="100" cy="120" r="61" />
+        </clipPath>
+      </defs>
+      <circle cx="100" cy="120" r="62" fill="#D7DE23" />
 
-      {/* 테니스공 특유의 곡선 솔기 */}
-      <path
-        d="M 46 88 Q 90 108 46 152"
-        stroke="#F7F9E4"
-        strokeWidth="5"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        d="M 154 88 Q 110 108 154 152"
-        stroke="#F7F9E4"
-        strokeWidth="5"
-        fill="none"
-        strokeLinecap="round"
-      />
+      <g clipPath="url(#mascot-ball-clip)">
+        {/* 테니스공 특유의 곡선 솔기 (양끝이 공 밖까지 이어진 뒤 잘려서 윤곽에 딱 맞음) */}
+        <path d="M 36 70 Q 92 110 36 170" stroke="#F7F9E4" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <path d="M 164 70 Q 108 110 164 170" stroke="#F7F9E4" strokeWidth="5" fill="none" strokeLinecap="round" />
 
-      {/* 헤어밴드 */}
-      <path d="M 44 96 Q 100 74 156 96 L 156 106 Q 100 86 44 106 Z" fill="#C1512F" />
+        {/* 헤어밴드: 공의 곡면을 따라 감기도록 곡선, 양끝은 공 밖으로 길게 뺀 뒤 잘림 */}
+        <path d="M 30 100 Q 100 70 170 100 L 170 114 Q 100 84 30 114 Z" fill="#C1512F" />
+        {/* 밴드 아래쪽 그늘 + 윗면 하이라이트로 입체감 */}
+        <path d="M 30 111 Q 100 81 170 111 L 170 114 Q 100 84 30 114 Z" fill="#9E3F22" opacity="0.55" />
+        <path d="M 30 102.5 Q 100 72.5 170 102.5" stroke="#E2815F" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.7" />
+      </g>
+
+      {/* 공 윤곽선 (맨 위에 다시 그려 안쪽 선들의 끝을 깔끔하게 마감) */}
+      <circle cx="100" cy="120" r="62" fill="none" stroke="#B7C21E" strokeWidth="3" />
 
       {/* 얼굴 */}
       {pose === "sad" ? (
