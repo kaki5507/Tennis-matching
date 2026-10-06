@@ -14,12 +14,15 @@ export const AUDIT_ACTIONS = {
   BRACKET_GENERATE: { label: "대진표 생성", group: "대회", tone: "ok" },
   BRACKET_RESET: { label: "대진표 초기화", group: "대회", tone: "danger" },
   MATCH_RESULT: { label: "경기 결과 입력", group: "대회", tone: "info" },
+  MAINTENANCE_ON: { label: "점검 모드 켬", group: "시스템", tone: "danger" },
+  MAINTENANCE_OFF: { label: "점검 모드 끔", group: "시스템", tone: "ok" },
+  MAINTENANCE_UPDATE: { label: "점검 안내 수정", group: "시스템", tone: "info" },
 } as const
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS
-export type AuditGroup = "회원" | "조회" | "대회"
+export type AuditGroup = "회원" | "조회" | "대회" | "시스템"
 
-export const AUDIT_GROUPS: AuditGroup[] = ["회원", "대회", "조회"]
+export const AUDIT_GROUPS: AuditGroup[] = ["회원", "대회", "조회", "시스템"]
 
 export function actionLabel(code: string): string {
   return (AUDIT_ACTIONS as Record<string, { label: string }>)[code]?.label ?? code

@@ -463,3 +463,16 @@ model AdminAuditLog {
   @@index([adminId])
   @@map("admin_audit_logs")
 }
+
+// 서비스 점검 모드: 항상 id=1 한 줄만 쓰는 설정 테이블.
+// enabled가 true면 일반 사용자에게 점검 안내 화면을 보여주고, 관리자는 그대로 이용 가능.
+model MaintenanceSetting {
+  id        Int       @id @default(1)
+  enabled   Boolean   @default(false)
+  message   String? // 사용자에게 보여줄 안내 문구
+  endsAt    DateTime? @map("ends_at") // 종료 예정 시각(지나면 자동 해제)
+  updatedBy String?   @map("updated_by") @db.Uuid
+  updatedAt DateTime  @default(now()) @map("updated_at")
+
+  @@map("maintenance_settings")
+}

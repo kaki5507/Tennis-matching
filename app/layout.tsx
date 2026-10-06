@@ -4,6 +4,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import PageViewTracker from "@/components/PageViewTracker";
 import SiteHeader from "@/components/SiteHeader";
+import MaintenanceGate from "@/components/MaintenanceGate";
+import { getMaintenanceState } from "@/lib/maintenance";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
@@ -22,7 +24,8 @@ export const metadata: Metadata = {
   description: "실력과 매너로 만나는 테니스 파트너 매칭 서비스",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const maintenance = await getMaintenanceState();
   return (
     <html
       lang="ko"
@@ -38,8 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col" style={{ fontFamily: '"Noto Sans KR", var(--font-sans), sans-serif' }}>
         <PageViewTracker />
-        <SiteHeader />
-        {children}
+        <MaintenanceGate initial={maintenance} header={<SiteHeader />}>
+          {children}
+        </MaintenanceGate>
       </body>
     </html>
   );

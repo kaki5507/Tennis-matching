@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin/users", label: "👥 회원 관리", exact: false },
   { href: "/admin/tournaments/create", label: "🏆 대회 개설", exact: false },
   { href: "/admin/audit", label: "🧾 작업 기록", exact: false },
+  { href: "/admin/maintenance", label: "🛠 점검 모드", exact: false },
 ];
 
 /** 관리자 화면 공통 상단 탭 */
