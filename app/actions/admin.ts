@@ -268,3 +268,44 @@ export async function getRecentActivity(accessToken: string | null) {
     })),
   }
 }
+
+/**
+ * 요일·시간대별 인기 경기 시간.
+ * 경기 날짜/시작 시간은 사용자가 한국 시간으로 직접 입력한 값이라 시간대 변환 없이 그대로 집계합니다.
+ * 기간: 오늘 기준 days일 전 ~ 30일 후 사이에 열리는/열린 경기 (취소·삭제된 방 제외).
+ * rooms=개설된 방 수, players=수락된 참가자 수(방장 포함), filled=정원 마감/완료된 방 수
+ */
+export async function getMatchTimeStats(accessToken: string | null, days: number = 90) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+
+  const span = Math.min(365, Math.max(7, Math.floor(days) || 90))
+  const from = kstDayStart(span)
+  const to = kstDayStart(-30)
+
+  const rows = await prisma.$queryRaw<
+    { dow: number; hour: number; rooms: bigint; players: bigint; filled: bigint }[]
+  >(Prisma.sql`
+    SELECT EXTRACT(DOW FROM m.match_date)::int AS dow,
+           EXTRACT(HOUR FROM m.start_time)::int AS hour,
+           COUNT(*) AS rooms,
+           COALESCE(SUM((SELECT COUNT(*) FROM match_participants p
+                         WHERE p.match_id = m.id AND p.status = 'ACCEPTED')), 0) + COUNT(*) AS players,
+           COUNT(*) FILTER (WHERE m.status IN ('FULL', 'COMPLETED')) AS filled
+    FROM matches m
+    WHERE m.deleted_at IS NULL
+      AND m.status <> 'CANCELED'
+      AND m.match_date >= ${from}::date
+      AND m.match_date <= ${to}::date
+    GROUP BY 1, 2`)
+
+  const cells = rows.map((r) => ({
+    dow: r.dow,
+    hour: r.hour,
+    rooms: Number(r.rooms),
+    players: Number(r.players),
+    filled: Number(r.filled),
+  }))
+  const totalRooms = cells.reduce((a, c) => a + c.rooms, 0)
+  return { success: true as const, days: span, totalRooms, cells }
+}

@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { getAdminStats, getVisitStats, getRecentActivity } from "@/app/actions/admin";
+import { getAdminStats, getVisitStats, getRecentActivity, getMatchTimeStats } from "@/app/actions/admin";
 import TennisLoader from "@/components/TennisLoader";
+import MatchTimeHeatmap, { type TimeCell } from "@/components/MatchTimeHeatmap";
 
 interface Stats {
   users: { total: number; today: number; week: number; month: number };
@@ -96,6 +97,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [visit, setVisit] = useState<VisitStats | null>(null);
   const [recent, setRecent] = useState<Recent | null>(null);
+  const [timeCells, setTimeCells] = useState<{ days: number; total: number; cells: TimeCell[] } | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -107,10 +109,11 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const [statsResult, visitResult, recentResult] = await Promise.all([
+      const [statsResult, visitResult, recentResult, timeResult] = await Promise.all([
         getAdminStats(token),
         getVisitStats(token, 30),
         getRecentActivity(token),
+        getMatchTimeStats(token, 90),
       ]);
 
       if (!statsResult.success) {
@@ -120,6 +123,7 @@ export default function AdminDashboardPage() {
       setStats(statsResult as unknown as Stats);
       if (visitResult.success) setVisit(visitResult);
       if (recentResult.success) setRecent(recentResult);
+      if (timeResult.success) setTimeCells({ days: timeResult.days, total: timeResult.totalRooms, cells: timeResult.cells });
       setStatus("ok");
     };
     load();
@@ -208,6 +212,12 @@ export default function AdminDashboardPage() {
               </div>
             </Panel>
           </>
+        )}
+
+        {timeCells && (
+          <Panel title={`🎾 요일·시간대별 인기 경기 시간 (최근 ${timeCells.days}일 ~ 앞으로 30일, 경기 ${timeCells.total}개)`}>
+            <MatchTimeHeatmap cells={timeCells.cells} />
+          </Panel>
         )}
 
         {/* 핵심 지표 */}
