@@ -158,6 +158,11 @@
 .chip-on { background: var(--court); color: var(--chalk); }
 .chip-off { background: transparent; color: var(--ink); }
 .chip-off-court { background: transparent; color: var(--court); }
+.chip-off, .chip-off-court { transition: background-color 150ms; }
+.chip-off:hover { background: var(--mist); }
+.chip-off-court:hover { background: var(--mist); }
+.chip-on { transition: filter 150ms; }
+.chip-on:hover { filter: brightness(1.12); }
 .badge-win { background: var(--ball); color: var(--court); }
 .badge-lose { background: var(--muted-bg); color: var(--muted-fg); }
 .badge-live { background: var(--clay); color: var(--chalk); }
@@ -367,4 +372,60 @@
   html {
     @apply font-sans;
   }
+}
+
+/* --- 공통 상호작용: 클릭 가능한 모든 요소 ---------------------------------
+   개별 파일에서 일일이 쓰지 않아도 되도록 여기서 한 번에 처리합니다.
+   - 커서: 클릭 가능하면 손가락, 비활성이면 금지 표시
+   - 호버: 배경색이 있든 없든 눈에 띄게 살짝 어두워짐(밝기 필터)
+   개별 요소가 자체 hover 스타일(.btn-clay:hover 등)을 가지면 그쪽이 우선합니다. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  select,
+  label[for],
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"],
+  input[type="date"],
+  input[type="time"],
+  input[type="range"] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  button,
+  a[href],
+  summary {
+    transition: filter 150ms, background-color 150ms, color 150ms, box-shadow 150ms, transform 150ms, opacity 150ms;
+  }
+  button:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover,
+  summary:hover {
+    filter: brightness(0.94);
+  }
+  /* 링크: 버튼을 감싼 링크는 안쪽 버튼이 반응하므로 제외(이중 적용 방지) */
+  a[href]:not(:has(> button)):not([aria-disabled="true"]):hover {
+    filter: brightness(0.94);
+  }
+  button:not(:disabled):active,
+  a[href]:not(:has(> button)):active {
+    filter: brightness(0.88);
+  }
+  /* 큰 카드/목록 행 링크는 밝기 대신 은은한 배경 변화가 더 자연스러움 */
+  a[href].card-link:hover,
+  a[href].row-link:hover {
+    filter: none;
+  }
+  a[href].card-link:hover { box-shadow: 0 6px 18px rgba(47, 74, 51, 0.14); transform: translateY(-1px); }
+  a[href].row-link:hover { background: var(--mist); }
 }

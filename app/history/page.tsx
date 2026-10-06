@@ -99,7 +99,7 @@ export default async function HistoryPage({
                 <Link
                   key={match.id}
                   href={`/matches/${match.id}`}
-                  className="block px-4 py-4 hover:bg-slate-50"
+                  className="row-link block px-4 py-4"
                 >
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-slate-900">{match.court.name}</span>

@@ -39,7 +39,7 @@ export default async function TournamentsPage() {
                 <Link
                   key={t.id}
                   href={`/tournaments/${t.id}`}
-                  className="surface p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+                  className="card-link surface p-5 rounded-2xl shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-2 gap-2">
                     <div className="flex items-center gap-1.5">

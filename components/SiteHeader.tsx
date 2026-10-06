@@ -71,13 +71,13 @@ export default function SiteHeader() {
           {userId ? (
             <>
               <NotificationBell />
-              <Link href="/mypage" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
+              <Link href="/mypage" className="chip-off px-3 py-1.5 rounded-full text-sm font-medium">
                 마이페이지
               </Link>
             </>
           ) : (
             <>
-              <Link href="/login" className="px-3 py-1.5 rounded-full text-sm font-medium text-ink">
+              <Link href="/login" className="chip-off px-3 py-1.5 rounded-full text-sm font-medium">
                 로그인
               </Link>
               <Link href="/signup" className="px-3 py-1.5 rounded-full text-sm font-bold btn-clay">
