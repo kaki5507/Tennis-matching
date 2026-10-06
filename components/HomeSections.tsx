@@ -3,6 +3,12 @@
 
 import Link from "next/link";
 import TennisMascot from "@/components/TennisMascot";
+import { BUCHEON_COURTS } from "@/lib/bucheonCourts";
+
+const BUCHEON_LIST_URL =
+  "https://reserv.bucheon.go.kr/site/main/lending/lendingList?lending_inst_nm=tennis&inst_cate=01";
+const bucheonDetailUrl = (seq: string) =>
+  `https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=${seq}&cp=1&pageSize=16&listType=list&inst_cate=01&lending_inst_nm=tennis`;
 
 const STEPS = [
   { title: "가입하고 프로필 만들기", desc: "구력과 선호 위치를 입력하면 나에게 맞는 방이 보여요." },
@@ -52,6 +58,42 @@ export default function HomeSections() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* 부천 테니스장 예약 바로가기 (부천시 공공서비스예약 사이트로 연결) */}
+      <section className="max-w-6xl mx-auto px-4 py-12">
+        <div className="flex items-end justify-between mb-6 gap-3">
+          <div>
+            <h2 className="font-display text-2xl md:text-3xl text-court">🏟️ 부천 테니스장 예약 바로가기</h2>
+            <p className="text-sm mt-1 text-ink-muted">부천시 공공서비스예약 사이트가 새 창으로 열려요.</p>
+          </div>
+          <a
+            href={BUCHEON_LIST_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-bold underline text-court shrink-0"
+          >
+            전체 목록 보기 ↗
+          </a>
+        </div>
+        <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {BUCHEON_COURTS.map((c) => (
+            <li key={c.facilityId}>
+              <a
+                href={bucheonDetailUrl(c.facilityId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card-link surface rounded-xl px-4 py-3.5 flex items-center justify-between gap-3"
+              >
+                <span className="font-medium text-ink truncate">{c.name}</span>
+                <span className="flex items-center gap-1.5 shrink-0">
+                  {c.indoor && <span className="chip-on text-[10px] font-bold px-2 py-0.5 rounded-full">실내</span>}
+                  <span className="text-court text-sm" aria-hidden="true">↗</span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* 하단 CTA */}
