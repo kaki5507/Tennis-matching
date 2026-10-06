@@ -13,12 +13,14 @@ import { getProfile } from "@/app/actions/profile"; // 👈 유저 진짜 점수
 import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
 import { ChevronDown } from "lucide-react";
 import { getAccessToken } from "@/lib/authToken";
+import { getPopularTimes, type PopularSlot } from "@/app/actions/popularTimes";
 
 export default function CreateMatchPage() {
   const router = useRouter();
   
   // 로그인한 유저 ID 및 상태
   const [isLoading, setIsLoading] = useState(false);
+  const [popular, setPopular] = useState<PopularSlot[]>([]);
 
   // 🌟 내 진짜 NTRP를 저장할 상태
   const [myRoundedNtrp, setMyRoundedNtrp] = useState<number>(2.0); 
@@ -117,6 +119,25 @@ export default function CreateMatchPage() {
   const currentLevel = myRoundedNtrp.toFixed(1);
   const maxLevel = (myRoundedNtrp + 0.5).toFixed(1);
 
+  useEffect(() => {
+    (async () => {
+      setPopular(await getPopularTimes());
+    })();
+  }, []);
+
+  // 인기 시간 칩 클릭: 해당 요일의 가장 가까운 날짜(오늘 포함) + 그 시각으로 채움
+  const applyPopular = (slot: PopularSlot) => {
+    const base = new Date(`${todayStr}T00:00:00`);
+    const diff = (slot.dow - base.getDay() + 7) % 7;
+    base.setDate(base.getDate() + diff);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setFormData((prev) => ({
+      ...prev,
+      matchDate: `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`,
+      startTime: `${pad(slot.hour)}:00`,
+    }));
+  };
+
   const levelOptions = [
     { label: "누구나 (초보 환영)", value: "누구나" },
     { label: `비슷한 실력 (${minLevel} ~ ${maxLevel})`, value: `${minLevel}-${maxLevel}` },
@@ -167,6 +188,24 @@ export default function CreateMatchPage() {
               <p className="text-xs text-slate-400">직접 입력해주세요 (예: 07:30, 19:00)</p>
             </div>
           </div>
+
+          {popular.length > 0 && (
+            <div className="space-y-2 -mt-2">
+              <p className="text-xs font-bold">🔥 요즘 사람이 많이 모이는 시간 (누르면 날짜·시간이 채워져요)</p>
+              <div className="flex flex-wrap gap-1.5">
+                {popular.map((p) => (
+                  <button
+                    key={`${p.dow}-${p.hour}`}
+                    type="button"
+                    onClick={() => applyPopular(p)}
+                    className="chip-off-court px-3 py-1.5 rounded-full text-xs font-medium"
+                  >
+                    {["일", "월", "화", "수", "목", "금", "토"][p.dow]}요일 {String(p.hour).padStart(2, "0")}시 · {p.rooms}개 방
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 2. 게임 종류 & 실력 조건 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
