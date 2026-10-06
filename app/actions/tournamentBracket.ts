@@ -4,7 +4,7 @@
 // 어느 쪽이든 같은 로직으로 동작하고, 이름 표시와 알림 대상만 형식에 따라 달라집니다.
 "use server"
 
-import { isAdmin } from "@/app/actions/admin"
+import { requireAdmin } from "@/lib/adminAuth"
 import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
 import { sendPushToUsers } from "@/app/actions/notification"
 import { buildBracket } from "@/lib/bracket"
@@ -13,12 +13,13 @@ import { teamLabel } from "@/lib/tournamentRules"
 
 /** 관리자: 대진표 없이 현장에서 진행한 대회의 결과(1~3위)를 직접 기록 */
 export async function recordTournamentResult(
-  adminId: string,
+  accessToken: string | null,
   tournamentId: string,
   result: { championId: string; runnerUpId?: string; thirdPlaceId?: string }
 ) {
-  const admin = await isAdmin(adminId)
-  if (!admin) return { success: false, error: "관리자만 가능합니다." }
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
 
   try {
     await finalizeTournament(tournamentId, result.championId, result.runnerUpId || null, result.thirdPlaceId || null)
@@ -91,9 +92,10 @@ async function finalizeTournament(
  * - 복식에서 아직 파트너가 수락하지 않은 팀은 대진표에 넣지 않고 정리(삭제)하며 알립니다.
  * 생성과 동시에 대회는 '진행중'이 되고 신청이 닫히며, 참가자 전원에게 알림이 갑니다.
  */
-export async function generateBracket(adminId: string, tournamentId: string) {
-  const admin = await isAdmin(adminId)
-  if (!admin) return { success: false, error: "관리자만 가능합니다." }
+export async function generateBracket(accessToken: string | null, tournamentId: string) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
 
   try {
     const tournament = await prisma.tournament.findUnique({
@@ -164,9 +166,10 @@ export async function generateBracket(adminId: string, tournamentId: string) {
 }
 
 /** 관리자: 대진표 초기화. 부전승 말고 실제 경기 결과가 하나라도 입력됐으면 막습니다. */
-export async function resetBracket(adminId: string, tournamentId: string) {
-  const admin = await isAdmin(adminId)
-  if (!admin) return { success: false, error: "관리자만 가능합니다." }
+export async function resetBracket(accessToken: string | null, tournamentId: string) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
 
   try {
     const playedCount = await prisma.tournamentMatch.count({
@@ -201,9 +204,10 @@ export async function resetBracket(adminId: string, tournamentId: string) {
  * - 결승(과 3·4위전)이 모두 끝나면 1~3위가 확정되고 대회가 자동 종료됩니다.
  * - 이미 다음 경기 결과까지 입력된 상태에서 승자를 바꾸면 대진이 꼬이므로 막습니다.
  */
-export async function setMatchWinner(adminId: string, matchId: string, winnerId: string, score?: string) {
-  const admin = await isAdmin(adminId)
-  if (!admin) return { success: false, error: "관리자만 가능합니다." }
+export async function setMatchWinner(accessToken: string | null, matchId: string, winnerId: string, score?: string) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
 
   try {
     const match = await prisma.tournamentMatch.findUnique({

@@ -11,7 +11,8 @@ import {
 } from "@/app/actions/tournament";
 import type { ViewerStatus } from "@/app/actions/tournament";
 import { recordTournamentResult, generateBracket, resetBracket, setMatchWinner } from "@/app/actions/tournamentBracket";
-import { isAdmin } from "@/app/actions/admin";
+import { checkAdminAccess } from "@/app/actions/admin";
+import { getAccessToken } from "@/lib/authToken";
 import TournamentBracket, { BracketMatch } from "@/components/TournamentBracket";
 import EntrantList, { TeamRow } from "@/components/EntrantList";
 import TeamRegistration from "@/components/TeamRegistration";
@@ -63,7 +64,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const load = async () => {
     const { data } = await supabase.auth.getUser();
     setUserId(data.user?.id ?? null);
-    if (data.user) setIsAdminUser(await isAdmin(data.user.id));
+    if (data.user) setIsAdminUser(await checkAdminAccess(await getAccessToken()));
 
     const result = await getTournamentDetail(id, data.user?.id);
     if (result.success && result.tournament) {
@@ -102,7 +103,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const handleStatusChange = async (status: "RECRUITING" | "CLOSED" | "ONGOING") => {
     if (!userId) return;
     setIsSubmitting(true);
-    const result = await updateTournamentStatus(userId, id, status);
+    const result = await updateTournamentStatus(await getAccessToken(), id, status);
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
@@ -113,7 +114,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!userId || !resultForm.championId) return alert("우승자를 선택해주세요.");
     if (!confirm("결과를 확정하면 대회가 '종료' 처리되고, 전체 참가자에게 알림이 갑니다. 계속할까요?")) return;
     setIsSubmitting(true);
-    const result = await recordTournamentResult(userId, id, resultForm);
+    const result = await recordTournamentResult(await getAccessToken(), id, resultForm);
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
@@ -125,7 +126,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     const pendingNote = pendingTeamCount > 0 ? `\n(파트너가 아직 수락하지 않은 ${pendingTeamCount}팀은 대진표에서 제외되고 신청이 취소돼요.)` : "";
     if (!confirm(`${entrantCount}${unit}으로 대진표를 만들까요?\n${isDoubles ? "두 선수 NTRP 합" : "NTRP"}이 높은 순으로 시드가 배정되고, 신청이 마감되며 참가자 전원에게 알림이 갑니다.${pendingNote}`)) return;
     setIsSubmitting(true);
-    const result = await generateBracket(userId, id);
+    const result = await generateBracket(await getAccessToken(), id);
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
@@ -136,7 +137,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!userId) return;
     if (!confirm("대진표를 초기화할까요? (결과가 입력된 경기가 있으면 초기화할 수 없어요)")) return;
     setIsSubmitting(true);
-    const result = await resetBracket(userId, id);
+    const result = await resetBracket(await getAccessToken(), id);
     if (!result.success) alert(result.error);
     await load();
     setIsSubmitting(false);
@@ -145,7 +146,7 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   // [NEW] 관리자: 경기 승자 입력 → 자동 진출, 결승까지 끝나면 자동 종료
   const handleSetWinner = async (matchId: string, winnerId: string, score: string) => {
     if (!userId) return;
-    const result = await setMatchWinner(userId, matchId, winnerId, score);
+    const result = await setMatchWinner(await getAccessToken(), matchId, winnerId, score);
     if (!result.success) {
       alert(result.error);
     } else if (result.completed) {

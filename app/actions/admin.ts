@@ -5,10 +5,10 @@ import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireAdmin } from "@/lib/adminAuth"
 
-/** 이 유저가 관리자인지 확인 (모든 admin 함수 호출 전에 반드시 거쳐야 함) */
-export async function isAdmin(userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-  return user?.role === "ADMIN"
+/** 화면 표시용: 이 로그인 토큰의 주인이 관리자인지 (서버가 토큰을 직접 검증). 실제 권한 검사는 각 액션이 따로 합니다. */
+export async function checkAdminAccess(accessToken: string | null): Promise<boolean> {
+  const auth = await requireAdmin(accessToken)
+  return auth.ok
 }
 
 // 모든 날짜 집계는 한국 시간(KST) 기준 "하루"로 계산합니다. (서버는 UTC라 그냥 쓰면 9시간 어긋남)

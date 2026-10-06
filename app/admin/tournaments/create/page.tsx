@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { isAdmin } from "@/app/actions/admin";
+import { checkAdminAccess } from "@/app/actions/admin";
+import { getAccessToken } from "@/lib/authToken";
 import { createTournament } from "@/app/actions/tournament";
 import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
 import { findOrCreateCourt } from "@/app/actions/court";
@@ -15,7 +16,6 @@ import TennisLoader from "@/components/TennisLoader";
 export default function CreateTournamentPage() {
   const router = useRouter();
   const [status, setStatus] = useState<"checking" | "denied" | "ok">("checking");
-  const [adminId, setAdminId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -38,9 +38,8 @@ export default function CreateTournamentPage() {
     const check = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return router.push("/login");
-      const admin = await isAdmin(data.user.id);
+      const admin = await checkAdminAccess(await getAccessToken());
       if (!admin) return setStatus("denied");
-      setAdminId(data.user.id);
       setStatus("ok");
     };
     check();
@@ -69,7 +68,7 @@ export default function CreateTournamentPage() {
       return;
     }
 
-    const result = await createTournament(adminId, {
+    const result = await createTournament(await getAccessToken(), {
       title: form.title,
       description: form.description,
       courtId: courtResult.courtId,

@@ -3,7 +3,7 @@
 // 복식 팀 신청은 tournamentTeam.ts, 대진표·결과는 tournamentBracket.ts 에 있습니다.
 "use server"
 
-import { isAdmin } from "@/app/actions/admin"
+import { requireAdmin } from "@/lib/adminAuth"
 import { logAdminAction, tournamentTitle } from "@/lib/auditLog"
 import { sendPushToUsers } from "@/app/actions/notification"
 import { checkPlayer } from "@/lib/tournamentRules"
@@ -24,11 +24,10 @@ interface CreateTournamentInput {
 }
 
 /** 관리자가 대회를 개설합니다. 개설 즉시, 조건에 맞는 유저 전원에게 알림을 보냅니다. */
-export async function createTournament(adminId: string, data: CreateTournamentInput) {
-  const admin = await isAdmin(adminId)
-  if (!admin) {
-    return { success: false, error: "관리자만 대회를 개설할 수 있습니다." }
-  }
+export async function createTournament(accessToken: string | null, data: CreateTournamentInput) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
   if (data.minNtrp > data.maxNtrp) {
     return { success: false, error: "최소 실력이 최대 실력보다 클 수 없습니다." }
   }
@@ -304,9 +303,10 @@ export async function cancelTournamentRegistration(userId: string, tournamentId:
 }
 
 /** 관리자: 대회 상태 변경 (모집마감/진행중 등) */
-export async function updateTournamentStatus(adminId: string, tournamentId: string, status: "RECRUITING" | "CLOSED" | "ONGOING" | "COMPLETED") {
-  const admin = await isAdmin(adminId)
-  if (!admin) return { success: false, error: "관리자만 가능합니다." }
+export async function updateTournamentStatus(accessToken: string | null, tournamentId: string, status: "RECRUITING" | "CLOSED" | "ONGOING" | "COMPLETED") {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false, error: auth.error }
+  const adminId = auth.userId
 
   try {
     await prisma.tournament.update({ where: { id: tournamentId }, data: { status } })

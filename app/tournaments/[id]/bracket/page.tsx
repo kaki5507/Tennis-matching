@@ -8,7 +8,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getTournamentDetail } from "@/app/actions/tournament";
 import { setMatchWinner } from "@/app/actions/tournamentBracket";
-import { isAdmin } from "@/app/actions/admin";
+import { checkAdminAccess } from "@/app/actions/admin";
+import { getAccessToken } from "@/lib/authToken";
 import BracketViewer from "@/components/BracketViewer";
 import type { BracketMatch } from "@/components/TournamentBracket";
 import CourtLines from "@/components/CourtLines";
@@ -49,7 +50,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
   const load = useCallback(async () => {
     const { data } = await supabase.auth.getUser();
     setUserId(data.user?.id ?? null);
-    if (data.user) setIsAdminUser(await isAdmin(data.user.id));
+    if (data.user) setIsAdminUser(await checkAdminAccess(await getAccessToken()));
 
     const result = await getTournamentDetail(id, data.user?.id);
     if (result.success && result.tournament) {
@@ -73,7 +74,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
 
   const handleSetWinner = async (matchId: string, winnerId: string, score: string) => {
     if (!userId) return;
-    const result = await setMatchWinner(userId, matchId, winnerId, score);
+    const result = await setMatchWinner(await getAccessToken(), matchId, winnerId, score);
     if (!result.success) {
       alert(result.error);
     } else if (result.completed) {

@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { isAdmin } from "@/app/actions/admin";
+import { checkAdminAccess } from "@/app/actions/admin";
+import { getAccessToken } from "@/lib/authToken";
 import TennisMascot from "@/components/TennisMascot";
 import NotificationBell from "@/components/NotificationBell";
 import { Menu, X } from "lucide-react";
@@ -29,7 +30,7 @@ export default function SiteHeader() {
     const check = async () => {
       const { data } = await supabase.auth.getUser();
       setUserId(data.user?.id ?? null);
-      if (data.user) setIsAdminUser(await isAdmin(data.user.id));
+      if (data.user) setIsAdminUser(await checkAdminAccess(await getAccessToken()));
     };
     check();
 
