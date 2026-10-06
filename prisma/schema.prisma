@@ -420,10 +420,12 @@ model PageView {
   path      String // 방문한 경로 (예: /matches, /matches/[id])
   device    String // "mobile" | "desktop"
   userId    String?  @db.Uuid // 로그인 안 했으면 null
+  visitorId String?  @map("visitor_id") // 브라우저별 익명 ID (비로그인 방문자도 "하루 몇 명"으로 셀 수 있게)
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([path])
   @@index([createdAt])
+  @@index([visitorId])
   @@map("page_views")
 }
 

@@ -55,24 +55,3 @@ export async function withdrawUser(userId: string) {
     return { success: false, error: "탈퇴 처리 중 오류가 발생했습니다." }
   }
 }
-
-/**
- * 관리자용: 유저를 밴 처리.
- * 아직 별도 관리자 화면은 없지만, 신고 누적/허위구력 적발 로직이 붙을 때
- * 이 함수를 호출하도록 연결하면 됩니다.
- */
-export async function banUser(userId: string, reason: string) {
-  try {
-    // TODO: User 모델에 banReason 컬럼이 추가되면 여기서 함께 저장하도록 변경
-    console.log(`유저 밴 처리 (userId=${userId}, 사유=${reason})`)
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { isBanned: true },
-    })
-    return { success: true }
-  } catch (error) {
-    console.error("유저 밴 처리 에러:", error)
-    return { success: false, error: "정지 처리 중 오류가 발생했습니다." }
-  }
-}

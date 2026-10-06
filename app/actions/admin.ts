@@ -1,9 +1,9 @@
 // app/actions/admin.ts
 "use server"
 
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { Prisma } from "@prisma/client"
+import { prisma } from "@/lib/tournamentData"
+import { requireAdmin } from "@/lib/adminAuth"
 
 /** 이 유저가 관리자인지 확인 (모든 admin 함수 호출 전에 반드시 거쳐야 함) */
 export async function isAdmin(userId: string): Promise<boolean> {
@@ -11,25 +11,33 @@ export async function isAdmin(userId: string): Promise<boolean> {
   return user?.role === "ADMIN"
 }
 
-function daysAgo(n: number) {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  d.setHours(0, 0, 0, 0)
-  return d
+// 모든 날짜 집계는 한국 시간(KST) 기준 "하루"로 계산합니다. (서버는 UTC라 그냥 쓰면 9시간 어긋남)
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000
+
+/** KST 기준 n일 전 00:00 (UTC Date로 반환). 0이면 오늘 0시 */
+function kstDayStart(daysBack: number) {
+  const k = new Date(Date.now() + KST_OFFSET_MS)
+  return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - daysBack) - KST_OFFSET_MS)
+}
+function kstMonthStart() {
+  const k = new Date(Date.now() + KST_OFFSET_MS)
+  return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), 1) - KST_OFFSET_MS)
+}
+function kstDateKey(d: Date) {
+  return new Date(d.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10)
 }
 
 /**
  * 관리자 대시보드에 필요한 모든 통계를 한 번에 모아서 반환합니다.
- * 호출하는 쪽(페이지)에서 반드시 isAdmin()으로 먼저 권한을 확인해야 합니다.
+ * 로그인 토큰을 서버에서 검증해 관리자인지 확인합니다. (requireAdmin)
  */
-export async function getAdminStats(requesterId: string) {
-  const admin = await isAdmin(requesterId)
-  if (!admin) {
-    return { success: false, error: "관리자만 접근할 수 있습니다." as const }
+export async function getAdminStats(accessToken: string | null) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) {
+    return { success: false, error: auth.error }
   }
 
-  const now = new Date()
-  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const startOfThisMonth = kstMonthStart()
 
   const [
     totalUsers,
@@ -48,8 +56,8 @@ export async function getAdminStats(requesterId: string) {
     deviceBreakdown,
   ] = await Promise.all([
     prisma.user.count({ where: { deletedAt: null } }),
-    prisma.user.count({ where: { createdAt: { gte: daysAgo(0) } } }),
-    prisma.user.count({ where: { createdAt: { gte: daysAgo(7) } } }),
+    prisma.user.count({ where: { createdAt: { gte: kstDayStart(0) } } }),
+    prisma.user.count({ where: { createdAt: { gte: kstDayStart(6) } } }),
     prisma.user.count({ where: { createdAt: { gte: startOfThisMonth } } }),
     prisma.match.count(),
     prisma.match.count({ where: { status: "COMPLETED" } }),
@@ -137,31 +145,126 @@ export async function getAdminStats(requesterId: string) {
 }
 
 /**
- * 일자별 가입자 수 추이 (최근 N일). 관리자 대시보드의 그래프용.
+ * 일자별 방문자/조회수/가입자 추이 + 방문자 요약 + 시간대별 분포 (KST 기준).
+ * "방문자"는 브라우저별 익명 ID(visitor_id) 또는 로그인 유저 ID 기준 고유 수입니다.
+ * 익명 ID가 도입되기 전의 옛 기록은 비로그인이면 방문자 수에서 빠집니다(조회수에는 포함).
  */
-export async function getSignupTrend(requesterId: string, days: number = 30) {
-  const admin = await isAdmin(requesterId)
-  if (!admin) return { success: false, error: "관리자만 접근할 수 있습니다." as const }
+export async function getVisitStats(accessToken: string | null, days: number = 30) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
 
-  const since = daysAgo(days)
-  const users = await prisma.user.findMany({
-    where: { createdAt: { gte: since } },
-    select: { createdAt: true },
-  })
+  const span = Math.min(Math.max(Math.floor(days), 1), 90)
+  const since = kstDayStart(span - 1)
+  const today = kstDayStart(0)
+  const week = kstDayStart(6)
+  const month = kstDayStart(29)
 
-  // 날짜별로 집계 (DB groupBy가 날짜 단위 truncate를 지원 안 해서 JS에서 처리)
-  const counts = new Map<string, number>()
-  for (let i = 0; i <= days; i++) {
-    const d = daysAgo(days - i)
-    counts.set(d.toISOString().slice(0, 10), 0)
+  const kstTs = Prisma.sql`((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Seoul')`
+  const visitor = Prisma.sql`COALESCE(visitor_id, user_id::text)`
+
+  const [daily, summary, hourly, signups] = await Promise.all([
+    prisma.$queryRaw<{ d: string; pv: bigint; uv: bigint }[]>(Prisma.sql`
+      SELECT to_char(${kstTs}::date, 'YYYY-MM-DD') AS d,
+             COUNT(*) AS pv,
+             COUNT(DISTINCT ${visitor}) AS uv
+      FROM page_views
+      WHERE created_at >= ${since}
+      GROUP BY 1 ORDER BY 1`),
+    prisma.$queryRaw<
+      { uv_today: bigint; uv_week: bigint; uv_month: bigint; uv_total: bigint; pv_today: bigint; pv_total: bigint }[]
+    >(Prisma.sql`
+      SELECT COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${today}) AS uv_today,
+             COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${week}) AS uv_week,
+             COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${month}) AS uv_month,
+             COUNT(DISTINCT ${visitor}) AS uv_total,
+             COUNT(*) FILTER (WHERE created_at >= ${today}) AS pv_today,
+             COUNT(*) AS pv_total
+      FROM page_views`),
+    prisma.$queryRaw<{ h: number; pv: bigint }[]>(Prisma.sql`
+      SELECT EXTRACT(HOUR FROM ${kstTs})::int AS h, COUNT(*) AS pv
+      FROM page_views
+      WHERE created_at >= ${month}
+      GROUP BY 1 ORDER BY 1`),
+    prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+  ])
+
+  // 빈 날짜도 0으로 채워서 그래프가 끊기지 않게
+  const byDate = new Map<string, { date: string; visitors: number; pageViews: number; signups: number }>()
+  for (let i = span - 1; i >= 0; i--) {
+    const key = kstDateKey(kstDayStart(i))
+    byDate.set(key, { date: key, visitors: 0, pageViews: 0, signups: 0 })
   }
-  users.forEach((u) => {
-    const key = u.createdAt.toISOString().slice(0, 10)
-    counts.set(key, (counts.get(key) ?? 0) + 1)
+  daily.forEach((r) => {
+    const row = byDate.get(r.d)
+    if (row) {
+      row.visitors = Number(r.uv)
+      row.pageViews = Number(r.pv)
+    }
   })
+  signups.forEach((u) => {
+    const row = byDate.get(kstDateKey(u.createdAt))
+    if (row) row.signups += 1
+  })
+
+  const hourlyFull = Array.from({ length: 24 }, (_, h) => ({ hour: h, pageViews: 0 }))
+  hourly.forEach((r) => {
+    if (r.h >= 0 && r.h < 24) hourlyFull[r.h].pageViews = Number(r.pv)
+  })
+
+  const sm = summary[0]
+  return {
+    success: true as const,
+    series: Array.from(byDate.values()),
+    hourly: hourlyFull,
+    summary: {
+      visitorsToday: Number(sm?.uv_today ?? 0),
+      visitorsWeek: Number(sm?.uv_week ?? 0),
+      visitorsMonth: Number(sm?.uv_month ?? 0),
+      visitorsTotal: Number(sm?.uv_total ?? 0),
+      pageViewsToday: Number(sm?.pv_today ?? 0),
+      pageViewsTotal: Number(sm?.pv_total ?? 0),
+    },
+  }
+}
+
+/** 최근 가입자 / 최근 개설된 방 (대시보드 "최근 활동" 패널용) */
+export async function getRecentActivity(accessToken: string | null) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+
+  const [users, matches] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: { id: true, nickname: true, tennisLevel: true, createdAt: true, isBanned: true },
+    }),
+    prisma.match.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        status: true,
+        gameType: true,
+        matchDate: true,
+        createdAt: true,
+        court: { select: { name: true } },
+        host: { select: { nickname: true } },
+      },
+    }),
+  ])
 
   return {
     success: true as const,
-    trend: Array.from(counts.entries()).map(([date, count]) => ({ date, count })),
+    users: users.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() })),
+    matches: matches.map((m) => ({
+      id: m.id,
+      status: m.status,
+      gameType: m.gameType,
+      courtName: m.court.name,
+      hostNickname: m.host.nickname,
+      matchDate: m.matchDate.toISOString(),
+      createdAt: m.createdAt.toISOString(),
+    })),
   }
 }
