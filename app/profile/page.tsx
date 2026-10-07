@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getProfile, updateProfile } from "@/app/actions/profile";
+import { checkNickname } from "@/app/actions/nickname";
 import { getAccessToken } from "@/lib/authToken";
 import { Position } from "@prisma/client"; // 💡 [추가] any 대신 사용할 정확한 스키마 타입
 
 export default function ProfileEditPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [nickStatus, setNickStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
   // 💡 [수정] preferredPos에 as Position을 선언하여 TypeScript에게 타입을 확실히 알려줍니다.
   const [formData, setFormData] = useState({
@@ -52,6 +54,7 @@ export default function ProfileEditPage() {
   }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (e.target.name === "nickname") setNickStatus(null);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -91,8 +94,17 @@ export default function ProfileEditPage() {
             <Input 
               id="nickname" name="nickname" required
               value={formData.nickname} onChange={handleChange} 
-              placeholder="예: 테니스왕자" 
+              placeholder="예: 테니스왕자" maxLength={20}
+              onBlur={async () => {
+                if (!formData.nickname.trim()) return;
+                const r = await checkNickname(await getAccessToken(), formData.nickname);
+                setNickStatus({ ok: r.available, message: r.message });
+              }}
+              aria-describedby="nickname-status"
             />
+            <p id="nickname-status" aria-live="polite" className={`text-xs min-h-4 ${nickStatus ? (nickStatus.ok ? "text-ok" : "text-danger") : "text-ink-muted"}`}>
+              {nickStatus ? nickStatus.message : "2~20자, 다른 회원과 겹치지 않아야 해요."}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

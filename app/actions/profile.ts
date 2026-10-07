@@ -4,6 +4,8 @@
 import { Position } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireUser } from "@/lib/serverAuth"
+import { normalizeNickname, nicknameFormatError, NICKNAME_TAKEN_MESSAGE } from "@/lib/nickname"
+import { isNicknameTaken } from "@/lib/nicknameDb"
 
 // 프로필 데이터 타입 설계도 (이메일은 로그인 계정 정보라 여기서 바꿀 수 없습니다)
 interface ProfileData {
@@ -20,9 +22,11 @@ export async function updateProfile(accessToken: string | null, data: ProfileDat
     const auth = await requireUser(accessToken)
     if (!auth.ok) return { success: false, error: auth.error }
 
-    const nickname = (data.nickname ?? "").trim()
-    if (nickname.length < 2 || nickname.length > 20) {
-      return { success: false, error: "닉네임은 2~20자로 입력해주세요." }
+    const nickname = normalizeNickname(data.nickname)
+    const nickError = nicknameFormatError(nickname)
+    if (nickError) return { success: false, error: nickError }
+    if (await isNicknameTaken(nickname, auth.userId)) {
+      return { success: false, error: NICKNAME_TAKEN_MESSAGE }
     }
     if (data.gender !== "MALE" && data.gender !== "FEMALE") {
       return { success: false, error: "성별 값이 올바르지 않습니다." }
@@ -44,6 +48,9 @@ export async function updateProfile(accessToken: string | null, data: ProfileDat
 
     return { success: true }
   } catch (error) {
+    if ((error as { code?: string })?.code === "P2002") {
+      return { success: false, error: NICKNAME_TAKEN_MESSAGE }
+    }
     console.error("프로필 업데이트 에러:", error)
     return { success: false, error: "프로필 저장에 실패했습니다." }
   }

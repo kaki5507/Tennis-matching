@@ -4,6 +4,8 @@ import { getMaintenanceState, MAINTENANCE_BLOCK_MESSAGE } from "@/lib/maintenanc
 import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/tournamentData"
 import { verifyToken } from "@/lib/serverAuth"
+import { normalizeNickname, nicknameFormatError, NICKNAME_TAKEN_MESSAGE } from "@/lib/nickname"
+import { isNicknameTaken } from "@/lib/nicknameDb"
 import { fetchVerifiedIdentity, unverifiedSignupAllowed, unverifiedIdentityFor } from "@/lib/portone"
 
 function safeEqual(a: string, b: string) {
@@ -41,10 +43,9 @@ export async function createUserInDB(data: {
       return { success: false, error: "이용약관과 개인정보처리방침에 동의해야 가입할 수 있습니다." }
     }
 
-    const nickname = (data.nickname ?? "").trim()
-    if (nickname.length < 2 || nickname.length > 20) {
-      return { success: false, error: "닉네임은 2~20자로 입력해주세요." }
-    }
+    const nickname = normalizeNickname(data.nickname)
+    const nickError = nicknameFormatError(nickname)
+    if (nickError) return { success: false, error: nickError }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email ?? "") || data.email.length > 200) {
       return { success: false, error: "이메일 형식이 올바르지 않습니다." }
     }
@@ -84,6 +85,10 @@ export async function createUserInDB(data: {
       return { success: false, error: "이미 가입된 본인인증 정보입니다." }
     }
 
+    if (await isNicknameTaken(nickname)) {
+      return { success: false, error: NICKNAME_TAKEN_MESSAGE }
+    }
+
     // 관리자 초대코드 검증 — 틀렸으면 그냥 조용히 일반회원으로 가입시킵니다.
     // (틀린 코드라고 에러를 띄우면 코드가 존재한다는 사실 자체가 단서가 되므로 실패를 드러내지 않음)
     const adminSecret = process.env.ADMIN_SIGNUP_CODE
@@ -106,7 +111,16 @@ export async function createUserInDB(data: {
     })
     return { success: true }
   } catch (error) {
+    // 동시에 같은 닉네임으로 가입한 경우 DB의 유니크 인덱스가 막아줍니다.
+    if (isUniqueViolation(error) && (await isNicknameTaken(normalizeNickname(data.nickname)).catch(() => false))) {
+      return { success: false, error: NICKNAME_TAKEN_MESSAGE }
+    }
     console.error("DB 생성 에러:", error)
     return { success: false, error: "프로필 생성에 실패했습니다." }
   }
+}
+
+/** Prisma 유니크 제약 위반(P2002) 여부 */
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002"
 }

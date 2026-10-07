@@ -1,5 +1,6 @@
 "use client"; // 상태 관리(useState)를 쓰기 위해 맨 위에 추가!
 
+import { checkNickname } from "@/app/actions/nickname";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -17,6 +18,7 @@ export default function SignupPage() {
   // 사용자가 입력한 값을 담아둘 공간
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
+  const [nickStatus, setNickStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
@@ -326,7 +328,19 @@ export default function SignupPage() {
 
             <div className="space-y-2">
               <Label htmlFor="nickname">닉네임</Label>
-              <Input id="nickname" type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} required />
+              <Input
+                id="nickname" type="text" value={nickname} maxLength={20} required
+                onChange={(e) => { setNickname(e.target.value); setNickStatus(null); }}
+                onBlur={async () => {
+                  if (!nickname.trim()) return;
+                  const r = await checkNickname(null, nickname);
+                  setNickStatus({ ok: r.available, message: r.message });
+                }}
+                aria-describedby="nickname-status"
+              />
+              <p id="nickname-status" aria-live="polite" className={`text-xs min-h-4 ${nickStatus ? (nickStatus.ok ? "text-ok" : "text-danger") : "text-ink-muted"}`}>
+                {nickStatus ? nickStatus.message : "2~20자, 다른 회원과 겹치지 않아야 해요."}
+              </p>
             </div>
 
             <div className="space-y-2">
