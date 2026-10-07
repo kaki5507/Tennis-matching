@@ -200,7 +200,14 @@ export default function SignupPage() {
 
     } catch (error: unknown) { // any 대신 unknown 사용
       if (error instanceof Error) {
-        setErrorMsg(error.message);
+        // 브라우저가 서버와 통신 자체에 실패한 경우 (iOS: "Load failed", 그 외: "Failed to fetch")
+        if (/load failed|failed to fetch|networkerror|network request failed/i.test(error.message)) {
+          setErrorMsg(
+            "서버와 연결하지 못했어요. 잠시 후 다시 시도해 주세요. 만약 인증 메일이 이미 도착했다면 가입은 처리된 것일 수 있어요. 메일함을 확인하고 로그인해 보세요."
+          );
+        } else {
+          setErrorMsg(error.message);
+        }
       } else {
         setErrorMsg("가입 중 오류가 발생했습니다.");
       }
