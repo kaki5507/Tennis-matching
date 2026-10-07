@@ -1,6 +1,7 @@
 "use client"; // 상태 관리(useState)를 쓰기 위해 맨 위에 추가!
 
 import { checkNickname } from "@/app/actions/nickname";
+import { signUpWithoutEmailVerification } from "@/app/actions/testSignup";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -151,6 +152,28 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
+      // 1-1. [테스트 단계] 임시 가입이고 서버에 관리자 키가 있으면, 이메일 인증 없이 가입하고 바로 로그인
+      if (verifiedId === "dev") {
+        const fast = await signUpWithoutEmailVerification({
+          email, password, nickname, termsAgreed, privacyAgreed, marketingAgreed,
+          adminCode: wantsAdmin ? adminCode : undefined,
+        });
+        if (fast.success) {
+          const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+          if (loginError) {
+            alert("회원가입이 완료되었습니다! 로그인해주세요.");
+            router.push("/login");
+          } else {
+            alert("회원가입이 완료되었습니다! 환영합니다 🎾");
+            router.push("/");
+            router.refresh();
+          }
+          return;
+        }
+        if (fast.code !== "DISABLED") throw new Error(fast.error ?? "가입에 실패했습니다.");
+        // DISABLED → 서버 키가 없는 것이므로 아래의 일반 가입 흐름으로 진행
+      }
+
       // 2. Supabase Auth에 회원가입 요청
       const { data, error } = await supabase.auth.signUp({
         email,

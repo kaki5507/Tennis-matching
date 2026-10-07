@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import { getEmailBypassMode, confirmEmailForTest } from "@/app/actions/testSignup";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,6 +21,10 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [infoMsg, setInfoMsg] = useState("");
   const [needsConfirm, setNeedsConfirm] = useState(false); // 이메일 인증이 안 된 계정
+  const [emailBypass, setEmailBypass] = useState(false); // 테스트 단계: 이메일 인증 건너뛰기 가능
+  useEffect(() => {
+    getEmailBypassMode().then((m) => setEmailBypass(m.emailBypass)).catch(() => {});
+  }, []);
 
 const handleLogin = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // 폼 제출 시 새로고침 방지
@@ -61,6 +66,26 @@ const handleLogin = async (e: React.SyntheticEvent) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // [테스트 단계] 이메일 인증을 건너뛰고 바로 로그인
+  const handleSkipConfirm = async () => {
+    setErrorMsg("");
+    setInfoMsg("");
+    if (!email || !password) return setErrorMsg("이메일과 비밀번호를 입력한 뒤 눌러 주세요.");
+    setIsLoading(true);
+    const r = await confirmEmailForTest(email);
+    if (!r.success) {
+      setIsLoading(false);
+      return setErrorMsg(r.error ?? "처리에 실패했습니다.");
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setIsLoading(false);
+    if (error) {
+      return setErrorMsg(error.message.includes("Invalid login credentials") ? "이메일이나 비밀번호가 올바르지 않습니다." : error.message);
+    }
+    router.push("/");
+    router.refresh();
   };
 
   // 인증 메일 다시 보내기
@@ -138,6 +163,11 @@ const handleLogin = async (e: React.SyntheticEvent) => {
           </Button>
         </form>
 
+        {needsConfirm && emailBypass && (
+          <button type="button" onClick={handleSkipConfirm} disabled={isLoading} className="mt-4 w-full text-sm font-bold btn-clay rounded-lg py-2.5">
+            테스트 모드: 이메일 인증 건너뛰고 로그인
+          </button>
+        )}
         {needsConfirm && (
           <button type="button" onClick={handleResend} className="mt-4 w-full text-sm font-medium btn-outline-court border rounded-lg py-2.5">
             인증 메일 다시 받기
