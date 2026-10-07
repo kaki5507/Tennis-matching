@@ -39,15 +39,24 @@ export async function fetchVerifiedIdentity(identityVerificationId: string): Pro
   }
 }
 
+/** 포트원 본인인증이 실제로 동작 가능한 상태인지: 서버 비밀키 + 상점 ID + 채널 키가 모두 있어야 함 */
+export function portoneFullyConfigured(): boolean {
+  return !!(
+    process.env.PORTONE_API_SECRET &&
+    process.env.NEXT_PUBLIC_PORTONE_STORE_ID &&
+    process.env.NEXT_PUBLIC_PORTONE_CHANNEL_KEY
+  )
+}
+
 /**
  * 본인인증 없이 가입(임시 가입) 허용 여부.
- *  - 포트원 키(PORTONE_API_SECRET)가 있으면 실연동 중이므로 항상 거부
- *  - 키가 없으면 어차피 본인인증 자체가 불가능하므로 임시 가입을 허용 (테스트/오픈 초기용)
- *  - 키가 없어도 ALLOW_UNVERIFIED_SIGNUP=false 로 명시하면 거부 (긴급 차단 스위치)
- * PG 계약 후 PORTONE_API_SECRET을 넣으면 자동으로 닫힙니다.
+ *  - 포트원 설정 3종(비밀키/상점ID/채널키)이 모두 있으면 실연동 중이므로 거부
+ *  - 하나라도 비어 있으면 본인인증 자체가 불가능하므로 임시 가입을 허용 (테스트/오픈 초기용)
+ *  - 설정이 없어도 ALLOW_UNVERIFIED_SIGNUP=false 로 명시하면 거부 (긴급 차단 스위치)
+ * PG 계약 후 3종을 모두 넣으면 자동으로 닫힙니다.
  */
 export function unverifiedSignupAllowed(): boolean {
-  if (process.env.PORTONE_API_SECRET) return false
+  if (portoneFullyConfigured()) return false
   return process.env.ALLOW_UNVERIFIED_SIGNUP !== "false"
 }
 

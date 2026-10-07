@@ -1,14 +1,16 @@
 import { describe, it, expect, afterEach } from "vitest"
 import { unverifiedSignupAllowed, unverifiedIdentityFor, isIdentityVerified } from "@/lib/portone"
 
-const KEYS = ["PORTONE_API_SECRET", "NODE_ENV", "ALLOW_UNVERIFIED_SIGNUP"] as const
+const KEYS = ["PORTONE_API_SECRET", "NEXT_PUBLIC_PORTONE_STORE_ID", "NEXT_PUBLIC_PORTONE_CHANNEL_KEY", "NODE_ENV", "ALLOW_UNVERIFIED_SIGNUP"] as const
 const saved: Record<string, string | undefined> = {}
 KEYS.forEach((k) => (saved[k] = process.env[k]))
 
-function setEnv(secret: string | undefined, nodeEnv: string, allow: string | undefined) {
+function setEnv(secret: string | undefined, nodeEnv: string, allow: string | undefined, publicKeys = !!secret) {
   const env = process.env as Record<string, string | undefined>
   const set = (k: string, v: string | undefined) => (v === undefined ? delete env[k] : (env[k] = v))
   set("PORTONE_API_SECRET", secret)
+  set("NEXT_PUBLIC_PORTONE_STORE_ID", publicKeys ? "store-x" : undefined)
+  set("NEXT_PUBLIC_PORTONE_CHANNEL_KEY", publicKeys ? "channel-x" : undefined)
   set("NODE_ENV", nodeEnv)
   set("ALLOW_UNVERIFIED_SIGNUP", allow)
 }
@@ -32,6 +34,11 @@ describe("unverifiedSignupAllowed (UT-PRT-001)", () => {
     setEnv(secret as string | undefined, nodeEnv as string, allow as string | undefined)
     expect(unverifiedSignupAllowed()).toBe(want)
   })
+})
+
+it("비밀키만 있고 상점ID/채널키가 없으면(설정 미완료) 임시 가입이 열려 있다", () => {
+  setEnv("secret", "production", undefined, false)
+  expect(unverifiedSignupAllowed()).toBe(true)
 })
 
 describe("unverifiedIdentityFor", () => {
