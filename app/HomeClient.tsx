@@ -5,9 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
-import TennisMascot from "@/components/TennisMascot";
+import HeroCourt from "@/components/HeroCourt";
+import { Target, Thermometer, MapPin } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
-import CourtLines from "@/components/CourtLines";
 import NotificationBell from "@/components/NotificationBell";
 
 export default function HomeClient({ children }: { children?: ReactNode }) {
@@ -77,83 +77,67 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
         </div>
       </header>
 
-      {/* 히어로 섹션 */}
+      {/* 히어로 섹션: 하드코트 블루 */}
       <main className="flex-1">
-        <section className="relative overflow-hidden">
-          {/* 배경 코트라인 장식 (우측에 크게, 옅게) */}
-          <CourtLines
-            className="absolute -right-32 -top-10 w-[720px] h-[500px] opacity-[0.07] pointer-events-none hidden md:block text-court"
-          />
-
-          <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center relative">
-            {/* 왼쪽: 카피 */}
-            <div className="text-center md:text-left">
-              <h1 className="font-display text-4xl md:text-6xl leading-tight mb-6 text-ink">
-                오늘도 코트에서
+        <section className="hero-blue relative overflow-hidden">
+          <div className="max-w-6xl mx-auto px-4 pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center relative">
+            {/* 왼쪽: 큰 타이포 + 행동 버튼 */}
+            <div>
+              <h1 className="font-display text-[2.6rem] md:text-7xl leading-[1.08] mb-6 text-white">
+                실력 맞는
                 <br />
-                만나요
+                파트너,
+                <br />
+                오늘 코트에서.
               </h1>
-              <p className="text-lg mb-10 max-w-md mx-auto md:mx-0 text-ink-muted">
-                실력, 연령, 성별 조건에 맞는 매칭 방을 찾거나 직접 만들어보세요.
-                매너 온도로 쾌적한 경기를 보장합니다.
+              <p className="text-lg mb-9 max-w-md text-white/85 leading-relaxed">
+                레벨·연령·성별 조건으로 방을 찾고, 매너 온도로 쾌적하게 치세요. 방 하나 열면 끝이에요.
               </p>
 
               {user ? (
-                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Link href="/matches">
-                    <Button
-                      className="h-12 px-8 text-lg w-full sm:w-auto text-white hover:opacity-90 bg-clay text-white"
-                    >
-                      매칭 방 찾기
-                    </Button>
+                    <Button className="h-13 px-8 text-lg w-full sm:w-auto btn-clay">매칭 방 찾기</Button>
                   </Link>
                   <Link href="/matches/create">
-                    <Button
-                      variant="outline"
-                      className="h-12 px-8 text-lg w-full sm:w-auto btn-outline-court"
-                    >
+                    <Button variant="outline" className="h-13 px-8 text-lg w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">
                       방 만들기
                     </Button>
                   </Link>
                 </div>
               ) : (
-                <Link href="/signup">
-                  <Button
-                    className="h-12 px-8 text-lg text-white hover:opacity-90 bg-clay text-white"
-                  >
-                    지금 바로 시작하기
-                  </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href="/signup">
+                    <Button className="h-13 px-8 text-lg w-full sm:w-auto btn-clay">지금 바로 시작하기</Button>
+                  </Link>
+                  <Link href="/matches">
+                    <Button variant="outline" className="h-13 px-8 text-lg w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">
+                      열린 방 구경하기
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
 
-            {/* 오른쪽: 마스코트 일러스트 */}
-            <div className="flex justify-center">
-              <div
-                className="relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center mascot-frame"
-              >
-                <TennisMascot pose="wave" className="w-48 h-48 md:w-60 md:h-60" />
-              </div>
-            </div>
+            {/* 오른쪽: 하드코트 + 마스코트 */}
+            <HeroCourt />
           </div>
+          <div className="surface-band" />
         </section>
 
-        {/* 특징 3가지 - 코트 라인으로 구획 */}
+        {/* 세 가지 코트 표면 = 세 가지 장점 */}
         <section className="max-w-6xl mx-auto px-4 py-16">
-          <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x border-line">
+          <div className="grid md:grid-cols-3 gap-5">
             {[
-              { emoji: "🎯", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
-              { emoji: "🌡️", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
-              { emoji: "📍", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
-            ].map((f) => (
-              <div key={f.title} className="py-8 sm:py-0 sm:px-8 text-center first:pl-0 last:pr-0">
-                <div className="text-3xl mb-3">{f.emoji}</div>
-                <h3 className="font-display text-xl mb-2 text-court">
-                  {f.title}
-                </h3>
-                <p className="text-sm text-ink-muted">
-                  {f.desc}
-                </p>
+              { cls: "panel-hard", Icon: Target, tag: "하드코트", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
+              { cls: "panel-grass", Icon: Thermometer, tag: "잔디", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
+              { cls: "panel-clay", Icon: MapPin, tag: "클레이", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
+            ].map(({ cls, Icon, tag, title, desc }) => (
+              <div key={title} className={`${cls} panel-lines rounded-2xl p-8 pt-9 min-h-[220px] flex flex-col`}>
+                <span className="relative z-10 self-start text-xs font-extrabold bg-white/95 text-ink rounded-full px-3 py-1">{tag}</span>
+                <Icon className="relative z-10 w-10 h-10 mt-6 mb-3" strokeWidth={2.4} aria-hidden />
+                <h3 className="relative z-10 font-display text-2xl mb-1.5">{title}</h3>
+                <p className="relative z-10 text-sm text-white/90 leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>

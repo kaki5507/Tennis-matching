@@ -13,18 +13,23 @@
 /* --- 1. 토큰 -------------------------------------------------------------- */
 :root {
   /* 브랜드 컬러 (실제 코트/공/클레이 색감에서 추출) */
-  --clay: #c1512f;   /* 클레이코트 브릭오렌지 — CTA, 강조 */
-  --court: #2f4a33;  /* 짙은 코트그린 — 헤더, 진한 텍스트 */
-  --ball: #d7de23;   /* 테니스공 연두 — 마스코트, 하이라이트 */
-  --chalk: #fbf8f1;  /* 라인화이트 — 카드 배경 */
-  --mist: #eef1e4;   /* 옅은 세이지 — 페이지 배경 */
-  --ink: #24301f;    /* 웜톤 다크 — 본문 텍스트 */
-  --line: #dfe3d4;   /* 옅은 구분선/테두리 */
+  /* 세 가지 코트 표면: 하드(블루) · 잔디(그린) · 클레이(흙) + 라인 화이트 + 공 */
+  --court: #0b3c91;  /* 딥 하드코트 블루 — 제목, 헤더 요소, 진한 배경 */
+  --court-soft: #1e63e9; /* 쨍한 하드코트 블루 — 그라데이션 끝, 포인트 */
+  --grass: #2a9a44;  /* 잔디 그린 */
+  --grass-soft: #e0f4e5;
+  --clay: #d4532b;   /* 클레이코트 흙색 — CTA, 강조 */
+  --clay-deep: #a8431f; /* 클레이 그림자/눌림 */
+  --clay-soft: #fbe6dc;
+  --ball: #dfe62a;   /* 테니스공 연두 — 마스코트, 하이라이트 */
+  --chalk: #ffffff;  /* 라인 화이트 — 카드 배경 */
+  --mist: #edf3fc;   /* 옅은 하늘빛 — 페이지 배경 */
+  --ink: #0e1c3a;    /* 짙은 네이비 — 본문 텍스트 */
+  --line: #d3dff1;   /* 옅은 구분선/테두리 */
 
   /* 의미 색 (성공/수락 등 긍정 상태) */
-  --ok: #3f7a4a;
-  --ok-soft: #e8f2e9;
-  --court-soft: #3d6042; /* 코트그린 그라데이션 끝색 */
+  --ok: #1f8a3b;
+  --ok-soft: #e0f4e5;
 
   /* 성별 구분 색 (대진표/명단에서 남복·여복·혼복을 한눈에 구분) */
   --gender-m: #3f6fa3;      /* 남성: 차분한 코발트 */
@@ -45,29 +50,29 @@
   --trophy-bronze-light: #e8c19f;
 
   /* 상태 색: 경고(대기/주의), 위험(거절/오류), 정보(안내/확정) - 하드코딩 대신 이 토큰만 사용 */
-  --warn: #8a5a00;
+  --warn: #8a5200;
   --warn-soft: #fbf1d3;
   --danger: #b23a2a;
   --danger-soft: #fbe9e5;
-  --info: #2f5f8f;
-  --info-soft: #e6eef7;
+  --info: #1651c4;
+  --info-soft: #e3ecfd;
 
   /* 보조 색 */
   --silver: #e5e7eb; /* 준우승 */
   --bronze: #f3d9c4; /* 3위 */
   --muted-bg: #f1f5f9;
   --muted-fg: #94a3b8;
-  --overlay: rgba(20, 30, 20, 0.6); /* 모달 뒷배경 */
+  --overlay: rgba(8, 20, 50, 0.6); /* 모달 뒷배경 */
 
   /* 코트그린 배경 위에 얹는 반투명 레이어 */
-  --on-court-panel: rgba(251, 248, 241, 0.08);
-  --on-court-chip: rgba(251, 248, 241, 0.12);
-  --on-court-border: rgba(251, 248, 241, 0.35);
-  --on-court-idle: rgba(251, 248, 241, 0.15);
+  --on-court-panel: rgba(255, 255, 255, 0.08);
+  --on-court-chip: rgba(255, 255, 255, 0.12);
+  --on-court-border: rgba(255, 255, 255, 0.35);
+  --on-court-idle: rgba(255, 255, 255, 0.15);
 
   /* 대진표 */
-  --bracket-border: rgba(47, 74, 51, 0.15);
-  --bracket-divider: rgba(47, 74, 51, 0.1);
+  --bracket-border: rgba(11, 60, 145, 0.15);
+  --bracket-divider: rgba(11, 60, 145, 0.1);
   --bracket-winner: rgba(215, 222, 35, 0.28);
 
   /* 글꼴: Pretendard Variable (본문·제목 공통, 무게로 위계를 만듭니다) */
@@ -94,13 +99,16 @@
 /* --- 3. 레이아웃 / 표면 --------------------------------------------------- */
 .page-bg { background: var(--mist); }   /* 페이지 전체 배경 */
 .tint { background: var(--mist); }      /* 카드 안쪽 보조 영역 */
-.surface {                              /* 기본 카드 */
+.surface {                              /* 기본 카드: 또렷한 라인 + 아래쪽 단단한 그림자 */
   background: var(--chalk);
-  border: 1px solid var(--bracket-divider);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 0 var(--line);
 }
-.app-bar {                              /* 상단 고정 바 */
-  background: var(--chalk);
-  border-bottom: 1px solid var(--line);
+.app-bar {                              /* 상단 고정 바: 위쪽에 하드·잔디·클레이 3색 띠 */
+  background:
+    linear-gradient(90deg, var(--court-soft) 0 34%, var(--grass) 34% 67%, var(--clay) 67% 100%) top / 100% 4px no-repeat,
+    var(--chalk);
+  border-bottom: 1.5px solid var(--line);
 }
 .admin-panel {                          /* 관리자 전용 영역 */
   background: var(--chalk);
@@ -109,7 +117,7 @@
 .modal-overlay { background: var(--overlay); }
 .mascot-frame {                         /* 랜딩 마스코트 원형 프레임 */
   background: var(--chalk);
-  border: 3px dashed var(--ball);
+  border: 4px solid var(--ball);
 }
 
 /* --- 4. 배경 / 테두리 유틸 ------------------------------------------------ */
@@ -144,9 +152,12 @@
 .btn-clay {
   background: var(--clay);
   color: #fff;
-  transition: filter 150ms;
+  font-weight: 800;
+  box-shadow: 0 3px 0 var(--clay-deep);
+  transition: filter 150ms, transform 100ms, box-shadow 100ms;
 }
-.btn-clay:hover { filter: brightness(1.08); }
+.btn-clay:hover { filter: brightness(1.06); }
+.btn-clay:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--clay-deep); }
 .btn-outline-court {
   border-color: var(--court);
   color: var(--court);
@@ -242,7 +253,7 @@
   height: 8px;
   border-radius: 4px;
   background: linear-gradient(180deg, var(--court-soft), var(--court));
-  box-shadow: 0 3px 0 rgba(47, 74, 51, 0.15);
+  box-shadow: 0 3px 0 rgba(11, 60, 145, 0.15);
 }
 
 /* 금 트로피를 여러 번 딴 경우: 은은하게 빛나는 효과 */
@@ -441,7 +452,7 @@
   a[href].row-link:hover {
     filter: none;
   }
-  a[href].card-link:hover { box-shadow: 0 6px 18px rgba(47, 74, 51, 0.14); transform: translateY(-1px); }
+  a[href].card-link:hover { box-shadow: 0 6px 18px rgba(11, 60, 145, 0.14); transform: translateY(-1px); }
   a[href].row-link:hover { background: var(--mist); }
 }
 
@@ -508,3 +519,25 @@
 @media (prefers-reduced-motion: reduce) {
   .mascot-zzz, .mascot-twinkle, .mascot-bubble, .mascot-float { animation: none !important; opacity: 1; }
 }
+
+
+/* --- 랜딩: 하드코트 히어로 / 3색 표면 패널 ------------------------------- */
+.hero-blue {
+  background:
+    radial-gradient(120% 90% at 85% 10%, var(--court-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--court) 0%, #0a2f73 100%);
+  color: #fff;
+}
+.surface-band { height: 10px; background: linear-gradient(90deg, var(--court-soft) 0 34%, var(--grass) 34% 67%, var(--clay) 67% 100%); }
+.panel-hard  { background: linear-gradient(160deg, var(--court-soft), var(--court)); color: #fff; }
+.panel-grass { background: linear-gradient(160deg, #34b052, #1c7a35); color: #fff; }
+.panel-clay  { background: linear-gradient(160deg, #e36a3f, var(--clay-deep)); color: #fff; }
+/* 패널 안쪽 코트 라인 */
+.panel-lines { position: relative; }
+.panel-lines::before {
+  content: ""; position: absolute; inset: 10px; border: 2px solid rgba(255,255,255,0.35); border-radius: 6px; pointer-events: none;
+}
+.panel-lines::after {
+  content: ""; position: absolute; left: 10px; right: 10px; top: 58%; border-top: 2px solid rgba(255,255,255,0.35); pointer-events: none;
+}
+.ticket-chip { background: #fff; color: var(--ink); box-shadow: 0 4px 0 rgba(0,0,0,0.18); }

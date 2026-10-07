@@ -28,7 +28,7 @@ const LABEL: Record<MascotPose, string> = {
   sad: "시무룩한 테니스공 캐릭터",
 };
 
-const INK = "#2F4A33";
+const INK = "#16284f";
 const FUR = "#B7C21E";
 const BALL = "#D7DE23";
 const CLAY = "#C1512F";
@@ -70,16 +70,19 @@ function Sparkle({ x, y, s = 1, fill, delay = 0 }: { x: number; y: number; s?: n
 function Face({ pose }: { pose: MascotPose }) {
   const cheeks = (
     <>
-      <ellipse cx="70" cy="136" rx="8" ry="5" fill={CLAY} opacity="0.28" />
-      <ellipse cx="130" cy="136" rx="8" ry="5" fill={CLAY} opacity="0.28" />
+      <ellipse cx="64" cy="143" rx="9" ry="5.5" fill="#ff7a6b" opacity="0.4" />
+      <ellipse cx="136" cy="143" rx="9" ry="5.5" fill="#ff7a6b" opacity="0.4" />
     </>
   );
+  // 크고 반짝이는 눈: 큰 타원 + 큰/작은 하이라이트 2개
   const dotEyes = (dx = 0, dy = 0) => (
     <>
-      <circle cx={82 + dx} cy={120 + dy} r="6" fill={INK} />
-      <circle cx={118 + dx} cy={120 + dy} r="6" fill={INK} />
-      <circle cx={84 + dx} cy={117.5 + dy} r="2" fill="#fff" />
-      <circle cx={120 + dx} cy={117.5 + dy} r="2" fill="#fff" />
+      <ellipse cx={80 + dx} cy={124 + dy} rx="10" ry="12" fill={INK} />
+      <ellipse cx={120 + dx} cy={124 + dy} rx="10" ry="12" fill={INK} />
+      <circle cx={84 + dx} cy={118.5 + dy} r="4.4" fill="#fff" />
+      <circle cx={124 + dx} cy={118.5 + dy} r="4.4" fill="#fff" />
+      <circle cx={76.5 + dx} cy={129 + dy} r="2.2" fill="#fff" opacity="0.9" />
+      <circle cx={116.5 + dx} cy={129 + dy} r="2.2" fill="#fff" opacity="0.9" />
     </>
   );
 
@@ -87,13 +90,16 @@ function Face({ pose }: { pose: MascotPose }) {
     case "sad":
       return (
         <>
-          <circle cx="82" cy="124" r="5.5" fill={INK} />
-          <circle cx="118" cy="124" r="5.5" fill={INK} />
-          <circle cx="83.8" cy="121.8" r="1.8" fill="#fff" />
-          <circle cx="119.8" cy="121.8" r="1.8" fill="#fff" />
-          <path d="M 72 110 Q 80 106 90 111 M 128 110 Q 120 106 110 111" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
-          <path d="M 84 148 Q 100 138 116 148" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
-          <path d="M 125 130 q 4 8 0 12 q -4 -4 0 -12 Z" fill="#7DB7E8" />
+          <ellipse cx="80" cy="127" rx="10" ry="12" fill={INK} />
+          <ellipse cx="120" cy="127" rx="10" ry="12" fill={INK} />
+          <circle cx="84" cy="121" r="4.6" fill="#fff" />
+          <circle cx="124" cy="121" r="4.6" fill="#fff" />
+          <circle cx="77" cy="132" r="2.3" fill="#fff" opacity="0.9" />
+          <circle cx="117" cy="132" r="2.3" fill="#fff" opacity="0.9" />
+          <path d="M 68 108 Q 78 103 91 110 M 132 108 Q 122 103 109 110" stroke={INK} strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          <path d="M 88 150 Q 100 142 112 150" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
+          <path d="M 94 140 q 6 12 0 18" stroke="none" fill="none" />
+          <path d="M 134 134 q 5 10 0 15 q -5 -5 0 -15 Z" fill="#7DB7E8" />
         </>
       );
     case "sleep":
@@ -112,9 +118,9 @@ function Face({ pose }: { pose: MascotPose }) {
       return (
         <>
           {dotEyes(4, -1)}
-          <path d="M 72 108 Q 82 103 92 108" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
-          <path d="M 108 106 Q 118 100 128 106" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
-          <path d="M 90 144 Q 100 140 110 144" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
+          <path d="M 70 104 Q 80 99 92 104" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path d="M 108 101 Q 120 95 130 101" stroke={INK} strokeWidth="3" strokeLinecap="round" fill="none" />
+          <path d="M 94 148 Q 102 144 110 148" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
           {cheeks}
         </>
       );
@@ -132,8 +138,8 @@ function Face({ pose }: { pose: MascotPose }) {
       return (
         <>
           {dotEyes()}
-          <path d="M 70 108 L 92 113 M 130 108 L 108 113" stroke={INK} strokeWidth="3.5" strokeLinecap="round" fill="none" />
-          <path d="M 86 140 Q 100 150 114 140" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
+          <path d="M 68 104 L 92 109 M 132 104 L 108 109" stroke={INK} strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          <path d="M 88 146 Q 100 156 112 146" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
           {cheeks}
         </>
       );
@@ -141,7 +147,7 @@ function Face({ pose }: { pose: MascotPose }) {
       return (
         <>
           {dotEyes()}
-          <path d="M 82 138 Q 100 153 118 138" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
+          <path d="M 88 146 Q 100 158 112 146" stroke={INK} strokeWidth="4" strokeLinecap="round" fill="none" />
           {cheeks}
         </>
       );

@@ -9,13 +9,25 @@ import { usePathname } from "next/navigation";
 
 type Mood = "happy" | "wink" | "cheer" | "look";
 
-const INK = "#2F4A33";
+const INK = "#16284f";
 
 export function moodFor(pathname: string): Mood {
   if (pathname.startsWith("/matches")) return "wink";
   if (pathname.startsWith("/tournaments")) return "cheer";
   if (pathname.startsWith("/history")) return "look";
   return "happy";
+}
+
+/** 크고 반짝이는 눈 (left: 왼쪽 눈만) */
+function Eyes({ dx = 0, left = false }: { dx?: number; left?: boolean }) {
+  const one = (cx: number) => (
+    <g key={cx}>
+      <ellipse cx={cx + dx} cy="39" rx="4.6" ry="5.4" fill={INK} />
+      <circle cx={cx + dx + 1.6} cy="36.6" r="2" fill="#fff" />
+      <circle cx={cx + dx - 1.6} cy="41.4" r="1" fill="#fff" opacity="0.9" />
+    </g>
+  );
+  return <>{left ? one(23) : [one(23), one(41)]}</>;
 }
 
 export function LogoBall({ mood, className }: { mood: Mood; className?: string }) {
@@ -39,16 +51,15 @@ export function LogoBall({ mood, className }: { mood: Mood; className?: string }
 
       {mood === "happy" && (
         <>
-          <circle cx="24" cy="38" r="2.6" fill={INK} />
-          <circle cx="40" cy="38" r="2.6" fill={INK} />
-          <path d="M 25 45 Q 32 51 39 45" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <Eyes />
+          <path d="M 27 47 Q 32 52 37 47" stroke={INK} strokeWidth="2.2" strokeLinecap="round" fill="none" />
         </>
       )}
       {mood === "wink" && (
         <>
-          <circle cx="24" cy="38" r="2.6" fill={INK} />
-          <path d="M 36.5 38.5 Q 40 35 43.5 38.5" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
-          <path d="M 25 45 Q 32 51 39 45" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <Eyes left />
+          <path d="M 35 39 Q 40 34 45 39" stroke={INK} strokeWidth="2.6" strokeLinecap="round" fill="none" />
+          <path d="M 27 47 Q 32 52 37 47" stroke={INK} strokeWidth="2.2" strokeLinecap="round" fill="none" />
         </>
       )}
       {mood === "cheer" && (
@@ -60,13 +71,12 @@ export function LogoBall({ mood, className }: { mood: Mood; className?: string }
       )}
       {mood === "look" && (
         <>
-          <circle cx="26" cy="38" r="2.6" fill={INK} />
-          <circle cx="42" cy="38" r="2.6" fill={INK} />
-          <path d="M 28 46 Q 33 49 38 46" stroke={INK} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <Eyes dx={2} />
+          <path d="M 30 48 Q 34 50.5 38 48" stroke={INK} strokeWidth="2.2" strokeLinecap="round" fill="none" />
         </>
       )}
-      <ellipse cx="17" cy="44" rx="3.4" ry="2.1" fill="#C1512F" opacity="0.28" />
-      <ellipse cx="47" cy="44" rx="3.4" ry="2.1" fill="#C1512F" opacity="0.28" />
+      <ellipse cx="14.5" cy="46" rx="4" ry="2.4" fill="#ff7a6b" opacity="0.45" />
+      <ellipse cx="49.5" cy="46" rx="4" ry="2.4" fill="#ff7a6b" opacity="0.45" />
     </svg>
   );
 }
