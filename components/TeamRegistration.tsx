@@ -108,7 +108,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
         >
           팀 신청 취소
         </button>
-        {message && <p className="text-xs text-red-500 mt-2">{message}</p>}
+        {message && <p className="text-xs text-danger mt-2">{message}</p>}
       </div>
     );
   }
@@ -126,7 +126,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
         >
           제안 취소
         </button>
-        {message && <p className="text-xs text-red-500 mt-2">{message}</p>}
+        {message && <p className="text-xs text-danger mt-2">{message}</p>}
       </div>
     );
   }
@@ -154,7 +154,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
             거절
           </button>
         </div>
-        {message && <p className="text-xs text-red-500 mt-3">{message}</p>}
+        {message && <p className="text-xs text-danger mt-3">{message}</p>}
       </div>
     );
   }
@@ -240,7 +240,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
       {preview && (
         <div
           className={`mt-3 rounded-xl px-4 py-3 text-sm ${
-            preview.overCap || preview.outOfRange ? "bg-red-50 text-red-600" : "bg-ok-soft text-ok"
+            preview.overCap || preview.outOfRange ? "alert-danger" : "bg-ok-soft text-ok"
           }`}
         >
           <div className="flex items-center gap-2 font-bold">
@@ -263,7 +263,7 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
         </div>
       )}
 
-      {message && <p className="text-xs text-red-500 mt-3">{message}</p>}
+      {message && <p className="text-xs text-danger mt-3">{message}</p>}
 
       <button
         type="button"

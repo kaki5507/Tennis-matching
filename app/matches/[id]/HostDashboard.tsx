@@ -26,10 +26,12 @@ interface Applicant {
 }
 
 export default function HostDashboard({
+  hostId: matchHostId,
   matchId,
   currentStatus,
   costPerPerson,
 }: {
+  hostId: string; // 이 방의 방장 id (화면 표시 여부 결정용 - 권한 검사는 서버 액션이 따로 함)
   matchId: string;
   currentStatus: string;
   costPerPerson: number; // [NEW] 1인당 참가비 (입금확인 UI에 표시용)
@@ -37,6 +39,7 @@ export default function HostDashboard({
   const router = useRouter();
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [hostId, setHostId] = useState<string | null>(null);
+  const [viewerChecked, setViewerChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // 💡 2. 수락/거절 후 신청자 목록만 다시 불러오는 전용 함수
@@ -66,10 +69,16 @@ export default function HostDashboard({
 
     const initData = async () => {
       const { data } = await supabase.auth.getUser();
+      // 방장이 아니면 신청자 목록을 요청하지 않음 (서버도 방장만 허용)
+      if (!data.user || data.user.id !== matchHostId) {
+        if (isMounted) setViewerChecked(true);
+        return;
+      }
       const result = await getMatchApplications(await getAccessToken(), matchId);
 
       if (isMounted) {
-        if (data.user) setHostId(data.user.id);
+        setHostId(data.user.id);
+        setViewerChecked(true);
 
         if (result.success && result.participants) {
           const formattedData: Applicant[] = result.participants.map((p) => ({
@@ -94,7 +103,7 @@ export default function HostDashboard({
     return () => {
       isMounted = false; // 화면 벗어나면 상태 업데이트 중지
     };
-  }, [matchId]);
+  }, [matchId, matchHostId]);
 
   // 신청자 수락/거절 처리
   const handleStatusChange = async (participantId: string, newStatus: "ACCEPTED" | "REJECTED") => {
@@ -140,10 +149,12 @@ export default function HostDashboard({
     setIsLoading(false);
   };
 
+  if (!viewerChecked || !hostId) return null;
+
   return (
     <div className="mt-12 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
       {/* 왕관 뱃지 디자인 */}
-      <div className="absolute top-0 right-0 bg-ok-soft0 text-white px-4 py-1 rounded-bl-xl font-bold text-sm">
+      <div className="absolute top-0 right-0 bg-court-solid px-4 py-1 rounded-bl-xl font-bold text-sm">
         방장 전용
       </div>
 
@@ -183,15 +194,15 @@ export default function HostDashboard({
                   </Link>
                   <span className={`text-xs px-2 py-1 rounded-full font-bold ${
                     applicant.status === "ACCEPTED" ? "badge-ok" :
-                    applicant.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                    "bg-yellow-100 text-yellow-700"
+                    applicant.status === "REJECTED" ? "badge-danger" :
+                    "badge-warn"
                   }`}>
                     {applicant.status === "ACCEPTED" ? "수락됨" : applicant.status === "REJECTED" ? "거절됨" : "대기중"}
                   </span>
                   {/* [NEW] 수락된 참가자에게만 입금확인 배지 표시 */}
                   {applicant.status === "ACCEPTED" && costPerPerson > 0 && (
                     <span className={`text-xs px-2 py-1 rounded-full font-bold ${
-                      applicant.paymentConfirmed ? "bg-blue-100 text-blue-700" : "bg-slate-200 text-slate-500"
+                      applicant.paymentConfirmed ? "badge-info" : "bg-slate-200 text-slate-500"
                     }`}>
                       {applicant.paymentConfirmed ? "💰 입금확인" : "입금대기"}
                     </span>
@@ -200,7 +211,7 @@ export default function HostDashboard({
                 <div className="text-sm text-slate-600 mt-1 flex gap-3">
                   <span>🎾 구력: {applicant.user.tennisLevel}</span>
                   {applicant.user.ntrpScore && (
-                    <span className="font-bold text-indigo-600">
+                    <span className="font-bold text-info">
                       🏆 NTRP: {(Math.round(Number(applicant.user.ntrpScore) * 2) / 2).toFixed(1)}
                     </span>
                   )}
@@ -217,7 +228,7 @@ export default function HostDashboard({
                       variant={applicant.paymentConfirmed ? "outline" : "default"}
                       onClick={() => handleTogglePayment(applicant.id, applicant.paymentConfirmed)}
                       disabled={isLoading}
-                      className={applicant.paymentConfirmed ? "border-blue-300 text-blue-600" : "bg-blue-600 hover:bg-blue-700"}
+                      className={applicant.paymentConfirmed ? "border-info text-info" : "btn-info"}
                     >
                       {applicant.paymentConfirmed ? "입금 취소" : `입금확인 (${costPerPerson.toLocaleString()}원)`}
                     </Button>
@@ -237,7 +248,7 @@ export default function HostDashboard({
                       size="sm" variant="outline" 
                       onClick={() => handleStatusChange(applicant.id, "REJECTED")}
                       disabled={isLoading}
-                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      className="btn-outline-danger"
                     >
                       거절
                     </Button>

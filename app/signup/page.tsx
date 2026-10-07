@@ -203,7 +203,7 @@ export default function SignupPage() {
 
         {/* 에러가 있으면 보여주는 빨간 박스 */}
         {errorMsg && (
-          <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center">
+          <div className="mb-6 p-3 alert-danger text-sm rounded-lg text-center">
             {errorMsg}
           </div>
         )}
@@ -235,7 +235,7 @@ export default function SignupPage() {
               type="button"
               onClick={handleDevBypass}
               disabled={isVerifying}
-              className="w-full mt-2 text-xs text-amber-700 bg-amber-50 border border-dashed border-amber-300 rounded-lg py-2 hover:bg-amber-100"
+              className="w-full mt-2 text-xs alert-warn border border-dashed rounded-lg py-2 hover:brightness-95"
             >
               본인인증 없이 가입하기 (임시)
             </button>

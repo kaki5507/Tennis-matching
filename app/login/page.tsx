@@ -65,7 +65,7 @@ const handleLogin = async (e: React.SyntheticEvent) => {
 
         {/* 에러가 있으면 보여주는 빨간 박스 */}
         {errorMsg && (
-          <div className="mb-6 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center">
+          <div className="mb-6 p-3 alert-danger text-sm rounded-lg text-center">
             {errorMsg}
           </div>
         )}

@@ -1,27 +1,22 @@
 // app/matches/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PrismaClient, MatchStatus } from "@prisma/client"
+import { prisma } from "@/lib/tournamentData";
 import { Button } from "@/components/ui/button";
 import JoinButton from "./JoinButton";
 import HostDashboard from "./HostDashboard";
 import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
-import { supabase } from "@/lib/supabase"; // 👈 [추가] 로그인 정보 가져오기 위한 도구
+import ShareButton from "./ShareButton";
+import { dayLabel, seatInfo } from "@/lib/matchDisplay";
 import MatchChatWrapper from "./MatchChatWrapper";
 import CourtMap from "@/components/CourtMap";
-
-const prisma = new PrismaClient();
 
 // 1. params의 타입을 Promise로 감싸줍니다.
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   
   // 2. params 값이 완전히 넘어올 때까지 기다려(await) 줍니다!
   const resolvedParams = await params;
-  
-  // 🌟 [추가] 서버에서 현재 로그인한 유저가 누구인지 확인합니다.
-  const { data: authData } = await supabase.auth.getUser();
-  const currentUserId = authData.user?.id || null;
   
   const match = await prisma.match.findUnique({
     where: { 
@@ -35,9 +30,17 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   });
 
   // 방이 없거나 삭제된 경우, Next.js의 404(Not Found) 페이지를 보여줍니다.
-  if (!match) {
+  if (!match || match.deletedAt) {
     notFound();
   }
+
+  const dateStr = match.matchDate.toISOString().slice(0, 10);
+  const day = dayLabel(dateStr);
+  const accepted = match.participants.filter((p) => p.status === "ACCEPTED").length;
+  const waiting = match.participants.filter((p) => p.status === "PENDING").length;
+  const seat = seatInfo(match.gameType, accepted);
+  const statusBadge =
+    match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
 
   return (
     <div className="min-h-screen page-bg py-12 px-4">
@@ -47,11 +50,17 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         <div className="px-8 py-10 text-white hero-court">
           <div className="flex justify-between items-start mb-4">
             <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
-              {match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : "🔴 마감됨"}
+              {statusBadge}
             </span>
-            <span className="font-medium bg-black/10 px-3 py-1 rounded-full text-sm">
-              {match.gameType}
-            </span>
+            <div className="flex items-center gap-2">
+              {day && match.status === "OPEN" && (
+                <span className="font-bold bg-clay text-chalk px-3 py-1 rounded-full text-sm">{day}</span>
+              )}
+              <span className="font-medium bg-black/10 px-3 py-1 rounded-full text-sm">
+                {match.gameType}
+              </span>
+              <ShareButton title={`${match.court?.name ?? "테니스"} ${match.gameType} 매칭`} />
+            </div>
           </div>
           <h1 className="text-3xl font-bold mb-3">
             {new Date(match.matchDate).toLocaleDateString("ko-KR", { month: 'long', day: 'numeric', weekday: 'short' })} 테니스 칠 분 구해요!
@@ -87,6 +96,14 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               </p>
             </div>
             <div>
+              <p className="text-sm text-slate-500 mb-1">참여 현황</p>
+              <p className="font-bold text-slate-900">
+                {seat.joined}
+                {seat.capacity ? `/${seat.capacity}명` : "명"}
+                {waiting > 0 && <span className="font-normal text-slate-500 text-sm"> · 대기 {waiting}</span>}
+              </p>
+            </div>
+            <div>
               <p className="text-sm text-slate-500 mb-1">방장</p>
               <p className="font-bold text-slate-900">{match.host?.nickname || "알 수 없음"}</p>
             </div>
@@ -114,9 +131,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
           </div>
 
           {/* 방장 대시보드 (방장에게만 보임) */}
-          {currentUserId === match.hostId && (
-            <HostDashboard matchId={match.id} currentStatus={match.status} costPerPerson={match.costPerPerson} />
-          )}
+          {/* 서버는 로그인 정보를 알 수 없으므로 항상 내려보내고, 화면(브라우저)에서 방장인 경우에만 보여줍니다. 실제 권한은 서버 액션이 따로 검사 */}
+          <HostDashboard hostId={match.hostId} matchId={match.id} currentStatus={match.status} costPerPerson={match.costPerPerson} />
 
           {/* 하단 액션 버튼 */}
           <div className="flex gap-4 mb-10">

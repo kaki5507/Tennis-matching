@@ -114,7 +114,7 @@ export default function CourtSearch({ onSelect, selected }: Props) {
             </Button>
           </div>
 
-          {errorMsg && <p className="text-xs text-red-500">{errorMsg}</p>}
+          {errorMsg && <p className="text-xs text-danger">{errorMsg}</p>}
 
           {results.length > 0 && (
             <ul className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-56 overflow-y-auto">

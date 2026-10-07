@@ -117,7 +117,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
         onClick={handleCancel} 
         disabled={isLoading}
         variant="outline"
-        className="flex-1 h-14 text-lg border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
+        className="flex-1 h-14 text-lg btn-outline-danger"
       >
         {partStatus === "ACCEPTED" ? "수락됨 (참여 취소하기)" : "신청 대기 중 (취소하기)"}
       </Button>
@@ -129,7 +129,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
     <Button 
       onClick={handleJoin} 
       disabled={isLoading}
-      className="flex-1 h-14 text-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+      className="flex-1 h-14 text-lg btn-clay shadow-sm"
     >
       참여 신청하기
     </Button>

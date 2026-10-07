@@ -123,7 +123,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
             
             {/* 유저 정보 영역 */}
             <div className="flex items-center gap-3 md:w-1/4 shrink-0">
-              <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold">
+              <div className="w-10 h-10 badge-info rounded-full flex items-center justify-center font-bold">
                 {(user.nickname || "?").charAt(0).toUpperCase()}
               </div>
               <span className="font-bold text-slate-800 truncate">
@@ -192,9 +192,9 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
                 id={`noshow-${user.id}`}
                 checked={evalData[user.id]?.isNoShow || false}
                 onChange={(e) => handleEvalChange(user.id, "isNoShow", e.target.checked)}
-                className="w-4 h-4 text-red-600 rounded border-slate-300"
+                className="w-4 h-4 text-danger rounded border-slate-300"
               />
-              <label htmlFor={`noshow-${user.id}`} className="text-sm font-medium text-red-600 cursor-pointer">
+              <label htmlFor={`noshow-${user.id}`} className="text-sm font-medium text-danger cursor-pointer">
                 노쇼 🚨
               </label>
             </div>
@@ -205,7 +205,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
         <Button 
           type="submit" 
           disabled={isLoading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white h-12 text-lg font-bold"
+          className="w-full btn-clay h-12 text-lg font-bold"
         >
           {isLoading ? "제출 중..." : "동료 평가 제출하기"}
         </Button>

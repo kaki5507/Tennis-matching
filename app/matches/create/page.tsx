@@ -232,7 +232,7 @@ export default function CreateMatchPage() {
               <div className="flex justify-between items-center">
                 <Label>요구 실력</Label>
                 {isVerified ? (
-                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold badge-info px-2 py-0.5 rounded-full">
                     내 기준: {myRoundedNtrp.toFixed(1)}
                   </span>
                 ) : (
@@ -246,7 +246,7 @@ export default function CreateMatchPage() {
                   name="targetLevel"
                   value={formData.targetLevel}
                   onChange={handleChange}
-                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-indigo-600"
+                  className="flex h-10 w-full appearance-none rounded-md border border-slate-200 surface pl-3 pr-9 py-2 text-sm outline-none focus:border-[color:var(--court)]"
                 >
                   {levelOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>

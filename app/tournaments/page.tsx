@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, { text: string; className: string }> = {
   RECRUITING: { text: "모집중", className: "badge-ok" },
-  CLOSED: { text: "모집마감", className: "bg-amber-100 text-amber-700" },
-  ONGOING: { text: "진행중", className: "bg-blue-100 text-blue-700" },
+  CLOSED: { text: "모집마감", className: "badge-warn" },
+  ONGOING: { text: "진행중", className: "badge-info" },
   COMPLETED: { text: "종료", className: "bg-slate-100 text-slate-500" },
 };
 

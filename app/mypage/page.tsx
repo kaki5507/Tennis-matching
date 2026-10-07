@@ -143,7 +143,7 @@ export default function MyPage() {
                 {/* 2. 동료 평가 기반 진짜 NTRP (3회 이상이면 점수 공개, 아니면 분석 중 표시) */}
                 {/* 🌟 [수정 후] 0.5 단위 반올림 적용 */}
                 {evalCount >= 3 ? (
-                  <span className="bg-indigo-50 text-indigo-700 text-sm px-3 py-1 rounded-full font-bold border border-indigo-200 shadow-sm">
+                  <span className="badge-info text-sm px-3 py-1 rounded-full font-bold shadow-sm">
                     🏆 검증된 NTRP: {(Math.round(Number(profile?.ntrpScore) * 2) / 2).toFixed(1)}
                   </span>
                 ) : (
@@ -188,7 +188,7 @@ export default function MyPage() {
 
         {/* [NEW] 허위구력 자동조정 이력 안내 (본인에게만 표시) */}
         {profile && (profile.levelMismatchCount ?? 0) > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6 text-sm text-amber-800">
+          <div className="alert-warn border rounded-2xl p-4 mt-6 text-sm">
             ⚠️ 동료 평가 결과를 바탕으로 구력 정보가 자동 조정된 이력이 {profile.levelMismatchCount}회 있어요.
             신고하신 구력과 동료들의 평가가 반복해서 크게 다르면, 서비스 이용이 제한될 수 있습니다.
           </div>

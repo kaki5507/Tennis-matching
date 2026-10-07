@@ -102,11 +102,11 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
   return (
     <div className="surface rounded-2xl shadow-sm overflow-hidden flex flex-col h-[500px]">
       {/* 채팅창 헤더 */}
-      <div className="bg-indigo-600 px-6 py-4">
+      <div className="hero-court px-6 py-4">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
           💬 참여자 전용 실시간 채팅방
         </h3>
-        <p className="text-indigo-200 text-sm">코트 번호와 세부 일정을 조율해 보세요!</p>
+        <p className="text-chalk opacity-80 text-sm">코트 번호와 세부 일정을 조율해 보세요!</p>
       </div>
 
       {/* 채팅 내역 영역 */}
@@ -135,7 +135,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
                 <div 
                   className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-[15px] shadow-sm ${
                     isMe 
-                      ? "bg-indigo-600 text-white rounded-tr-sm" 
+                      ? "bg-court-solid rounded-tr-sm" 
                       : "surface text-slate-800 rounded-tl-sm"
                   }`}
                 >
@@ -161,12 +161,12 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="메시지를 입력하세요..."
-          className="flex-1 tint border-slate-200 focus-visible:ring-indigo-500"
+          className="flex-1 tint border-slate-200 focus-visible:ring-[color:var(--court)]"
         />
         <Button 
           type="submit" 
           disabled={isSending || !message.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6"
+          className="btn-clay px-6"
         >
           {isSending ? "..." : "전송"}
         </Button>

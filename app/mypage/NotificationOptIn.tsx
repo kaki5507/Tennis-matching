@@ -67,7 +67,7 @@ export default function NotificationOptIn({ marketingAgreed }: Props) {
         {status === "loading" ? "설정 중..." : "이 브라우저에서 알림 받기"}
       </Button>
       {status === "denied" && (
-        <p className="text-xs text-red-500 mt-2">
+        <p className="text-xs text-danger mt-2">
           알림 권한이 거부되었거나 설정에 실패했어요. 브라우저 알림 설정을 확인해주세요.
         </p>
       )}

@@ -3,7 +3,7 @@ export default function TermsPage() {
     <div className="max-w-2xl mx-auto px-4 py-12 text-slate-700 leading-relaxed">
       <h1 className="text-2xl heading mb-6">이용약관</h1>
 
-      <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+      <div className="mb-8 p-4 alert-warn border rounded-lg text-sm">
         ⚠️ 이 페이지는 개발용 템플릿입니다. 실제 서비스 오픈 전 반드시 서비스 실정에
         맞게 수정하고, 법률 전문가의 검토를 받아주세요.
       </div>

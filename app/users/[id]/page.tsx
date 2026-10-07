@@ -77,7 +77,7 @@ const MEDAL: Record<1 | 2 | 3, { emoji: string; label: string; cls: string }> = 
 
 const RESULT_LABEL: Record<string, { text: string; className: string }> = {
   WIN: { text: "승", className: "badge-ok" },
-  LOSS: { text: "패", className: "bg-red-100 text-red-700" },
+  LOSS: { text: "패", className: "badge-danger" },
   DRAW: { text: "무", className: "bg-slate-100 text-slate-600" },
 };
 
@@ -209,7 +209,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
             <div className="text-xs text-slate-500">승</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-red-500">{record.losses}</div>
+            <div className="text-2xl font-bold text-danger">{record.losses}</div>
             <div className="text-xs text-slate-500">패</div>
           </div>
           <div>
