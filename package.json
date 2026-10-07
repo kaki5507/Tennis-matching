@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@portone/browser-sdk": "^0.1.10",
@@ -37,6 +38,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "to-ico": "^1.1.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

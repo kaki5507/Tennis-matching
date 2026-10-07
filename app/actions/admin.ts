@@ -4,6 +4,7 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireAdmin } from "@/lib/adminAuth"
+import { regionOf } from "@/lib/region"
 
 /** 화면 표시용: 이 로그인 토큰의 주인이 관리자인지 (서버가 토큰을 직접 검증). 실제 권한 검사는 각 액션이 따로 합니다. */
 export async function checkAdminAccess(accessToken: string | null): Promise<boolean> {
@@ -308,17 +309,6 @@ export async function getMatchTimeStats(accessToken: string | null, days: number
   }))
   const totalRooms = cells.reduce((a, c) => a + c.rooms, 0)
   return { success: true as const, days: span, totalRooms, cells }
-}
-
-/** 주소 앞부분으로 지역(시/군/구 단위) 이름 만들기: "경기도 부천시 ..." → "경기 부천시" */
-function regionOf(address: string): string {
-  const t = address.trim().split(/\s+/)
-  if (t.length === 0 || !t[0]) return "기타"
-  const first = t[0]
-    .replace(/특별자치시|특별자치도|특별시|광역시|자치시|자치도/g, "")
-    .replace(/(경기|강원|충청북|충청남|전라북|전라남|경상북|경상남|제주)도$/, "$1")
-  const second = t[1] && /(시|군|구)$/.test(t[1]) ? t[1] : ""
-  return second ? `${first} ${second}` : first
 }
 
 /**

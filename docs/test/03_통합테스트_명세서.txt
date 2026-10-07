@@ -195,8 +195,7 @@
 --------------------------------------------------------------------------------
  IT-API-001 [상] /api/cron/check-court-availability: Authorization 헤더 없음/틀린 토큰 -> 401,
               "Bearer <CRON_SECRET>" -> 200
- IT-API-002 [상] CRON_SECRET 환경변수 미설정 시 동작 확인 -> 현재 코드는 검증을 건너뛰어 누구나
-              호출 가능(발견 사항 F-09). 수정 후 기대 결과: 미설정이면 모두 401
+ IT-API-002 [상] CRON_SECRET 환경변수 미설정 시 모든 호출 401 (F-09 수정 완료: 미설정이면 거부)
  IT-API-003 [중] /api/track: 봇 User-Agent 제외, /admin 및 /api 경로 제외, 유효 토큰이면 사용자 연결,
               잘못된 토큰이면 비로그인 방문으로 기록(오류 없이)
  IT-API-004 [중] /api/track: visitor_id 길이/형식 검증, 과도한 경로 길이 처리
@@ -221,7 +220,7 @@
       (이전 보안 점검에서 낮은 위험으로 분류).
  F-08 confirmPayment 는 대상 참가자의 상태(ACCEPTED 여부)를 확인하지 않습니다.
       거절/취소된 참가자도 입금 확인 처리가 가능한지 확인하세요.
- F-09 [보안/높음] /api/cron/check-court-availability 는 CRON_SECRET 이 설정되지 않으면 인증을
+ F-09 [해결됨 2026-10-07] (아래는 수정 전 상황) /api/cron/check-court-availability 는 CRON_SECRET 이 설정되지 않으면 인증을
       건너뜁니다(fail-open). 환경변수 누락 시 누구나 호출해 부천시 사이트 조회를 유발할 수
       있습니다. 수정 제안: 미설정이면 401 반환. 또한 이 라우트는 자체 PrismaClient 를 새로
       만듭니다(lib/tournamentData 의 공유 인스턴스 사용 권장).

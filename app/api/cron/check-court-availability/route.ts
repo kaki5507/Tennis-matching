@@ -5,17 +5,18 @@
 // 뜬 슬롯이 있으면 그 테니스장을 구독한 유저들에게 알림을 보냅니다.
 
 import { NextRequest, NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/tournamentData"
 import { fetchAvailableSlots } from "@/lib/bucheonScraper"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
 import { sendPushToUsers } from "@/lib/push"
 
-const prisma = new PrismaClient()
 
 export async function GET(request: NextRequest) {
   // Vercel Cron 요청인지 검증 (누구나 이 URL을 호출해서 무의미하게 조회를 발생시키지 못하도록)
   const authHeader = request.headers.get("authorization")
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // CRON_SECRET 이 설정되지 않았으면 모든 호출을 거부합니다(설정 누락 시 누구나 호출 가능해지는 것을 방지).
+  const secret = process.env.CRON_SECRET
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

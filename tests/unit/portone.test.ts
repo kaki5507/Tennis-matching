@@ -1,0 +1,56 @@
+import { describe, it, expect, afterEach } from "vitest"
+import { unverifiedSignupAllowed, unverifiedIdentityFor, isIdentityVerified } from "@/lib/portone"
+
+const KEYS = ["PORTONE_API_SECRET", "NODE_ENV", "ALLOW_UNVERIFIED_SIGNUP"] as const
+const saved: Record<string, string | undefined> = {}
+KEYS.forEach((k) => (saved[k] = process.env[k]))
+
+function setEnv(secret: string | undefined, nodeEnv: string, allow: string | undefined) {
+  const env = process.env as Record<string, string | undefined>
+  const set = (k: string, v: string | undefined) => (v === undefined ? delete env[k] : (env[k] = v))
+  set("PORTONE_API_SECRET", secret)
+  set("NODE_ENV", nodeEnv)
+  set("ALLOW_UNVERIFIED_SIGNUP", allow)
+}
+
+afterEach(() => {
+  const env = process.env as Record<string, string | undefined>
+  KEYS.forEach((k) => (saved[k] === undefined ? delete env[k] : (env[k] = saved[k])))
+})
+
+describe("unverifiedSignupAllowed (UT-PRT-001)", () => {
+  it.each([
+    ["secret", "production", "true", false],
+    ["secret", "development", undefined, false],
+    [undefined, "development", undefined, true],
+    [undefined, "production", undefined, false],
+    [undefined, "production", "true", true],
+    [undefined, "production", "false", false],
+    [undefined, "production", "1", false],
+  ])("secret=%s env=%s allow=%s -> %s", (secret, nodeEnv, allow, want) => {
+    setEnv(secret as string | undefined, nodeEnv as string, allow as string | undefined)
+    expect(unverifiedSignupAllowed()).toBe(want)
+  })
+})
+
+describe("unverifiedIdentityFor", () => {
+  it("UT-PRT-002 대소문자/공백 무시", async () => {
+    expect(await unverifiedIdentityFor("A@b.com")).toBe(await unverifiedIdentityFor("  a@B.com "))
+  })
+  it("UT-PRT-003 접두어 + 64자리 16진수", async () => {
+    const v = await unverifiedIdentityFor("a@b.com")
+    expect(v).toMatch(/^unverified_[0-9a-f]{64}$/)
+    expect(v).toHaveLength(75)
+  })
+  it("UT-PRT-004 다른 이메일은 다른 값", async () => {
+    expect(await unverifiedIdentityFor("a@b.com")).not.toBe(await unverifiedIdentityFor("c@d.com"))
+  })
+})
+
+describe("isIdentityVerified (UT-PRT-005)", () => {
+  it("판정", () => {
+    expect(isIdentityVerified("unverified_abc")).toBe(false)
+    expect(isIdentityVerified("dev_bypass_x")).toBe(false)
+    expect(isIdentityVerified("실제CI값")).toBe(true)
+  })
+})
