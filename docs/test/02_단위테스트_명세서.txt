@@ -1,0 +1,190 @@
+================================================================================
+ 02. 단위 테스트 명세서
+================================================================================
+ 대상: lib/ 의 순수 함수 (DB, 네트워크 불필요) / 도구: Vitest 권장
+ 표기: [상/중/하] = 우선순위, 입력 -> 기대 결과
+ ※ 기대 결과는 현재 코드 기준으로 직접 계산한 값입니다.
+
+--------------------------------------------------------------------------------
+ A. lib/bracket.ts (대진표)  - 파일 위치 제안: lib/bracket.test.ts
+--------------------------------------------------------------------------------
+ UT-BRK-001 [상] nextPowerOfTwo
+   0->2, 1->2, 2->2, 3->4, 4->4, 5->8, 8->8, 9->16, 16->16, 17->32
+ UT-BRK-002 [상] seedOrder 표준 시드 배치
+   seedOrder(2)=[1,2]
+   seedOrder(4)=[1,4,2,3]
+   seedOrder(8)=[1,8,4,5,2,7,3,6]
+   seedOrder(16) 길이 16, 1과 2는 서로 반대편 절반에 위치
+ UT-BRK-003 [상] 참가자 1명 -> buildBracket(["a"]) 는 Error 발생
+   (메시지: "대진표를 만들려면 참가자가 2명 이상 필요합니다.")  참가자 0명도 동일
+ UT-BRK-004 [상] 참가자 2명 -> 경기 1개(결승, round 1), 부전승 없음, 3·4위전 없음
+ UT-BRK-005 [상] 참가자 3명 -> 총 3경기(1라운드 2 + 결승 1), 3·4위전 없음
+   1라운드 position 0: player1=1번 시드, player2=null, isBye=true, winnerId=1번 시드
+   1라운드 position 1: 2번 시드 vs 3번 시드 (부전승 아님)
+   결승: player1=1번 시드(부전승 승자 자동 진출), player2=null
+ UT-BRK-006 [상] 참가자 4명 -> 총 4경기(1라운드 2 + 결승 1 + 3·4위전 1)
+   3·4위전: isThirdPlace=true, round=2(마지막 라운드), position=0
+   1라운드: (1번 vs 4번), (2번 vs 3번)
+ UT-BRK-007 [상] 참가자 5명 -> 총 8경기(1R 4 + 2R 2 + 결승 1 + 3·4위전 1)
+   부전승 3개(isBye=true 경기 수 == 3), 1R 슬롯 = [1,null,4,5,2,null,3,null] 순서
+   2R position 0: player1=1번 시드, player2=null (4v5 승자 대기)
+   2R position 1: player1=2번 시드, player2=3번 시드
+ UT-BRK-008 [중] 참가자 8명 -> 부전승 0개, 총 경기 = 4+2+1+1 = 8
+ UT-BRK-009 [중] 모든 경기에서 isThirdPlace 경기는 최대 1개
+ UT-BRK-010 [중] 부전승이 아닌 경기의 winnerId는 모두 null (생성 직후)
+ UT-BRK-011 [하] roundName(round, totalRounds)
+   (1,1)="결승", (1,2)="4강", (2,2)="결승", (1,3)="8강", (2,3)="4강", (3,3)="결승",
+   (1,4)="16강"
+
+--------------------------------------------------------------------------------
+ B. lib/tournamentRules.ts (대회 참가 자격)
+--------------------------------------------------------------------------------
+ 공통 규칙(rule): minNtrp=2.0, maxNtrp=3.5, minMannerScore=30, maxTeamAvgNtrp=3.0
+ 공통 선수(ok): { ntrpScore:3.0, ntrpCount:5, mannerScore:36.5, isBanned:false }
+
+ UT-RUL-001 [상] checkPlayer(ok, rule) -> { ok:true }
+ UT-RUL-002 [상] isBanned=true -> ok:false, 사유에 "이용이 제한" 포함
+ UT-RUL-003 [상] ntrpCount=2 -> ok:false, 사유에 "3회 이상" 포함 (경계: 2는 실패)
+ UT-RUL-004 [상] ntrpCount=3 -> 다른 조건이 맞으면 ok:true (경계: 3은 통과, MIN_EVALUATIONS=3)
+ UT-RUL-005 [상] ntrpScore=1.9 -> ok:false (하한 미만), 사유에 "1.9" 와 "2.0~3.5" 포함
+ UT-RUL-006 [상] ntrpScore=2.0 -> ok:true (하한 경계 포함)
+ UT-RUL-007 [상] ntrpScore=3.5 -> ok:true (상한 경계 포함) / 3.6 -> ok:false
+ UT-RUL-008 [중] ntrpScore=null, ntrpCount=5 -> 점수 0으로 간주되어 ok:false
+ UT-RUL-009 [상] mannerScore=29.9 -> ok:false / 30.0 -> ok:true (경계)
+ UT-RUL-010 [중] rule.minMannerScore=null 이면 mannerScore=0 이어도 매너 검사 통과
+ UT-RUL-011 [중] who="홍길동" 이면 사유 문구가 "홍길동님의 ..." 로 시작
+ UT-RUL-012 [상] teamAvgNtrp({2.5},{3.0}) = 2.75
+ UT-RUL-013 [중] teamAvgNtrp({null},{3.0}) = 1.5 (null은 0으로 계산)
+ UT-RUL-014 [중] teamAvgNtrp({0.1},{0.2}) = 0.15 (부동소수점 오차 없이 소수 둘째 자리 반올림)
+ UT-RUL-015 [상] checkTeam: 두 선수 모두 ok, 평균 3.0 (3.0+3.0) -> ok:true (상한과 같으면 통과)
+ UT-RUL-016 [상] checkTeam: a=3.0, b=3.5 -> 각자 통과이나 평균 3.25 > 3.0 -> ok:false,
+              사유에 "3.25" 와 "3.0" 포함
+ UT-RUL-017 [상] checkTeam: 신청자 a가 부적격이면 b 검사 전에 a의 사유를 반환
+ UT-RUL-018 [중] checkTeam: rule.maxTeamAvgNtrp=null 이면 평균 상한 검사 생략 (3.0+3.5도 통과)
+ UT-RUL-019 [하] formatNtrp: 2.75->"2.75", 3->"3.0", 2.5->"2.5", 2->"2.0", 2.754->"2.75"
+ UT-RUL-020 [하] teamLabel("김철수","이영희")="김철수 · 이영희", (null,"이영희")="익명 · 이영희",
+              ("","")="익명 · 익명"
+
+--------------------------------------------------------------------------------
+ C. lib/gender.ts
+--------------------------------------------------------------------------------
+ UT-GEN-001 [중] toGender: "MALE"->"M", "male"->"M", " m "->"M", "FEMALE"->"F", "F"->"F"
+ UT-GEN-002 [중] toGender: null/undefined/""/"other" -> null
+ UT-GEN-003 [중] singleKind("MALE")="M", singleKind(null)="unknown"
+ UT-GEN-004 [중] teamKind: (M,M)="MM", (F,F)="FF", (M,F)="MF", (F,M)="MF"
+ UT-GEN-005 [중] teamKind: 한 명이라도 성별 모름 -> "unknown" ((null,"MALE"), ("MALE",null), (null,null))
+ UT-GEN-006 [하] teamKindLabel: MM="남복", FF="여복", MF="혼복", M="남성", F="여성", unknown=""
+ UT-GEN-007 [하] genderBadgeClass / genderTextClass 가 모든 GenderKind에 대해 비어있지 않은
+              문자열(또는 의도된 기본값)을 반환하고 예외가 없음 (스냅샷 테스트)
+
+--------------------------------------------------------------------------------
+ D. lib/trophies.ts
+--------------------------------------------------------------------------------
+ UT-TRO-001 [중] tierOf(1)="gold", tierOf(2)="silver", tierOf(3)="bronze"
+ UT-TRO-002 [중] championTitle: 0->null, -1->null, 1->"첫 우승", 2->"2관왕", 3->"3관왕",
+              4->"4관왕", 5->"전설의 챔피언", 99->"전설의 챔피언"
+ UT-TRO-003 [하] trophySize: gold 1개=56, 2개=66, 3개=76, 4개=76(최대 3단계에서 고정)
+              silver/bronze 1개=44, 2개=50, 3개=56, 4개=56, count=0 이면 1개와 동일(gold 56)
+ UT-TRO-004 [하] hasGlow: gold 1개=false, gold 2개=true, silver 5개=false
+ UT-TRO-005 [하] shelfSlice: 0->{0,0}, 3->{3,0}, 8->{8,0}, 9->{8,1}, 11->{8,3}
+
+--------------------------------------------------------------------------------
+ E. lib/portone.ts (임시 가입 스위치) - process.env를 테스트마다 설정/복원
+--------------------------------------------------------------------------------
+ UT-PRT-001 [상] unverifiedSignupAllowed 조합표
+   PORTONE_API_SECRET | NODE_ENV    | ALLOW_UNVERIFIED_SIGNUP | 기대
+   -------------------+-------------+-------------------------+------
+   설정됨             | production  | "true"                  | false (실연동이 우선)
+   설정됨             | development | 없음                    | false
+   없음               | development | 없음                    | true
+   없음               | production  | 없음                    | false
+   없음               | production  | "true"                  | true
+   없음               | production  | "false" / "1"           | false ("true"만 허용)
+ UT-PRT-002 [상] unverifiedIdentityFor("A@b.com") 와 ("  a@B.com ") 결과가 동일
+ UT-PRT-003 [상] 결과는 "unverified_" + 64자리 16진수 (총 길이 11+64=75)
+ UT-PRT-004 [상] 서로 다른 이메일은 서로 다른 값
+ UT-PRT-005 [상] isIdentityVerified: "unverified_abc"=false, "dev_bypass_x"=false, "실제CI값"=true
+
+--------------------------------------------------------------------------------
+ F. lib/maintenance.ts (점검 모드)
+--------------------------------------------------------------------------------
+ 기준: now = 고정 시각(예 2026-10-07T00:00:00Z)을 두 번째 인자로 전달
+ UT-MNT-001 [상] enabled=false -> false (endsAt가 미래여도 false)
+ UT-MNT-002 [상] enabled=true, endsAt=null -> true
+ UT-MNT-003 [상] enabled=true, endsAt=과거 -> false (자동 해제)
+ UT-MNT-004 [상] enabled=true, endsAt=미래 -> true
+ UT-MNT-005 [중] enabled=true, endsAt==now(같은 시각) -> false (경계: 종료 시각 도달 시 해제)
+
+--------------------------------------------------------------------------------
+ G. lib/auditActions.ts
+--------------------------------------------------------------------------------
+ UT-AUD-001 [중] actionLabel("USER_BAN")="회원 정지", actionLabel("MAINTENANCE_ON")="점검 모드 켬"
+ UT-AUD-002 [중] actionLabel("UNKNOWN_CODE") = "UNKNOWN_CODE" (코드 그대로 반환)
+ UT-AUD-003 [중] AUDIT_ACTIONS 의 모든 항목 group 이 AUDIT_GROUPS 안에 존재하고
+              tone 이 "danger"|"ok"|"info" 중 하나 (새 액션 추가 시 누락 방지)
+
+--------------------------------------------------------------------------------
+ H. lib/levelIntegrity.ts (허위 구력 자동 조정) - DB를 모킹하는 "준단위" 테스트
+--------------------------------------------------------------------------------
+ 상수: 평가 20회 미만은 검사 제외 / 차이 1.0 이상이면 불일치 / 불일치 5회 누적 시 정지
+ 사전 준비: prisma.user.findUnique/update, sendPushToUser 를 모킹
+
+ UT-LVL-001 [상] ntrpCount=19 -> { adjusted:false, reason:"insufficient_data" }, DB 조회 없음
+ UT-LVL-002 [상] ntrpCount=20 부터 검사 시작 (경계)
+ UT-LVL-003 [중] 사용자 없음 -> reason:"user_not_found"
+ UT-LVL-004 [중] tennisLevel="NTRP 3.5 이상" (매핑 불가) -> reason:"unmappable_level", 갱신 없음
+ UT-LVL-005 [상] 자기신고 "NTRP 2.5", realScore=3.4 (차이 0.9) -> reason:"within_threshold"
+ UT-LVL-006 [상] 자기신고 "NTRP 2.5", realScore=3.5 (차이 정확히 1.0) -> 조정됨(경계 포함)
+              newLevel="NTRP 3.5", levelMismatchCount +1
+ UT-LVL-007 [상] 자기신고 "테린이"(1.5), realScore=2.6 -> 가장 가까운 "NTRP 2.5" 로 조정
+ UT-LVL-008 [중] 가장 가까운 구간 동률: realScore=2.25 -> "NTRP 2.0" (먼저 나온 구간 우선)
+ UT-LVL-009 [중] 자기신고와 조정 결과가 같은 라벨이면 reason:"already_matching", 카운트 증가 없음
+ UT-LVL-010 [상] levelMismatchCount 가 4인 사용자가 5번째로 조정되면 isBanned=true,
+              반환값 banned=true, 푸시 제목 "⚠️ 계정이 정지되었습니다"
+ UT-LVL-011 [상] 카운트 3 또는 4에서는 정지되지 않음 (현재 상수는 5)
+ UT-LVL-012 [중] DB 오류 발생 시 예외를 던지지 않고 reason:"error" 반환 (평가 저장을 막지 않음)
+
+--------------------------------------------------------------------------------
+ I. 날짜/지역 헬퍼 (현재 app/actions/admin.ts 내부 - 분리 후 테스트)
+--------------------------------------------------------------------------------
+ UT-KST-001 [상] kstDayStart(0): UTC 2026-10-06T16:00:00Z(=KST 10/07 01:00) 시점 ->
+              2026-10-06T15:00:00Z (KST 10월 7일 00:00)
+ UT-KST-002 [상] kstDayStart 경계: UTC 14:59:59 (=KST 23:59:59) 와 15:00:00 (=KST 00:00:00)
+              에서 "오늘"이 달라진다
+ UT-KST-003 [중] kstMonthStart: 월 경계(예 UTC 9/30 15:00 = KST 10/1 00:00)에서 10월 1일 반환
+ UT-KST-004 [중] kstDateKey(Date) -> "YYYY-MM-DD" (KST 기준)
+ UT-REG-001 [중] regionOf: "경기도 부천시 원미구 ..."->"경기 부천시",
+              "서울특별시 강남구 ..."->"서울 강남구", "제주특별자치도 제주시 ..."->"제주 제주시",
+              "인천광역시 부평구 ..."->"인천 부평구", "세종특별자치시 한누리대로"->"세종"
+ UT-REG-002 [하] regionOf("")->"기타", 공백만 있는 주소->"기타"
+
+--------------------------------------------------------------------------------
+ J. 입력 검증 (서버 액션에서 분리하면 순수 함수 테스트 가능 / 아니면 IT-MAT 로 수행)
+--------------------------------------------------------------------------------
+ UT-VAL-001 [상] 방 생성 날짜 형식: "2026-10-07"=통과, "2026-1-7"/"20261007"/""/null=거부
+ UT-VAL-002 [상] 시작 시간: "00:00","09:30","23:59"=통과, "24:00","9:30","19:60","abc"=거부
+ UT-VAL-003 [상] 과거 시각 거부 (KST 기준): now=KST 10/07 19:00 일 때
+              "2026-10-07 18:59"=거부, "2026-10-07 19:00"=통과(같은 분 포함), "2026-10-08 00:00"=통과
+ UT-VAL-004 [중] 1년 초과 미래 거부: 오늘+366일 이내=통과, +367일=거부
+ UT-VAL-005 [중] 참가비: 0, 1000000=통과 / -1, 1000001, "abc"(->0으로 처리됨 확인)
+
+--------------------------------------------------------------------------------
+ K. 평가 점수 계산 (app/actions/evaluation.ts 의 calculateMannerDelta - 현재 비공개 함수)
+--------------------------------------------------------------------------------
+ UT-EVA-001 [중] 매너 별점 -> 온도 증감: 5=+0.2, 4=+0.1, 3=0.0, 2=-0.2, 1=-0.5
+ UT-EVA-002 [중] 노쇼(isNoShow=true)는 별점과 무관하게 -2.0
+ UT-EVA-003 [하] 범위 밖 별점(0, 6)은 0.0 (입력검증이 먼저 막지만 방어 동작 확인)
+ ※ lib/ 로 분리해 export 해야 테스트 가능 (F-04 참고)
+
+--------------------------------------------------------------------------------
+ [발견 사항 - 확인 필요]
+--------------------------------------------------------------------------------
+ F-01 lib/levelIntegrity.ts 주석에는 "누적 3회째면 계정 정지"라고 적혀 있으나 실제
+      상수 BAN_AFTER_MISMATCH_COUNT 는 5 입니다. 의도한 값을 정해 주석 또는 상수를 맞추세요.
+      (UT-LVL-010/011 은 현재 상수 5 기준)
+ F-02 app/actions/admin.ts 의 헬퍼가 "use server" 파일에 있어 직접 import 테스트가
+      어렵습니다. lib/ 로 옮기면 UT-KST/UT-REG 를 DB 없이 자동화할 수 있습니다.
+ F-03 createMatchRoom 의 과거 시각 검증은 KST 벽시계 문자열 비교입니다. 서버가 UTC로
+      돌아도 +9시간 보정하므로 결과는 같아야 하며, UT-VAL-003 으로 확인하세요.
+ F-04 calculateMannerDelta 는 "use server" 파일 내부 비공개 함수라 단위 테스트가 어렵습니다.
+      lib/evaluationScore.ts 로 옮기길 권장합니다.
