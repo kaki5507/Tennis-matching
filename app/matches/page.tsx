@@ -6,7 +6,7 @@ import LevelFilterToggle from "@/components/LevelFilterToggle";
 import { dayLabel, isPast, seatInfo } from "@/lib/matchDisplay";
 
 // 이 화면은 서버에서 그려져 내려옵니다. (로그인 정보는 서버에서 알 수 없으므로 내 레벨 필터는 주소의 lv 값으로 받습니다)
-const GAME_TYPES = ["단식", "복식", "혼합복식", "랠리"] as const;
+const GAME_TYPES = ["단식", "복식", "혼합복식", "랠리(연습)"] as const;
 
 export default async function MatchesPage({
   searchParams,
@@ -91,7 +91,7 @@ export default async function MatchesPage({
               className={`px-3.5 py-1.5 rounded-full text-sm font-medium border ${gameType === t ? "chip-on border-transparent" : "surface border-line chip-off-court"}`}
               aria-pressed={gameType === t}
             >
-              {t}
+              {t === "랠리(연습)" ? "랠리" : t}
             </Link>
           ))}
           <span className="w-px h-5 bg-line mx-1" aria-hidden />
