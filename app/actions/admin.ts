@@ -309,3 +309,76 @@ export async function getMatchTimeStats(accessToken: string | null, days: number
   const totalRooms = cells.reduce((a, c) => a + c.rooms, 0)
   return { success: true as const, days: span, totalRooms, cells }
 }
+
+/** 주소 앞부분으로 지역(시/군/구 단위) 이름 만들기: "경기도 부천시 ..." → "경기 부천시" */
+function regionOf(address: string): string {
+  const t = address.trim().split(/\s+/)
+  if (t.length === 0 || !t[0]) return "기타"
+  const first = t[0]
+    .replace(/특별자치시|특별자치도|특별시|광역시|자치시|자치도/g, "")
+    .replace(/(경기|강원|충청북|충청남|전라북|전라남|경상북|경상남|제주)도$/, "$1")
+  const second = t[1] && /(시|군|구)$/.test(t[1]) ? t[1] : ""
+  return second ? `${first} ${second}` : first
+}
+
+/**
+ * 지역·코트별 주간 매칭 수 추이 (경기 날짜 기준, 월요일 시작 주 단위, 취소·삭제 제외).
+ * 경기 날짜는 사용자가 입력한 한국 날짜 그대로 사용합니다. 현재 주까지의 최근 weeks주.
+ */
+export async function getMatchTrend(accessToken: string | null, weeks: number = 12) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+
+  const span = Math.min(52, Math.max(4, Math.floor(weeks) || 12))
+  // 이번 주 월요일(KST) 계산
+  const k = new Date(Date.now() + KST_OFFSET_MS)
+  const dow = (k.getUTCDay() + 6) % 7 // 월=0
+  const thisMonday = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() - dow)
+  const weekKeys: string[] = []
+  for (let i = span - 1; i >= 0; i--) weekKeys.push(new Date(thisMonday - i * 7 * 86400000).toISOString().slice(0, 10))
+  const from = weekKeys[0]
+
+  const rows = await prisma.$queryRaw<{ wk: string; court_id: string; cnt: bigint }[]>(Prisma.sql`
+    SELECT to_char(date_trunc('week', m.match_date), 'YYYY-MM-DD') AS wk, m.court_id AS court_id, COUNT(*) AS cnt
+    FROM matches m
+    WHERE m.deleted_at IS NULL AND m.status <> 'CANCELED'
+      AND m.match_date >= ${from}::date
+      AND m.match_date < (${from}::date + ${span * 7}::int)
+    GROUP BY 1, 2`)
+
+  const courts = await prisma.court.findMany({
+    where: { id: { in: [...new Set(rows.map((r) => r.court_id))] } },
+    select: { id: true, name: true, address: true },
+  })
+  const courtMap = new Map(courts.map((c) => [c.id, c]))
+  const idx = new Map(weekKeys.map((w, i) => [w, i]))
+
+  type Row = { name: string; sub?: string; total: number; series: number[] }
+  const byRegion = new Map<string, Row>()
+  const byCourt = new Map<string, Row>()
+  const weekTotals = new Array<number>(span).fill(0)
+  for (const r of rows) {
+    const i = idx.get(r.wk)
+    const c = courtMap.get(r.court_id)
+    if (i === undefined || !c) continue
+    const n = Number(r.cnt)
+    const region = regionOf(c.address)
+    const reg = byRegion.get(region) ?? { name: region, total: 0, series: new Array<number>(span).fill(0) }
+    reg.total += n
+    reg.series[i] += n
+    byRegion.set(region, reg)
+    const cr = byCourt.get(c.id) ?? { name: c.name, sub: region, total: 0, series: new Array<number>(span).fill(0) }
+    cr.total += n
+    cr.series[i] += n
+    byCourt.set(c.id, cr)
+    weekTotals[i] += n
+  }
+  const top = (m: Map<string, Row>, n: number) => [...m.values()].sort((a, b) => b.total - a.total).slice(0, n)
+  return {
+    success: true as const,
+    weeks: weekKeys,
+    weekTotals,
+    regions: top(byRegion, 8),
+    courts: top(byCourt, 10),
+  }
+}

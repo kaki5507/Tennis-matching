@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { getAdminStats, getVisitStats, getRecentActivity, getMatchTimeStats } from "@/app/actions/admin";
+import { getAdminStats, getVisitStats, getRecentActivity, getMatchTimeStats, getMatchTrend } from "@/app/actions/admin";
 import TennisLoader from "@/components/TennisLoader";
+import MatchTrend, { type TrendRow } from "@/components/MatchTrend";
 import MatchTimeHeatmap, { type TimeCell } from "@/components/MatchTimeHeatmap";
 
 interface Stats {
@@ -97,6 +98,7 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [visit, setVisit] = useState<VisitStats | null>(null);
   const [recent, setRecent] = useState<Recent | null>(null);
+  const [trend, setTrend] = useState<{ weeks: string[]; weekTotals: number[]; regions: TrendRow[]; courts: TrendRow[] } | null>(null);
   const [timeCells, setTimeCells] = useState<{ days: number; total: number; cells: TimeCell[] } | null>(null);
 
   useEffect(() => {
@@ -109,11 +111,12 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const [statsResult, visitResult, recentResult, timeResult] = await Promise.all([
+      const [statsResult, visitResult, recentResult, timeResult, trendResult] = await Promise.all([
         getAdminStats(token),
         getVisitStats(token, 30),
         getRecentActivity(token),
         getMatchTimeStats(token, 90),
+        getMatchTrend(token, 12),
       ]);
 
       if (!statsResult.success) {
@@ -123,6 +126,7 @@ export default function AdminDashboardPage() {
       setStats(statsResult as unknown as Stats);
       if (visitResult.success) setVisit(visitResult);
       if (recentResult.success) setRecent(recentResult);
+      if (trendResult.success) setTrend(trendResult);
       if (timeResult.success) setTimeCells({ days: timeResult.days, total: timeResult.totalRooms, cells: timeResult.cells });
       setStatus("ok");
     };
@@ -212,6 +216,12 @@ export default function AdminDashboardPage() {
               </div>
             </Panel>
           </>
+        )}
+
+        {trend && (
+          <Panel title="📊 지역·코트별 주간 매칭 수 추이 (최근 12주)">
+            <MatchTrend weeks={trend.weeks} weekTotals={trend.weekTotals} regions={trend.regions} courts={trend.courts} />
+          </Panel>
         )}
 
         {timeCells && (
