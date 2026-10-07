@@ -76,7 +76,7 @@ export default function MaintenanceGate({
       <main className="min-h-screen page-bg flex items-center justify-center px-4">
         <div className="surface rounded-3xl max-w-md w-full p-8 text-center space-y-4">
           <div className="flex justify-center">
-            <TennisMascot className="w-28 h-28" />
+            <TennisMascot pose="sleep" className="w-32 h-32 mascot-float" />
           </div>
           <h1 className="text-2xl heading">서비스 점검 중이에요</h1>
           <p className="text-sm text-ink-muted whitespace-pre-line">

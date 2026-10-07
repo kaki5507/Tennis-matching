@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
 import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
 import Link from "next/link";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 import { getAccessToken } from "@/lib/authToken";
 
 // 💡 1. 완벽한 타입 설계 (any 절대 금지!)
@@ -177,9 +177,8 @@ export default function HostDashboard({
 
       <div className="space-y-3">
         {applicants.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 tint rounded-lg">
-            <TennisMascot pose="sad" className="w-16 h-16 mx-auto mb-2" />
-            아직 참여 신청자가 없습니다.
+          <div className="tint rounded-lg">
+            <EmptyState size="compact" pose="search" title="아직 신청자가 없어요" description="공유 버튼으로 방 링크를 보내 보세요." />
           </div>
         ) : (
           applicants.map((applicant) => (

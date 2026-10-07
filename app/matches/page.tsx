@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/tournamentData";
 import { Button } from "@/components/ui/button";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 import LevelFilterToggle from "@/components/LevelFilterToggle";
 import { dayLabel, isPast, seatInfo } from "@/lib/matchDisplay";
 
@@ -105,25 +105,31 @@ export default async function MatchesPage({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.length === 0 ? (
-            <div className="col-span-full text-center py-16 surface rounded-2xl shadow-sm">
-              <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
-              <p className="text-slate-500">
-                {gameType || level !== null ? (
-                  <>조건에 맞는 방이 없어요. <br /> 필터를 풀거나 직접 방을 만들어 보세요.</>
-                ) : (
-                  <>아직 모집 중인 방이 없습니다. <br /> 첫 번째 방장이 되어 사람들을 초대해 보세요!</>
-                )}
-              </p>
-              <div className="mt-5 flex justify-center gap-2">
-                {(gameType || level !== null) && (
+            <div className="col-span-full surface rounded-2xl shadow-sm">
+              {gameType || level !== null ? (
+                <EmptyState
+                  pose="search"
+                  title="조건에 맞는 방을 못 찾았어요"
+                  description={<>필터를 풀어서 다시 찾아보거나,<br />원하는 조건으로 직접 방을 만들어 보세요.</>}
+                >
                   <Link href="/matches" className="btn-outline-court px-4 py-2 rounded-lg text-sm font-medium border">
                     필터 초기화
                   </Link>
-                )}
-                <Link href="/matches/create" className="btn-clay px-4 py-2 rounded-lg text-sm font-bold">
-                  방 만들기
-                </Link>
-              </div>
+                  <Link href="/matches/create" className="btn-clay px-4 py-2 rounded-lg text-sm font-bold">
+                    방 만들기
+                  </Link>
+                </EmptyState>
+              ) : (
+                <EmptyState
+                  pose="sleep"
+                  title="코트가 조용해요"
+                  description={<>아직 모집 중인 방이 없어요.<br />첫 번째 방장이 되어 파트너를 불러 보세요!</>}
+                >
+                  <Link href="/matches/create" className="btn-clay px-5 py-2.5 rounded-lg text-sm font-bold">
+                    첫 방 만들기
+                  </Link>
+                </EmptyState>
+              )}
             </div>
           ) : (
             matches.map((match) => {

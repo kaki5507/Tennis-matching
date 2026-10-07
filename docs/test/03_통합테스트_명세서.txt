@@ -33,7 +33,7 @@
  IT-SGN-001 [상] 필수 약관(termsAgreed, privacyAgreed) 미동의 -> 가입 거부
  IT-SGN-002 [상] PORTONE_API_SECRET 설정 + 유효한 인증ID -> 가입 성공, ciDi 가 실제 값으로 저장
  IT-SGN-003 [상] PORTONE_API_SECRET 설정 + 인증ID 없음/무효 -> 거부 (임시가입 스위치 무시)
- IT-SGN-004 [상] PORTONE 없음 + ALLOW_UNVERIFIED_SIGNUP="true" + 인증 없이 -> 가입 성공,
+ IT-SGN-004 [상] PORTONE 없음 + ALLOW_UNVERIFIED_SIGNUP 미설정 또는 "true" + 인증 없이 -> 가입 성공,
                  ciDi 가 "unverified_" 로 시작, 관리자 회원목록에서 identityVerified=false
  IT-SGN-005 [상] PORTONE 없음 + production + 스위치 미설정 -> 인증 없이 가입 거부
  IT-SGN-006 [상] 같은 이메일로 임시가입 2회 -> 두 번째 "이미 가입된 본인인증 정보입니다." 거부

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import TennisMascot from "@/components/TennisMascot";
+import BrandLogo from "@/components/BrandLogo";
 import CourtLines from "@/components/CourtLines";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -42,12 +43,7 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
       {/* 헤더 */}
       <header className="border-b sticky top-0 z-10 app-bar">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TennisMascot pose="wave" className="w-9 h-9" />
-            <span className="font-display text-xl text-court">
-              테니스매칭
-            </span>
-          </div>
+          <BrandLogo size="lg" mood="happy" />
 
           <div className="flex items-center gap-3">
             {user ? (

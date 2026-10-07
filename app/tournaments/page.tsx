@@ -1,7 +1,7 @@
 // app/tournaments/page.tsx
 import Link from "next/link";
 import { getTournaments } from "@/app/actions/tournament";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 import { formatNtrp } from "@/lib/tournamentRules";
 
 // 대회 신청/마감 상태는 수시로 바뀌므로 정적으로 캐시하지 않습니다.
@@ -26,9 +26,12 @@ export default async function TournamentsPage() {
         </div>
 
         {tournaments.length === 0 ? (
-          <div className="text-center py-16 surface rounded-2xl">
-            <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
-            <p className="text-slate-500">아직 개설된 대회가 없습니다.</p>
+          <div className="surface rounded-2xl">
+            <EmptyState pose="cheer" title="곧 멋진 대회가 열려요" description="새 대회가 열리면 알림으로 알려 드려요. 그동안 매칭 방에서 몸을 풀어 보세요!">
+              <Link href="/matches" className="btn-clay px-5 py-2.5 rounded-lg text-sm font-bold">
+                매칭 방 보러 가기
+              </Link>
+            </EmptyState>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">

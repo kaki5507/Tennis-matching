@@ -97,9 +97,9 @@
    설정됨             | production  | "true"                  | false (실연동이 우선)
    설정됨             | development | 없음                    | false
    없음               | development | 없음                    | true
-   없음               | production  | 없음                    | false
-   없음               | production  | "true"                  | true
-   없음               | production  | "false" / "1"           | false ("true"만 허용)
+   없음               | production  | 없음                    | true  (키가 없으면 기본 허용)
+   없음               | production  | "true" / "1"            | true
+   없음               | production  | "false"                 | false (긴급 차단 스위치, "false"만 차단)
  UT-PRT-002 [상] unverifiedIdentityFor("A@b.com") 와 ("  a@B.com ") 결과가 동일
  UT-PRT-003 [상] 결과는 "unverified_" + 64자리 16진수 (총 길이 11+64=75)
  UT-PRT-004 [상] 서로 다른 이메일은 서로 다른 값

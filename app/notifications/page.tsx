@@ -13,7 +13,7 @@ import {
   markAllNotificationsAsRead,
 } from "@/app/actions/notification";
 import TennisLoader from "@/components/TennisLoader";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 import { getAccessToken } from "@/lib/authToken";
 
 interface NotificationItem {
@@ -139,14 +139,16 @@ export default function NotificationsPage() {
         </div>
 
         {visible.length === 0 ? (
-          <div className="surface rounded-2xl py-14 text-center">
-            <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">
-              {filter === "unread" ? "안 읽은 알림이 없어요." : "아직 받은 알림이 없어요."}
-            </p>
-            <Link href="/mypage" className="inline-block mt-4 text-xs font-bold text-court underline">
-              마이페이지에서 알림 설정하기
-            </Link>
+          <div className="surface rounded-2xl">
+            <EmptyState
+              pose="sleep"
+              title={filter === "unread" ? "모두 확인했어요" : "아직 받은 알림이 없어요"}
+              description={filter === "unread" ? "안 읽은 알림이 없습니다." : "신청 결과나 경기 소식이 생기면 여기로 알려 드려요."}
+            >
+              <Link href="/mypage" className="text-xs font-bold text-court underline">
+                마이페이지에서 알림 설정하기
+              </Link>
+            </EmptyState>
           </div>
         ) : (
           <ul className="space-y-2">

@@ -15,7 +15,7 @@ import type { BracketMatch } from "@/components/TournamentBracket";
 import CourtLines from "@/components/CourtLines";
 import { buildEntrantMaps, genderBadgeClass, teamKindLabel } from "@/lib/gender";
 import TennisLoader from "@/components/TennisLoader";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 
 interface TournamentData {
   id: string;
@@ -179,10 +179,7 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
         </div>
 
         {tournament.matches.length === 0 ? (
-          <div className="rounded-2xl p-12 text-center on-court-panel">
-            <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
-            <p className="text-chalk">아직 대진표가 만들어지지 않았어요.</p>
-          </div>
+          <EmptyState onCourt pose="ready" title="대진표를 준비하고 있어요" description="참가 접수가 끝나면 대진표가 이곳에 공개됩니다." />
         ) : (
           <BracketViewer
             matches={tournament.matches}

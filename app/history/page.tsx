@@ -1,7 +1,7 @@
 // app/history/page.tsx
 import Link from "next/link";
 import { PrismaClient } from "@prisma/client";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 
 const prisma = new PrismaClient();
 
@@ -47,9 +47,12 @@ export default async function HistoryPage({
         </div>
 
         {matches.length === 0 ? (
-          <div className="text-center py-16 text-slate-500 surface rounded-2xl shadow-sm">
-            <TennisMascot pose="sad" className="w-24 h-24 mx-auto mb-4" />
-            아직 완료된 경기가 없습니다. 첫 번째 기록의 주인공이 되어보세요! 🎾
+          <div className="surface rounded-2xl shadow-sm">
+            <EmptyState pose="ready" title="아직 기록된 경기가 없어요" description="경기가 끝나면 이곳에 승부 기록이 쌓여요. 첫 번째 기록의 주인공이 되어보세요!">
+              <Link href="/matches" className="btn-clay px-5 py-2.5 rounded-lg text-sm font-bold">
+                매칭 방 둘러보기
+              </Link>
+            </EmptyState>
           </div>
         ) : (
           <div className="surface rounded-2xl shadow-sm overflow-hidden">

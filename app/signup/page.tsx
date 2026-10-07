@@ -230,17 +230,23 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* 서버가 임시 가입을 허용 중일 때만 노출됩니다. (포트원 계약 후 PORTONE_API_SECRET을 넣으면 자동으로 사라짐)
+          {/* 서버가 임시 가입을 허용 중일 때만 노출됩니다. (포트원 키가 없는 동안 기본 허용, 키를 넣으면 자동으로 사라짐)
               버튼이 보여도 실제 허용 여부는 가입 시 서버가 다시 검사합니다. */}
           {!verifiedId && unverifiedAllowed && (
-            <button
-              type="button"
-              onClick={handleDevBypass}
-              disabled={isVerifying}
-              className="w-full mt-2 text-xs alert-warn border border-dashed rounded-lg py-2 hover:brightness-95"
-            >
-              본인인증 없이 가입하기 (임시)
-            </button>
+            <div className="mt-3 rounded-xl p-4 alert-warn">
+              <p className="text-sm font-bold">지금은 본인인증 없이도 가입할 수 있어요</p>
+              <p className="text-xs mt-1 opacity-90">
+                서비스 준비 기간에는 임시 가입이 가능합니다. 본인인증이 열리면 안내해 드릴게요.
+              </p>
+              <Button
+                type="button"
+                onClick={handleDevBypass}
+                disabled={isVerifying}
+                className="w-full mt-3 h-11 btn-clay font-bold"
+              >
+                본인인증 없이 가입하기 (임시)
+              </Button>
+            </div>
           )}
         </div>
 

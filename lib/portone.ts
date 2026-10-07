@@ -41,14 +41,14 @@ export async function fetchVerifiedIdentity(identityVerificationId: string): Pro
 
 /**
  * 본인인증 없이 가입(임시 가입) 허용 여부.
- *  - 포트원 키(PORTONE_API_SECRET)가 있으면 실연동 중이므로 항상 거부 (스위치를 켜 둬도 무시)
- *  - 개발 환경(production 아님)에서는 허용
- *  - 운영에서는 ALLOW_UNVERIFIED_SIGNUP=true 로 명시적으로 켠 경우에만 허용
+ *  - 포트원 키(PORTONE_API_SECRET)가 있으면 실연동 중이므로 항상 거부
+ *  - 키가 없으면 어차피 본인인증 자체가 불가능하므로 임시 가입을 허용 (테스트/오픈 초기용)
+ *  - 키가 없어도 ALLOW_UNVERIFIED_SIGNUP=false 로 명시하면 거부 (긴급 차단 스위치)
  * PG 계약 후 PORTONE_API_SECRET을 넣으면 자동으로 닫힙니다.
  */
 export function unverifiedSignupAllowed(): boolean {
   if (process.env.PORTONE_API_SECRET) return false
-  return process.env.NODE_ENV !== "production" || process.env.ALLOW_UNVERIFIED_SIGNUP === "true"
+  return process.env.ALLOW_UNVERIFIED_SIGNUP !== "false"
 }
 
 /** 임시 가입자의 식별값 접두어. 이 접두어가 붙은 사용자는 본인인증을 받지 않은 계정입니다. */

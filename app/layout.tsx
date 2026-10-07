@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import PageViewTracker from "@/components/PageViewTracker";
 import SiteHeader from "@/components/SiteHeader";
 import MaintenanceGate from "@/components/MaintenanceGate";
 import { getMaintenanceState } from "@/lib/maintenance";
-
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -29,17 +22,17 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      className={cn("h-full", "antialiased", geistMono.variable, "font-sans")}
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* Pretendard (SIL OFL 1.1 — 상업적 사용 무료). 쓰는 글자 조각만 받는 dynamic subset 이라 가볍습니다. */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700;900&display=swap"
           rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
         />
       </head>
-      <body className="min-h-full flex flex-col" style={{ fontFamily: '"Noto Sans KR", var(--font-sans), sans-serif' }}>
+      <body className="min-h-full flex flex-col">
         <PageViewTracker />
         <MaintenanceGate initial={maintenance} header={<SiteHeader />}>
           {children}

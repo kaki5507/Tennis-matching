@@ -10,7 +10,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { checkAdminAccess } from "@/app/actions/admin";
 import { getAccessToken } from "@/lib/authToken";
-import TennisMascot from "@/components/TennisMascot";
+import BrandLogo from "@/components/BrandLogo";
 import NotificationBell from "@/components/NotificationBell";
 import { Menu, X } from "lucide-react";
 
@@ -48,11 +48,8 @@ export default function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b app-bar">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <TennisMascot pose="wave" className="w-8 h-8" />
-          <span className="font-display text-lg text-court">테니스매칭</span>
-        </Link>
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <BrandLogo />
 
         {/* 데스크톱 메뉴 */}
         <nav className="hidden sm:flex items-center gap-1">

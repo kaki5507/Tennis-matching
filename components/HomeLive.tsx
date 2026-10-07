@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/tournamentData";
-import TennisMascot from "@/components/TennisMascot";
+import EmptyState from "@/components/EmptyState";
 
 async function loadLive() {
   try {
@@ -68,16 +68,12 @@ export default async function HomeLive() {
         </div>
 
         {data.upcoming.length === 0 ? (
-          <div className="surface rounded-2xl py-12 px-6 text-center">
-            <TennisMascot pose="wave" className="w-24 h-24 mx-auto mb-3" />
-            <p className="font-display text-lg text-court">아직 열린 방이 없어요</p>
-            <p className="text-sm mt-1 mb-5 text-ink-muted">첫 번째 방을 만들어 코트의 주인공이 되어보세요!</p>
-            <Link
-              href="/matches/create"
-              className="btn-clay inline-block px-6 py-2.5 rounded-full text-sm font-bold"
-            >
-              방 만들기
-            </Link>
+          <div className="surface rounded-2xl">
+            <EmptyState pose="sleep" title="코트가 조용해요" description="아직 열린 방이 없어요. 첫 번째 방을 만들어 코트의 주인공이 되어보세요!">
+              <Link href="/matches/create" className="btn-clay inline-block px-6 py-2.5 rounded-full text-sm font-bold">
+                방 만들기
+              </Link>
+            </EmptyState>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4">

@@ -23,10 +23,11 @@ describe("unverifiedSignupAllowed (UT-PRT-001)", () => {
     ["secret", "production", "true", false],
     ["secret", "development", undefined, false],
     [undefined, "development", undefined, true],
-    [undefined, "production", undefined, false],
+    [undefined, "production", undefined, true], // 키가 없으면 운영에서도 기본 허용
     [undefined, "production", "true", true],
-    [undefined, "production", "false", false],
-    [undefined, "production", "1", false],
+    [undefined, "production", "false", false], // 긴급 차단 스위치
+    [undefined, "production", "1", true],
+    ["secret", "production", undefined, false], // 키가 생기면 자동으로 닫힘
   ])("secret=%s env=%s allow=%s -> %s", (secret, nodeEnv, allow, want) => {
     setEnv(secret as string | undefined, nodeEnv as string, allow as string | undefined)
     expect(unverifiedSignupAllowed()).toBe(want)
