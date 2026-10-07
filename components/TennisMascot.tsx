@@ -171,7 +171,7 @@ export default function TennisMascot({ pose = "wave", className }: Props) {
 
       {/* 팔 (몸통보다 먼저 그려서 뒤에 깔리게) */}
       {pose === "wave" && <Arm d="M 138 108 Q 168 92 176 62" w={14} />}
-      {pose === "serve" && <Arm d="M 140 100 Q 172 78 168 40" w={14} />}
+      {pose === "serve" && <Arm d="M 140 104 Q 170 94 160 62" w={14} />}
       {pose === "ready" && <Arm d="M 138 116 Q 160 112 166 92" w={13} />}
       {pose === "search" && <Arm d="M 138 112 Q 152 104 156 90" w={13} />}
       {pose === "sad" && <Arm d="M 62 130 Q 48 148 58 168" w={13} />}
@@ -187,8 +187,9 @@ export default function TennisMascot({ pose = "wave", className }: Props) {
       {pose === "sad" && <Arm d="M 66 118 Q 44 128 40 152" />}
 
       {/* 도구 */}
-      {pose === "serve" && <Racket transform="translate(146,6) rotate(18)" />}
-      {pose === "ready" && <Racket transform="translate(150,34) rotate(24) scale(0.95)" />}
+      {/* 라켓 손잡이 중간(20,56)이 손 위치에 오도록 맞춰 그림 */}
+      {pose === "serve" && <Racket transform="translate(160 62) rotate(20) scale(0.85) translate(-20 -56)" />}
+      {pose === "ready" && <Racket transform="translate(166 92) rotate(28) scale(0.85) translate(-20 -56)" />}
       {pose === "search" && (
         <g>
           <path d="M 158 86 L 170 70" stroke={INK} strokeWidth="5" strokeLinecap="round" />
