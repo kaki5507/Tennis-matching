@@ -14,22 +14,22 @@
 :root {
   /* 브랜드 컬러 (실제 코트/공/클레이 색감에서 추출) */
   /* 세 가지 코트 표면: 하드(블루) · 잔디(그린) · 클레이(흙) + 라인 화이트 + 공 */
-  --court: #0b3c91;  /* 딥 하드코트 블루 — 제목, 헤더 요소, 진한 배경 */
-  --court-soft: #1e63e9; /* 쨍한 하드코트 블루 — 그라데이션 끝, 포인트 */
-  --grass: #2a9a44;  /* 잔디 그린 */
-  --grass-soft: #e0f4e5;
-  --clay: #d4532b;   /* 클레이코트 흙색 — CTA, 강조 */
-  --clay-deep: #a8431f; /* 클레이 그림자/눌림 */
+  --court: #2a4a74;  /* 차분한 슬레이트 블루 — 제목, 헤더 요소, 진한 배경 */
+  --court-soft: #5b87b9; /* 릴렉싱한 하늘빛 하드코트 블루 — 그라데이션 끝, 포인트 */
+  --grass: #4f9a62;  /* 잔디 그린 */
+  --grass-soft: #e3f1e7;
+  --clay: #d0653f;   /* 클레이코트 흙색 — CTA, 강조 */
+  --clay-deep: #a84e2c; /* 클레이 그림자/눌림 */
   --clay-soft: #fbe6dc;
-  --ball: #dfe62a;   /* 테니스공 연두 — 마스코트, 하이라이트 */
+  --ball: #dde43a;   /* 테니스공 연두 — 마스코트, 하이라이트 */
   --chalk: #ffffff;  /* 라인 화이트 — 카드 배경 */
-  --mist: #edf3fc;   /* 옅은 하늘빛 — 페이지 배경 */
-  --ink: #0e1c3a;    /* 짙은 네이비 — 본문 텍스트 */
-  --line: #d3dff1;   /* 옅은 구분선/테두리 */
+  --mist: #eef3f8;   /* 옅은 하늘빛 — 페이지 배경 */
+  --ink: #1c2a40;    /* 짙은 네이비 — 본문 텍스트 */
+  --line: #d8e2ec;   /* 옅은 구분선/테두리 */
 
   /* 의미 색 (성공/수락 등 긍정 상태) */
-  --ok: #1f8a3b;
-  --ok-soft: #e0f4e5;
+  --ok: #2f8048;
+  --ok-soft: #e3f1e7;
 
   /* 성별 구분 색 (대진표/명단에서 남복·여복·혼복을 한눈에 구분) */
   --gender-m: #3f6fa3;      /* 남성: 차분한 코발트 */
@@ -54,15 +54,15 @@
   --warn-soft: #fbf1d3;
   --danger: #b23a2a;
   --danger-soft: #fbe9e5;
-  --info: #1651c4;
-  --info-soft: #e3ecfd;
+  --info: #34649d;
+  --info-soft: #e5edf6;
 
   /* 보조 색 */
   --silver: #e5e7eb; /* 준우승 */
   --bronze: #f3d9c4; /* 3위 */
   --muted-bg: #f1f5f9;
   --muted-fg: #94a3b8;
-  --overlay: rgba(8, 20, 50, 0.6); /* 모달 뒷배경 */
+  --overlay: rgba(16, 28, 46, 0.6); /* 모달 뒷배경 */
 
   /* 코트그린 배경 위에 얹는 반투명 레이어 */
   --on-court-panel: rgba(255, 255, 255, 0.08);
@@ -71,8 +71,8 @@
   --on-court-idle: rgba(255, 255, 255, 0.15);
 
   /* 대진표 */
-  --bracket-border: rgba(11, 60, 145, 0.15);
-  --bracket-divider: rgba(11, 60, 145, 0.1);
+  --bracket-border: rgba(42, 74, 116, 0.15);
+  --bracket-divider: rgba(42, 74, 116, 0.1);
   --bracket-winner: rgba(215, 222, 35, 0.28);
 
   /* 글꼴: Pretendard Variable (본문·제목 공통, 무게로 위계를 만듭니다) */
@@ -253,7 +253,7 @@
   height: 8px;
   border-radius: 4px;
   background: linear-gradient(180deg, var(--court-soft), var(--court));
-  box-shadow: 0 3px 0 rgba(11, 60, 145, 0.15);
+  box-shadow: 0 3px 0 rgba(42, 74, 116, 0.15);
 }
 
 /* 금 트로피를 여러 번 딴 경우: 은은하게 빛나는 효과 */
@@ -393,6 +393,7 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
     word-break: keep-all; /* 한글이 단어 중간에서 줄바꿈되지 않게 */
+    overflow-wrap: anywhere; /* 아주 긴 단어는 화면 밖으로 삐져나가지 않게 */
     -webkit-font-smoothing: antialiased;
   }
   html {
@@ -452,7 +453,7 @@
   a[href].row-link:hover {
     filter: none;
   }
-  a[href].card-link:hover { box-shadow: 0 6px 18px rgba(11, 60, 145, 0.14); transform: translateY(-1px); }
+  a[href].card-link:hover { box-shadow: 0 6px 18px rgba(42, 74, 116, 0.14); transform: translateY(-1px); }
   a[href].row-link:hover { background: var(--mist); }
 }
 
@@ -523,15 +524,16 @@
 
 /* --- 랜딩: 하드코트 히어로 / 3색 표면 패널 ------------------------------- */
 .hero-blue {
+  position: relative;
   background:
-    radial-gradient(120% 90% at 85% 10%, var(--court-soft) 0%, transparent 60%),
-    linear-gradient(180deg, var(--court) 0%, #0a2f73 100%);
+    radial-gradient(90% 70% at 80% 0%, rgba(255,255,255,0.22) 0%, transparent 60%),
+    linear-gradient(180deg, #5584b9 0%, #44709f 55%, #35597f 100%);
   color: #fff;
 }
 .surface-band { height: 10px; background: linear-gradient(90deg, var(--court-soft) 0 34%, var(--grass) 34% 67%, var(--clay) 67% 100%); }
-.panel-hard  { background: linear-gradient(160deg, var(--court-soft), var(--court)); color: #fff; }
-.panel-grass { background: linear-gradient(160deg, #34b052, #1c7a35); color: #fff; }
-.panel-clay  { background: linear-gradient(160deg, #e36a3f, var(--clay-deep)); color: #fff; }
+.panel-hard  { background: linear-gradient(160deg, #6b96c6, #3e6592); color: #fff; }
+.panel-grass { background: linear-gradient(160deg, #6fb27d, #3e8755); color: #fff; }
+.panel-clay  { background: linear-gradient(160deg, #de8561, #b2573a); color: #fff; }
 /* 패널 안쪽 코트 라인 */
 .panel-lines { position: relative; }
 .panel-lines::before {
@@ -541,3 +543,10 @@
   content: ""; position: absolute; left: 10px; right: 10px; top: 58%; border-top: 2px solid rgba(255,255,255,0.35); pointer-events: none;
 }
 .ticket-chip { background: #fff; color: var(--ink); box-shadow: 0 4px 0 rgba(0,0,0,0.18); }
+
+/* 히어로: 구름이 천천히 흐르고, 칩이 둥둥 떠 있음 */
+@keyframes hero-cloud { from { transform: translateX(-4%); } to { transform: translateX(8%); } }
+.hero-cloud { position: absolute; border-radius: 999px; background: rgba(255,255,255,0.16); filter: blur(6px); animation: hero-cloud 18s ease-in-out infinite alternate; pointer-events: none; }
+@keyframes hero-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+.hero-chip { animation: hero-bob 3.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .hero-ball { display: none; } .hero-cloud, .hero-chip { animation: none !important; } }

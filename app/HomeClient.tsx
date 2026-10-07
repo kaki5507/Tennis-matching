@@ -80,6 +80,8 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
       {/* 히어로 섹션: 하드코트 블루 */}
       <main className="flex-1">
         <section className="hero-blue relative overflow-hidden">
+          <div className="hero-cloud w-72 h-16 top-10 left-[6%]" aria-hidden />
+          <div className="hero-cloud w-96 h-20 top-40 right-[4%]" style={{ animationDelay: "-6s" }} aria-hidden />
           <div className="max-w-6xl mx-auto px-4 pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center relative">
             {/* 왼쪽: 큰 타이포 + 행동 버튼 */}
             <div>
