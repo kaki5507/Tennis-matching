@@ -465,6 +465,7 @@
 .bg-court-solid { background: var(--court); color: var(--chalk); }
 .alert-danger { background: var(--danger-soft); color: var(--danger); }
 .alert-warn { background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+.alert-info { background: var(--info-soft); color: var(--info); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
 .btn-outline-danger {
   border-color: color-mix(in srgb, var(--danger) 35%, transparent);
   color: var(--danger);

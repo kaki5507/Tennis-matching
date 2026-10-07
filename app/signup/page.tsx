@@ -157,8 +157,17 @@ export default function SignupPage() {
         password,
       });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (/already registered/i.test(error.message)) {
+          throw new Error("이미 가입된 이메일이에요. 로그인하거나, 비밀번호를 잊었다면 로그인 화면에서 재설정해 주세요.");
+        }
+        throw new Error(error.message);
+      }
       if (!data.user) throw new Error("유저 생성 실패");
+      // 이메일 인증이 켜져 있으면 이미 가입된 이메일은 에러 대신 identities 가 빈 사용자로 돌아옵니다.
+      if (data.user.identities && data.user.identities.length === 0) {
+        throw new Error("이미 가입된 이메일이에요. 로그인하거나, 비밀번호를 잊었다면 로그인 화면에서 재설정해 주세요.");
+      }
 
       // 3. 성공했다면, Prisma를 통해 우리 DB(users 테이블)에 프로필 저장
       //    본인인증 값은 서버가 인증 ID로 포트원에서 직접 확인합니다. (이메일 인증 없이 바로 로그인되는
@@ -181,7 +190,12 @@ export default function SignupPage() {
       }
 
       // 4. 모든 것이 성공하면 로그인 페이지로 이동!
-      alert("회원가입이 완료되었습니다! 로그인해주세요.");
+      // 세션이 없으면 이메일 인증이 필요한 설정 → 메일의 링크를 눌러야 로그인할 수 있음
+      alert(
+        data.session
+          ? "회원가입이 완료되었습니다! 로그인해주세요."
+          : "회원가입이 완료되었습니다!\n입력하신 이메일로 인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)"
+      );
       router.push("/login");
 
     } catch (error: unknown) { // any 대신 unknown 사용

@@ -18,10 +18,14 @@ export default function LoginPage() {
   // 로딩 상태 및 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [infoMsg, setInfoMsg] = useState("");
+  const [needsConfirm, setNeedsConfirm] = useState(false); // 이메일 인증이 안 된 계정
 
 const handleLogin = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // 폼 제출 시 새로고침 방지
     setErrorMsg("");
+    setInfoMsg("");
+    setNeedsConfirm(false);
     setIsLoading(true);
 
     try {
@@ -43,7 +47,11 @@ const handleLogin = async (e: React.SyntheticEvent) => {
       if (error instanceof Error) {
         // Supabase에서 주는 영어 에러 메시지를 한국어로 친절하게 바꿔주기 (선택사항)
         if (error.message.includes("Invalid login credentials")) {
-          setErrorMsg("이메일이나 비밀번호가 올바르지 않습니다.");
+          setErrorMsg("이메일이나 비밀번호가 올바르지 않습니다. 인증 메일을 아직 안 눌렀다면 아래에서 다시 받을 수 있어요.");
+          setNeedsConfirm(true);
+        } else if (error.message.includes("Email not confirmed")) {
+          setErrorMsg("이메일 인증이 아직 안 됐어요. 가입할 때 받은 메일의 링크를 눌러주세요.");
+          setNeedsConfirm(true);
         } else {
           setErrorMsg(error.message);
         }
@@ -53,6 +61,26 @@ const handleLogin = async (e: React.SyntheticEvent) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 인증 메일 다시 보내기
+  const handleResend = async () => {
+    setErrorMsg("");
+    setInfoMsg("");
+    if (!email) return setErrorMsg("위에 이메일을 먼저 입력해 주세요.");
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) return setErrorMsg(error.message.includes("rate") ? "잠시 후에 다시 시도해 주세요. (너무 자주 요청했어요)" : error.message);
+    setInfoMsg("인증 메일을 다시 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.");
+  };
+
+  // 비밀번호 재설정 메일 보내기
+  const handleForgot = async () => {
+    setErrorMsg("");
+    setInfoMsg("");
+    if (!email) return setErrorMsg("비밀번호를 재설정할 이메일을 먼저 입력해 주세요.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    if (error) return setErrorMsg(error.message.includes("rate") ? "잠시 후에 다시 시도해 주세요. (너무 자주 요청했어요)" : error.message);
+    setInfoMsg("재설정 메일을 보냈어요. 가입된 이메일이라면 곧 도착합니다. 메일의 링크를 눌러 새 비밀번호를 정해주세요.");
   };
 
   return (
@@ -67,6 +95,12 @@ const handleLogin = async (e: React.SyntheticEvent) => {
         {errorMsg && (
           <div className="mb-6 p-3 alert-danger text-sm rounded-lg text-center">
             {errorMsg}
+          </div>
+        )}
+
+        {infoMsg && (
+          <div className="mb-6 p-3 alert-info text-sm rounded-lg text-center" role="status">
+            {infoMsg}
           </div>
         )}
 
@@ -86,9 +120,9 @@ const handleLogin = async (e: React.SyntheticEvent) => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">비밀번호</Label>
-              <Link href="#" className="text-sm text-ok hover:underline">
+              <button type="button" onClick={handleForgot} className="text-sm text-ok hover:underline">
                 비밀번호를 잊으셨나요?
-              </Link>
+              </button>
             </div>
             <Input 
               id="password" 
@@ -103,6 +137,12 @@ const handleLogin = async (e: React.SyntheticEvent) => {
             {isLoading ? "로그인 중..." : "로그인"}
           </Button>
         </form>
+
+        {needsConfirm && (
+          <button type="button" onClick={handleResend} className="mt-4 w-full text-sm font-medium btn-outline-court border rounded-lg py-2.5">
+            인증 메일 다시 받기
+          </button>
+        )}
 
         <div className="mt-6 text-center text-slate-600">
           아직 계정이 없으신가요?{" "}

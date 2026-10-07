@@ -82,7 +82,12 @@ export async function createUserInDB(data: {
 
     const existing = await prisma.user.findFirst({ where: { ciDi, deletedAt: null } })
     if (existing) {
-      return { success: false, error: "이미 가입된 본인인증 정보입니다." }
+      return {
+        success: false,
+        error: data.devBypass
+          ? "이미 가입된 이메일이에요. 로그인해 주세요. (비밀번호를 잊었다면 로그인 화면에서 재설정할 수 있어요)"
+          : "이미 가입된 본인인증 정보입니다.",
+      }
     }
 
     if (await isNicknameTaken(nickname)) {
