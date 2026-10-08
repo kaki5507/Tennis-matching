@@ -18,7 +18,7 @@ const SHORTCUTS = [
 
 export default function HomeClient({ live, children }: { live?: ReactNode; children?: ReactNode }) {
   // 로그인 여부는 저장된 세션에서 바로 읽음 (서버 왕복 없음)
-  const { userId } = useAuthUser();
+  const { ready, userId } = useAuthUser();
   const user = userId;
 
   return (
@@ -42,7 +42,10 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
                 레벨·연령·성별 조건으로 방을 찾고, 매너 온도로 쾌적하게 치세요. 방 하나 열면 끝이에요.
               </p>
 
-              {user ? (
+              {!ready ? (
+                // 로그인 확인 전에는 버튼 자리만 비워 둬서 "지금 바로 시작하기"가 잠깐 보이는 깜빡임을 막음
+                <div className="max-w-md h-14 rounded-xl bg-white/15 animate-pulse" aria-hidden />
+              ) : user ? (
                 <div className="max-w-md">
                   <Link href="/courts" className="block">
                     <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 빈 코트 찾기</Button>
