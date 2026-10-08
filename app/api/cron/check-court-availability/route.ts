@@ -1,76 +1,22 @@
 // app/api/cron/check-court-availability/route.ts
 //
-// Vercel Cron이 3시간마다 이 엔드포인트를 호출합니다 (vercel.json 참고).
-// 부천시 예약 사이트를 조회만 하고(예약 신청 절대 안 함), 새로 "예약가능"이
-// 뜬 슬롯이 있으면 그 테니스장을 구독한 유저들에게 알림을 보냅니다.
+// 외부 크론(cron-job.org)이 매시 정각에 호출합니다. (한국 시간 오전 9시 ~ 밤 11시, 하루 15번)
+// 실제 수집 로직은 lib/courtCrawl.ts. 관리자가 크롤링 스위치를 꺼 두면 건너뜁니다.
 
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/tournamentData"
-import { fetchAvailableSlots } from "@/lib/bucheonScraper"
-import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
-import { sendPushToUsers } from "@/lib/push"
+import { runCourtCrawl } from "@/lib/courtCrawl"
 
+export const maxDuration = 60
 
 export async function GET(request: NextRequest) {
-  // Vercel Cron 요청인지 검증 (누구나 이 URL을 호출해서 무의미하게 조회를 발생시키지 못하도록)
-  const authHeader = request.headers.get("authorization")
-  // CRON_SECRET 이 설정되지 않았으면 모든 호출을 거부합니다(설정 누락 시 누구나 호출 가능해지는 것을 방지).
+  // Vercel/외부 크론 요청인지 검증 (CRON_SECRET 미설정이면 모든 호출 거부)
   const secret = process.env.CRON_SECRET
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const results: Record<string, number> = {}
-
-  // 사이트에 부담 주지 않도록, 구독자가 1명이라도 있는 시설만 확인합니다.
-  const watchedFacilityIds = await prisma.courtWatch.findMany({
-    distinct: ["facilityId"],
-    select: { facilityId: true },
-  })
-  const watchedSet = new Set(watchedFacilityIds.map((w) => w.facilityId))
-  const targets = BUCHEON_COURTS.filter((c) => watchedSet.has(c.facilityId))
-
-  for (const court of targets) {
-    try {
-      const slots = await fetchAvailableSlots(court.facilityId)
-      const keys = slots.map((s) => `${s.date}_${s.time}`)
-
-      const snapshot = await prisma.courtAvailabilitySnapshot.findUnique({
-        where: { facilityId: court.facilityId },
-      })
-      const previousKeys = new Set(snapshot?.availableKeys ?? [])
-      const newlyAvailable = keys.filter((k) => !previousKeys.has(k))
-
-      // 스냅샷 갱신 (다음 번 비교 기준)
-      await prisma.courtAvailabilitySnapshot.upsert({
-        where: { facilityId: court.facilityId },
-        update: { availableKeys: keys },
-        create: { facilityId: court.facilityId, availableKeys: keys },
-      })
-
-      results[court.facilityId] = newlyAvailable.length
-
-      if (newlyAvailable.length === 0) continue
-
-      const watchers = await prisma.courtWatch.findMany({
-        where: { facilityId: court.facilityId },
-        select: { userId: true },
-      })
-      if (watchers.length === 0) continue
-
-      await sendPushToUsers(
-        watchers.map((w) => w.userId),
-        {
-          title: `🎾 ${court.name} 예약 가능!`,
-          body: `새로 예약 가능한 시간대가 ${newlyAvailable.length}개 생겼어요. 서둘러 확인해보세요.`,
-          url: "https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=" + court.facilityId,
-        }
-      )
-    } catch (error) {
-      console.error(`[${court.name}] 확인 실패:`, error)
-      results[court.facilityId] = -1 // 에러 표시
-    }
-  }
-
-  return NextResponse.json({ success: true, checkedAt: new Date().toISOString(), results })
+  // ?force=1 : 시간대 제한만 무시 (끄기 스위치는 항상 존중)
+  const force = request.nextUrl.searchParams.get("force") === "1"
+  const out = await runCourtCrawl({ trigger: "cron", respectSwitch: true, respectHours: !force })
+  return NextResponse.json({ success: true, checkedAt: new Date().toISOString(), ...out })
 }

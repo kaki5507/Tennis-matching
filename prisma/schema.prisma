@@ -319,6 +319,18 @@ model CourtAvailabilitySnapshot {
   @@map("court_availability_snapshots")
 }
 
+// 빈 코트 크롤링 on/off 와 마지막 실행 기록 (한 줄짜리 설정 테이블, id=1)
+model CourtCrawlSetting {
+  id             Int       @id @default(1)
+  enabled        Boolean   @default(true) // false 면 정기 크롤링(크론)이 건너뜀. 관리자의 "지금 갱신"은 가능
+  lastRunAt      DateTime? @map("last_run_at")
+  lastRunSummary String?   @map("last_run_summary") // 예: "성공 11 / 실패 0 · 새 슬롯 3 (정기)"
+  updatedBy      String?   @map("updated_by") @db.Uuid
+  updatedAt      DateTime  @default(now()) @map("updated_at")
+
+  @@map("court_crawl_settings")
+}
+
 // [13] [NEW] 자체 대회
 // 검증된 구력(NTRP)과 매너 온도를 만족하는 유저만 신청할 수 있는 공식 대회.
 // 관리자가 직접 개설하고, 대회가 끝나면 관리자가 직접 순위를 기록합니다.

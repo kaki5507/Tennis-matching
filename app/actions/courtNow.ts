@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/serverAuth"
 import { checkAllCourtsRange, checkCourtRange, getRangeInfo, type CourtRangeResult, type RangeKey } from "@/lib/courtToday"
 
 type Out =
-  | { success: true; results: CourtRangeResult[]; checkedAt: string; rangeLabel: string; truncated: boolean }
+  | { success: true; results: CourtRangeResult[]; updatedAt: string | null; rangeLabel: string; truncated: boolean }
   | { success: false; error: string }
 
 const RANGES: RangeKey[] = ["tomorrow", "week", "month"]
@@ -17,5 +17,8 @@ export async function getCourtRange(accessToken: string | null, range: RangeKey,
   if (!RANGES.includes(range)) return { success: false, error: "잘못된 요청입니다." }
   const results = facilityId ? [await checkCourtRange(facilityId, range)] : await checkAllCourtsRange(range)
   const info = getRangeInfo(range)
-  return { success: true, results, checkedAt: new Date().toISOString(), rangeLabel: info.rangeLabel, truncated: info.truncated }
+  // 화면에 "N분 전 갱신"으로 보여줄 시각: 여러 곳 중 가장 오래된 수집 시각 (보수적으로)
+  const times = results.map((r) => r.updatedAt).filter((t): t is string => !!t).sort()
+  const oldest = times[0] ?? null
+  return { success: true, results, updatedAt: oldest, rangeLabel: info.rangeLabel, truncated: info.truncated }
 }

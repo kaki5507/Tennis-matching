@@ -16,6 +16,9 @@ export const AUDIT_ACTIONS = {
   MATCH_RESULT: { label: "경기 결과 입력", group: "대회", tone: "info" },
   MAINTENANCE_ON: { label: "점검 모드 켬", group: "시스템", tone: "danger" },
   MAINTENANCE_OFF: { label: "점검 모드 끔", group: "시스템", tone: "ok" },
+  COURT_CRAWL_ON: { label: "빈 코트 크롤링 켬", group: "시스템", tone: "ok" },
+  COURT_CRAWL_OFF: { label: "빈 코트 크롤링 끔", group: "시스템", tone: "danger" },
+  COURT_CRAWL_RUN: { label: "빈 코트 지금 갱신", group: "시스템", tone: "info" },
   MAINTENANCE_UPDATE: { label: "점검 안내 수정", group: "시스템", tone: "info" },
 } as const
 

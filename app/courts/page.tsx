@@ -3,7 +3,7 @@
 // app/courts/page.tsx
 // 메인 기능: 부천 테니스장 빈 코트 찾기. 당일 예약은 안 되므로 내일부터 (내일 / 7일 / 이번 달) 가능한 날짜·시간대를 보여줍니다.
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { RefreshCw, Bell, Clock } from "lucide-react";
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts";
@@ -13,6 +13,7 @@ import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
 import TennisMascot from "@/components/TennisMascot";
 import { dayKind } from "@/lib/koHolidays";
+import CourtCrawlAdmin from "@/components/CourtCrawlAdmin";
 
 const RANGES: { key: RangeKey; label: string; hint: string }[] = [
   { key: "tomorrow", label: "내일", hint: "내일 가능한 시간" },
@@ -23,8 +24,17 @@ const RANGES: { key: RangeKey; label: string; hint: string }[] = [
 const fmt = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
 const isAm = (t: string) => Number(t.slice(0, 2)) < 12;
 
-type Bucket = { results: Record<string, CourtRangeResult>; checkedAt: string | null; rangeLabel: string; truncated: boolean };
-const EMPTY: Bucket = { results: {}, checkedAt: null, rangeLabel: "", truncated: false };
+type Bucket = { results: CourtRangeResult[]; updatedAt: string | null; rangeLabel: string; truncated: boolean; loaded: boolean };
+const EMPTY: Bucket = { results: [], updatedAt: null, rangeLabel: "", truncated: false, loaded: false };
+
+/** "방금 전 / 12분 전 / 3시간 전 / 어제 ..." */
+function ago(iso: string, now: number) {
+  const min = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60000));
+  if (min < 1) return "방금 전";
+  if (min < 60) return `${min}분 전`;
+  const h = Math.floor(min / 60);
+  return h < 24 ? `${h}시간 ${min % 60}분 전` : `${Math.floor(h / 24)}일 전`;
+}
 
 function TimeChip({ t }: { t: string }) {
   return (
@@ -37,49 +47,42 @@ function TimeChip({ t }: { t: string }) {
 export default function CourtsPage() {
   const { ready, userId } = useAuthUser();
   const [range, setRange] = useState<RangeKey>("tomorrow");
-  // 범위마다 따로 결과를 기억 (탭을 바꿨다 돌아와도 유지)
+  // 범위마다 따로 기억 (탭을 바꿨다 돌아와도 유지). 데이터는 DB에 저장된 수집본이라 불러오는 건 가볍고 빨라요.
   const [buckets, setBuckets] = useState<Record<RangeKey, Bucket>>({ tomorrow: EMPTY, week: EMPTY, month: EMPTY });
-  // 확인 중인 시설들 ("범위:시설ID") — 여러 곳을 동시에 눌러도 서로 초기화되지 않음
-  const [checking, setChecking] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState<RangeKey | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
-  const key = (r: RangeKey, id: string) => `${r}:${id}`;
-  const setBusy = (ids: string[], on: boolean) =>
-    setChecking((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
-      return next;
-    });
+  // "N분 전" 표시를 30초마다 갱신
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, []);
 
-  const run = async (r: RangeKey, facilityIds: string[] | null) => {
-    const targets = (facilityIds ?? BUCHEON_COURTS.map((c) => c.facilityId)).filter((id) => !checking.has(key(r, id)));
-    if (targets.length === 0) return;
-    const keys = targets.map((id) => key(r, id));
-    setBusy(keys, true);
+  const load = useCallback(async (r: RangeKey) => {
+    setLoading(r);
     setError(null);
-    const res = await getCourtRange(await getAccessToken(), r, facilityIds && facilityIds.length === 1 ? facilityIds[0] : null);
+    const res = await getCourtRange(await getAccessToken(), r, null);
     if (res.success) {
-      setBuckets((prev) => ({
-        ...prev,
-        [r]: {
-          results: { ...prev[r].results, ...Object.fromEntries(res.results.filter((x) => targets.includes(x.facilityId)).map((x) => [x.facilityId, x])) },
-          checkedAt: res.checkedAt,
-          rangeLabel: res.rangeLabel,
-          truncated: res.truncated,
-        },
-      }));
+      setBuckets((prev) => ({ ...prev, [r]: { results: res.results, updatedAt: res.updatedAt, rangeLabel: res.rangeLabel, truncated: res.truncated, loaded: true } }));
     } else setError(res.error);
-    setBusy(keys, false);
-  };
+    setLoading(null);
+    setNow(Date.now());
+  }, []);
+
+  // 로그인 후 / 탭을 바꿀 때 처음 한 번 자동으로 불러오기
+  useEffect(() => {
+    if (!userId || buckets[range].loaded) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load(range);
+  }, [userId, range, buckets, load]);
 
   const bucket = buckets[range];
-  const checkingAny = BUCHEON_COURTS.some((c) => checking.has(key(range, c.facilityId)));
-  const allBusy = BUCHEON_COURTS.every((c) => checking.has(key(range, c.facilityId)));
 
   // 날짜별 정리: 날짜 → 코트 → 시간대
   const byDate = useMemo(() => {
     const map = new Map<string, { label: string; courts: { name: string; times: string[] }[] }>();
-    for (const r of Object.values(bucket.results)) {
+    for (const r of bucket.results) {
       if (!r.ok) continue;
       for (const d of r.days) {
         const e = map.get(d.date) ?? { label: d.label, courts: [] };
@@ -90,7 +93,7 @@ export default function CourtsPage() {
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [bucket.results]);
 
-  const checkedCount = Object.keys(bucket.results).length;
+  const checkedCount = bucket.results.filter((r) => r.ok).length;
 
   return (
     <div className="min-h-screen page-bg pb-16 pt-4">
@@ -99,7 +102,7 @@ export default function CourtsPage() {
           <div>
             <h1 className="font-display text-3xl sm:text-4xl leading-tight text-white">빈 코트 찾기</h1>
             <p className="mt-2 text-sm sm:text-base text-white/85">
-              당일 예약은 안 돼요. 내일부터 쓸 수 있는 부천 테니스장 시간을 한 번에 보여드려요.
+              당일 예약은 안 돼요. 내일부터 쓸 수 있는 부천 테니스장 시간을 모아서 보여드려요.
             </p>
           </div>
           <TennisMascot pose="search" className="w-24 sm:w-36 h-auto mascot-float" />
@@ -114,6 +117,8 @@ export default function CourtsPage() {
             <Link href="/login" className="font-bold underline text-court">로그인</Link>
           </div>
         )}
+
+        <CourtCrawlAdmin onRefreshed={() => load(range)} />
 
         {/* 범위 선택 */}
         <div className="grid grid-cols-3 gap-2" role="tablist" aria-label="검색 범위">
@@ -131,15 +136,26 @@ export default function CourtsPage() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => run(range, null)}
-          disabled={allBusy || !userId}
-          className="btn-clay mt-3 h-12 w-full rounded-xl text-base inline-flex items-center justify-center gap-2 disabled:opacity-60"
-        >
-          <RefreshCw className={`w-5 h-5 ${checkingAny ? "animate-spin" : ""}`} />
-          {allBusy ? "전체 확인 중..." : `${RANGES.find((r) => r.key === range)!.label} · 전체 ${BUCHEON_COURTS.length}곳 확인하기`}
-        </button>
+        {/* 마지막 갱신 시각: 모든 사용자가 같은 저장본을 봐요 */}
+        <div className="surface rounded-xl mt-3 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-ink">
+              {bucket.updatedAt ? (
+                <>🕘 <span className="text-court">{ago(bucket.updatedAt, now)}</span> 갱신</>
+              ) : loading ? "불러오는 중..." : "아직 수집된 정보가 없어요"}
+            </p>
+            <p className="text-xs text-ink-muted mt-0.5">매시 정각에 자동 갱신 · 오전 9시~밤 11시</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => load(range)}
+            disabled={loading !== null || !userId}
+            className="btn-outline-court border-2 shrink-0 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 disabled:opacity-60"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            새로고침
+          </button>
+        </div>
 
         {error && <p className="alert-danger rounded-xl p-3 text-sm mt-3">{error}</p>}
 
@@ -152,10 +168,10 @@ export default function CourtsPage() {
         </div>
 
         {/* 날짜별 정리 */}
-        {bucket.checkedAt && (
+        {bucket.loaded && (
           <section className="mt-3" aria-live="polite">
             <p className="text-xs text-ink-muted mb-2">
-              {fmt(bucket.checkedAt)} 확인 · {bucket.rangeLabel} · {checkedCount}곳 조회 · 가능한 날 <b className="text-court">{byDate.length}일</b>
+              {bucket.rangeLabel} · {checkedCount}곳 조회 · 가능한 날 <b className="text-court">{byDate.length}일</b>
             </p>
             {bucket.truncated && range !== "tomorrow" && (
               <p className="text-xs text-warn mb-2">예약 사이트 달력이 이번 달만 보여서, 다음 달 날짜는 빠져 있어요.</p>
@@ -195,43 +211,23 @@ export default function CourtsPage() {
           </section>
         )}
 
-        {/* 코트별 확인 */}
-        <h2 className="mt-6 mb-2 text-sm font-extrabold text-court">코트별로 따로 확인</h2>
-        <ul className="space-y-2">
-          {BUCHEON_COURTS.map((court) => {
-            const r = bucket.results[court.facilityId];
-            const busy = checking.has(key(range, court.facilityId));
-            const status = busy
-              ? "확인 중..."
-              : !r
-                ? court.indoor ? "실내" : ""
-                : !r.ok
-                  ? r.error
-                  : r.days.length === 0
-                    ? "가능한 시간대 없음"
-                    : `${r.days.length}일 가능 · 가장 빠른 날 ${r.days[0].label}`;
-            return (
-              <li key={court.facilityId} className="surface rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="font-bold text-sm text-ink truncate">{court.name}</div>
-                  {status && (
-                    <div className={`text-xs mt-0.5 ${busy ? "text-warn font-bold animate-pulse" : r?.ok && r.days.length ? "text-ok font-bold" : r && !r.ok ? "text-danger" : "text-ink-muted"}`}>
-                      {status}
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => run(range, [court.facilityId])}
-                  disabled={busy || !userId}
-                  className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-2 ${busy ? "checking-btn" : "btn-outline-court"} disabled:opacity-100`}
-                >
-                  {busy ? "확인 중..." : r ? "다시 확인" : "확인하기"}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        {/* 코트별 요약 */}
+        {bucket.loaded && (
+          <>
+            <h2 className="mt-6 mb-2 text-sm font-extrabold text-court">코트별 요약</h2>
+            <ul className="space-y-2">
+              {bucket.results.map((r) => (
+                <li key={r.facilityId} className="surface rounded-xl px-4 py-3">
+                  <div className="font-bold text-sm text-ink truncate">{r.name}</div>
+                  <div className={`text-xs mt-0.5 ${r.ok && r.days.length ? "text-ok font-bold" : r.ok ? "text-ink-muted" : "text-danger"}`}>
+                    {!r.ok ? r.error : r.days.length === 0 ? "가능한 시간대 없음" : `${r.days.length}일 가능 · 가장 빠른 날 ${r.days[0].label}`}
+                    {r.ok && r.updatedAt ? ` · ${ago(r.updatedAt, now)} 갱신` : ""}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         <Link href="/mypage#court-watch" className="surface rounded-2xl p-4 mt-5 flex items-center gap-3">
           <Bell className="w-5 h-5 text-clay shrink-0" />
@@ -239,7 +235,7 @@ export default function CourtsPage() {
             <b className="text-court">3시간마다 자동으로 확인</b>하고 알림받고 싶다면 알림 받을 테니스장을 골라 보세요.
           </span>
         </Link>
-        <p className="text-xs text-ink-muted mt-3">예약은 부천시 공공서비스예약 사이트에서 직접 해야 해요. 여기서는 조회만 합니다. (같은 시설은 3분 안에 다시 확인하면 직전 결과를 보여줘요)</p>
+        <p className="text-xs text-ink-muted mt-3">예약은 부천시 공공서비스예약 사이트에서 직접 해야 해요. 여기서는 조회만 합니다. (여기 보이는 정보는 저장된 수집본이라 사용자가 눌러도 예약 사이트에는 요청이 가지 않아요)</p>
       </div>
     </div>
   );

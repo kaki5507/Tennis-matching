@@ -62,7 +62,9 @@
 - **왜 Vercel 자체 크론이 아니라 cron-job.org를 쓰는지**: Vercel 무료(Hobby) 플랜은
   크론을 하루 1번까지만 허용해서, 3시간마다 도는 이 기능은 자체 크론으로 못 돌림.
   대신 cron-job.org(무료)에서 `https://[배포도메인]/api/cron/check-court-availability`를
-  3시간마다 호출하도록 등록. `Authorization: Bearer {CRON_SECRET}` 헤더 필요
+  **매시 정각, 한국 시간 오전 9시~밤 11시**(스케줄 `0 9-23 * * *`, 시간대 Asia/Seoul)에 호출하도록 등록. `Authorization: Bearer {CRON_SECRET}` 헤더 필요.
+  수집 결과는 DB에 저장되고 사용자의 "빈 코트 찾기"는 저장본만 읽음(부천 사이트에 요청 안 감). 관리자는 /courts 화면에서 정기 수집 ON/OFF 와 "지금 갱신"을 쓸 수 있음.
+  서버도 09~23시 밖의 호출은 건너뜀(`?force=1` 로 시간대만 무시 가능)
 - **다음 할 일**: 없음 (배포 후 cron-job.org에 등록하면 끝)
 
 ### Vercel (예정)

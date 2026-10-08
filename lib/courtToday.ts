@@ -1,10 +1,10 @@
 // lib/courtToday.ts
-// 부천 테니스장의 "예약 가능한 날짜·시간대"를 조회합니다. (조회만 하며 예약은 절대 대신 하지 않습니다)
+// 부천 테니스장의 "예약 가능한 날짜·시간대"를 보여줍니다. (예약은 절대 대신 하지 않습니다)
 // 당일 예약은 불가하므로 항상 "내일부터" 보여줍니다. 범위: 내일 / 7일 / 이번 달 남은 날.
 // 예약 사이트의 기본 달력은 이번 달만 읽을 수 있어서, 이번 달을 넘어가는 날짜는 조회에서 빠집니다(truncated).
-// 시설별 결과(달 전체)는 3분간 서버 메모리에 기억해 사이트에 부담을 주지 않습니다.
+// 데이터는 크롤러(매시 정각, 오전 9시~밤 11시)가 DB에 저장해 둔 것을 읽기만 합니다.
 
-import { fetchAvailableSlots } from "@/lib/bucheonScraper"
+import { prisma } from "@/lib/tournamentData"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
 
 export type RangeKey = "tomorrow" | "week" | "month"
@@ -20,6 +20,8 @@ export interface CourtRangeResult {
   name: string
   ok: boolean
   days: CourtDay[]
+  /** 이 코트 정보를 마지막으로 수집한 시각 (ISO) */
+  updatedAt?: string
   error?: string
 }
 
@@ -29,8 +31,6 @@ export interface RangeInfo {
   rangeLabel: string
 }
 
-const TTL_MS = 3 * 60_000
-const cache = new Map<string, { at: number; byDay: Record<string, string[]> }>()
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"]
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -60,40 +60,60 @@ export function getRangeInfo(range: RangeKey): RangeInfo {
   return { dates, truncated, rangeLabel }
 }
 
-async function monthSlots(facilityId: string) {
-  const hit = cache.get(facilityId)
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.byDay
-  const slots = await fetchAvailableSlots(facilityId)
-  const byDay: Record<string, string[]> = {}
-  for (const s of slots) {
-    const list = (byDay[s.date] ??= [])
-    if (!list.includes(s.time)) list.push(s.time)
+/** 저장된 이번 달 슬롯(DB)을 날짜별로 읽기. 부천 사이트에는 접속하지 않습니다. */
+async function loadSnapshots(monthPrefix: string) {
+  const rows = await prisma.courtAvailabilitySnapshot.findMany()
+  const map = new Map<string, { byDay: Record<string, string[]>; updatedAt: Date }>()
+  for (const r of rows) {
+    const byDay: Record<string, string[]> = {}
+    for (const k of r.availableKeys) {
+      // 새 형식 "YYYY-MM-DD_시간" 만 사용 (이번 달 것만). 예전 형식은 다음 수집 때 새 형식으로 바뀜
+      const m = k.match(/^(\d{4}-\d{2})-(\d{2})_(.+)$/)
+      if (!m || m[1] !== monthPrefix) continue
+      ;(byDay[m[2]] ??= []).push(m[3])
+    }
+    map.set(r.facilityId, { byDay, updatedAt: r.checkedAt })
   }
-  if (cache.size > 100) cache.clear()
-  cache.set(facilityId, { at: Date.now(), byDay })
-  return byDay
+  return map
+}
+
+function monthPrefixKst() {
+  const kst = new Date(Date.now() + 9 * 3600_000)
+  return `${kst.getUTCFullYear()}-${pad(kst.getUTCMonth() + 1)}`
+}
+
+function build(court: { facilityId: string; name: string }, info: RangeInfo, snap?: { byDay: Record<string, string[]>; updatedAt: Date }): CourtRangeResult {
+  if (info.dates.length === 0) {
+    return { facilityId: court.facilityId, name: court.name, ok: false, days: [], error: "다음 달 달력은 아직 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
+  }
+  if (!snap) {
+    return { facilityId: court.facilityId, name: court.name, ok: false, days: [], error: "아직 수집된 정보가 없어요. 매시 정각에 갱신돼요." }
+  }
+  const days: CourtDay[] = info.dates
+    .map((d) => ({ date: d.date, label: d.label, times: [...(snap.byDay[d.dd] ?? [])].sort() }))
+    .filter((d) => d.times.length > 0)
+  return { facilityId: court.facilityId, name: court.name, ok: true, days, updatedAt: snap.updatedAt.toISOString() }
 }
 
 export async function checkCourtRange(facilityId: string, range: RangeKey): Promise<CourtRangeResult> {
   const court = BUCHEON_COURTS.find((c) => c.facilityId === facilityId)
   if (!court) return { facilityId, name: "", ok: false, days: [], error: "알 수 없는 테니스장입니다." }
-
-  const info = getRangeInfo(range)
-  if (info.dates.length === 0) {
-    return { facilityId, name: court.name, ok: false, days: [], error: "다음 달 달력은 아직 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
-  }
   try {
-    const byDay = await monthSlots(facilityId)
-    const days: CourtDay[] = info.dates
-      .map((d) => ({ date: d.date, label: d.label, times: [...(byDay[d.dd] ?? [])].sort() }))
-      .filter((d) => d.times.length > 0)
-    return { facilityId, name: court.name, ok: true, days }
+    const snaps = await loadSnapshots(monthPrefixKst())
+    return build(court, getRangeInfo(range), snaps.get(facilityId))
   } catch (e) {
     console.error(`[courtRange:${court.name}]`, e)
-    return { facilityId, name: court.name, ok: false, days: [], error: "예약 사이트에서 불러오지 못했어요." }
+    return { facilityId, name: court.name, ok: false, days: [], error: "정보를 불러오지 못했어요." }
   }
 }
 
 export async function checkAllCourtsRange(range: RangeKey): Promise<CourtRangeResult[]> {
-  return Promise.all(BUCHEON_COURTS.map((c) => checkCourtRange(c.facilityId, range)))
+  try {
+    const snaps = await loadSnapshots(monthPrefixKst())
+    const info = getRangeInfo(range)
+    return BUCHEON_COURTS.map((c) => build(c, info, snaps.get(c.facilityId)))
+  } catch (e) {
+    console.error("[courtRange:all]", e)
+    return BUCHEON_COURTS.map((c) => ({ facilityId: c.facilityId, name: c.name, ok: false, days: [], error: "정보를 불러오지 못했어요." }))
+  }
 }
