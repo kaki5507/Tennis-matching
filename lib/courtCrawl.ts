@@ -58,7 +58,7 @@ export async function runCourtCrawl(opts: { trigger: "cron" | "admin"; respectSw
       // 성공했을 때만 저장 (실패하면 직전 저장본을 그대로 둠)
       await prisma.courtAvailabilitySnapshot.upsert({
         where: { facilityId: court.facilityId },
-        update: { availableKeys: keys },
+        update: { availableKeys: keys, checkedAt: new Date() },
         create: { facilityId: court.facilityId, availableKeys: keys },
       })
       ok++
