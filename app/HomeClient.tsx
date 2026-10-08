@@ -29,7 +29,7 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
       {/* 헤더 */}
       <header className="border-b sticky top-0 z-10 app-bar">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <BrandLogo size="md" mood="happy" />
+          <BrandLogo size="md" />
 
           <div className="flex items-center gap-1 sm:gap-2">
             {user ? (

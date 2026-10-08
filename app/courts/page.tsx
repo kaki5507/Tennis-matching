@@ -61,9 +61,9 @@ export default function CourtsPage() {
   const openCount = checked.filter((r) => r.ok && r.times.length > 0).length;
 
   return (
-    <div className="min-h-screen page-bg pb-16">
-      <section className="hero-blue relative overflow-hidden">
-        <div className="max-w-3xl mx-auto px-4 pt-7 pb-8 grid grid-cols-[1fr_auto] items-center gap-2">
+    <div className="min-h-screen page-bg pb-16 pt-4">
+      <section className="hero-blue relative overflow-hidden max-w-3xl mx-auto rounded-3xl">
+        <div className="px-6 pt-7 pb-8 grid grid-cols-[1fr_auto] items-center gap-2">
           <div>
             <h1 className="font-display text-3xl sm:text-4xl leading-tight text-white">내일 빈 코트 찾기</h1>
             <p className="mt-2 text-sm sm:text-base text-white/85">

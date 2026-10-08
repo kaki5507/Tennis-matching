@@ -515,7 +515,9 @@
 .mascot-float { animation: mascot-float 3.2s ease-in-out infinite; }
 
 /* 헤더 로고: 마우스를 올리면 공이 통통 튑니다 */
-.brand-ball { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 50% 90%; }
+.brand-tag { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 2px 0 var(--clay-deep); transform: rotate(-2deg); }
+.brand-link:hover .brand-tag, .brand-link:focus-visible .brand-tag { transform: rotate(2deg) translateY(-1px); }
+.brand-ball-unused { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 50% 90%; }
 .brand-link:hover .brand-ball, .brand-link:focus-visible .brand-ball { transform: translateY(-3px) rotate(-10deg); }
 @media (prefers-reduced-motion: reduce) {
   .mascot-zzz, .mascot-twinkle, .mascot-bubble, .mascot-float { animation: none !important; opacity: 1; }
@@ -600,3 +602,8 @@
 
 /* 확인 중 상태 버튼 (노란빛) */
 .checking-btn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+
+/* 안내 섹션 패널: 테두리 선만 두르고(글씨와 겹치는 중간 선 없음), 네트 선은 맨 위로 */
+.guide-lines { position: relative; }
+.guide-lines::before { content: ""; position: absolute; inset: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; pointer-events: none; }
+.guide-lines::after { content: ""; position: absolute; left: 8px; right: 8px; top: 20px; border-top: 2px solid rgba(255,255,255,0.3); pointer-events: none; }

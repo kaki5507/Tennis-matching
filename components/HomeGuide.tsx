@@ -73,7 +73,7 @@ export default function HomeGuide() {
           ))}
         </div>
 
-        <div className={`${tab.panel} panel-lines relative p-4 pt-5 md:p-6`} role="tabpanel">
+        <div className={`${tab.panel} guide-lines relative px-5 pb-5 pt-9 md:px-8`} role="tabpanel">
           <TennisMascot pose={tab.mascot} className="absolute right-3 top-3 w-14 h-auto opacity-95 hidden sm:block" />
           <ul className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {tab.items.map((it) => (

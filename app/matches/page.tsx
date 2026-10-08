@@ -53,7 +53,7 @@ export default async function MatchesPage({
   const baseParams: Record<string, string> = gameType ? { type: gameType } : {};
 
   return (
-    <div className="min-h-screen page-bg py-12 px-4">
+    <div className="min-h-screen page-bg py-4 sm:py-8 px-4">
       <div className="max-w-5xl mx-auto">
         {/* 상단 배너: 하드코트 블루 + 마스코트 */}
         <section className="hero-blue rounded-3xl overflow-hidden mb-6 relative">
