@@ -132,7 +132,11 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
 
           {/* 방장 대시보드 (방장에게만 보임) */}
           {/* 서버는 로그인 정보를 알 수 없으므로 항상 내려보내고, 화면(브라우저)에서 방장인 경우에만 보여줍니다. 실제 권한은 서버 액션이 따로 검사 */}
-          <HostDashboard hostId={match.hostId} matchId={match.id} currentStatus={match.status} costPerPerson={match.costPerPerson} />
+          <HostDashboard hostId={match.hostId} matchId={match.id} currentStatus={match.status} costPerPerson={match.costPerPerson}
+            matchDate={dateStr}
+            startTime={`${String(match.startTime.getHours()).padStart(2, "0")}:${String(match.startTime.getMinutes()).padStart(2, "0")}`}
+            description={match.description ?? ""}
+          />
 
           {/* 하단 액션 버튼 */}
           <div className="flex gap-4 mb-10">

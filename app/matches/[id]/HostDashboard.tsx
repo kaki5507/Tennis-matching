@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
-import { updateParticipantStatus, completeMatchAction } from "@/app/actions/match";
+import { updateParticipantStatus, completeMatchAction, updateMatchRoom } from "@/app/actions/match";
 import Link from "next/link";
 import EmptyState from "@/components/EmptyState";
 import { getAccessToken } from "@/lib/authToken";
@@ -30,17 +30,36 @@ export default function HostDashboard({
   matchId,
   currentStatus,
   costPerPerson,
+  matchDate,
+  startTime,
+  description,
 }: {
   hostId: string; // 이 방의 방장 id (화면 표시 여부 결정용 - 권한 검사는 서버 액션이 따로 함)
   matchId: string;
   currentStatus: string;
   costPerPerson: number; // [NEW] 1인당 참가비 (입금확인 UI에 표시용)
+  matchDate: string; // 수정 폼 초기값 (YYYY-MM-DD)
+  startTime: string; // 수정 폼 초기값 (HH:MM)
+  description: string;
 }) {
   const router = useRouter();
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [hostId, setHostId] = useState<string | null>(null);
   const [viewerChecked, setViewerChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ dateTime: `${matchDate}T${startTime}`, cost: String(costPerPerson), description });
+
+  const handleSaveEdit = async () => {
+    const [d, t] = form.dateTime.split("T");
+    setIsLoading(true);
+    const r = await updateMatchRoom(await getAccessToken(), matchId, { matchDate: d, startTime: (t ?? "").slice(0, 5), costPerPerson: form.cost, description: form.description });
+    setIsLoading(false);
+    if (r.success) {
+      setEditing(false);
+      router.refresh();
+    } else alert(r.error);
+  };
 
   // 💡 2. 수락/거절 후 신청자 목록만 다시 불러오는 전용 함수
   const reloadApplicants = async () => {
@@ -157,6 +176,51 @@ export default function HostDashboard({
       <div className="absolute top-0 right-0 bg-court-solid px-4 py-1 rounded-bl-xl font-bold text-sm">
         방장 전용
       </div>
+
+      {currentStatus === "OPEN" && (
+        <div className="mb-6">
+          {!editing ? (
+            <Button type="button" variant="outline" onClick={() => setEditing(true)} className="h-10">
+              ✏️ 방 정보 수정 (날짜·시간·참가비·설명)
+            </Button>
+          ) : (
+            <div className="tint rounded-lg p-4 space-y-3">
+              <label className="block text-xs font-bold text-slate-500">날짜·시간</label>
+              <input
+                type="datetime-local"
+                value={form.dateTime}
+                onChange={(e) => setForm((f) => ({ ...f, dateTime: e.target.value }))}
+                className="w-full h-11 rounded-md border border-slate-200 px-3 text-sm"
+              />
+              <label className="block text-xs font-bold text-slate-500">1인당 참가비 (원)</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={form.cost}
+                onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))}
+                className="w-full h-11 rounded-md border border-slate-200 px-3 text-sm"
+              />
+              <label className="block text-xs font-bold text-slate-500">상세 안내</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                rows={4}
+                className="w-full rounded-md border border-slate-200 p-3 text-sm"
+              />
+              <div className="flex gap-2">
+                <Button type="button" onClick={handleSaveEdit} disabled={isLoading} className="btn-clay h-10">
+                  {isLoading ? "저장 중..." : "저장"}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setEditing(false)} className="h-10">
+                  취소
+                </Button>
+              </div>
+              <p className="text-xs text-slate-400">저장하면 신청자·참가자에게 변경 알림이 가요.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h3 className="text-xl heading flex items-center gap-2">

@@ -45,6 +45,9 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
       if (isMounted && result.success && result.evaluatees) {
         setCurrentUserId(userId);
         setEvaluatees(result.evaluatees);
+        // 이미 모두 평가했다면 완료 안내만 보여줍니다.
+        const done = new Set(result.doneIds ?? []);
+        if (result.evaluatees.length > 0 && result.evaluatees.every((u) => done.has(u.id))) setIsSubmitted(true);
 
         // 처음 데이터를 불러왔을 때, 모든 사람의 기본 점수를 세팅해 줍니다.
         // (매너: 5점 만점, NTRP: 2.0 기본값)
@@ -114,7 +117,7 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
     <div className="mt-12 surface p-6 md:p-8 rounded-xl shadow-sm">
       <h3 className="text-xl heading mb-2">⭐ 동료 평가 (NTRP & 매너)</h3>
       <p className="text-slate-500 mb-6 text-sm">
-        함께 경기한 동료들의 진짜 실력과 매너를 평가해 주세요. (익명으로 반영됩니다)
+        방장과 참가자 모두가 서로를 평가해요. 함께 경기한 분의 실력(NTRP)과 매너를 남겨 주세요. (익명으로 반영됩니다)
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">

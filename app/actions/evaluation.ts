@@ -19,7 +19,10 @@ interface EvaluationInput {
  * 경기가 완료(COMPLETED)된 뒤에만 평가할 수 있습니다.
  */
 async function resolveEvaluationScope(matchId: string, userId: string) {
-  const match = await prisma.match.findUnique({ where: { id: matchId }, select: { hostId: true, status: true } })
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    select: { hostId: true, status: true, host: { select: { id: true, nickname: true } } },
+  })
   if (!match) return { ok: false as const, error: "경기를 찾을 수 없습니다." }
   if (match.status !== "COMPLETED") return { ok: false as const, error: "경기가 완료된 뒤에 평가할 수 있어요." }
 
@@ -30,21 +33,28 @@ async function resolveEvaluationScope(matchId: string, userId: string) {
   const isMember = match.hostId === userId || accepted.some((p) => p.userId === userId)
   if (!isMember) return { ok: false as const, error: "이 경기에 참여한 사람만 평가할 수 있어요." }
 
-  return { ok: true as const, evaluatees: accepted.filter((p) => p.userId !== userId).map((p) => p.user) }
+  // 서로 평가: 방장은 참가자를, 참가자는 방장과 다른 참가자를 평가합니다. (본인 제외)
+  const everyone = [match.host, ...accepted.map((p) => p.user)]
+  const uniq = new Map(everyone.map((u) => [u.id, u]))
+  return { ok: true as const, evaluatees: [...uniq.values()].filter((u) => u.id !== userId) }
 }
 
 export async function getEvaluatees(accessToken: string | null, matchId: string) {
   try {
     const auth = await requireUser(accessToken)
-    if (!auth.ok) return { success: false, evaluatees: [] }
+    if (!auth.ok) return { success: false, evaluatees: [], doneIds: [] as string[] }
 
     const scope = await resolveEvaluationScope(matchId, auth.userId)
-    if (!scope.ok) return { success: false, evaluatees: [] }
+    if (!scope.ok) return { success: false, evaluatees: [], doneIds: [] as string[] }
 
-    return { success: true, evaluatees: scope.evaluatees }
+    const done = await prisma.evaluation.findMany({
+      where: { matchId, evaluatorId: auth.userId },
+      select: { evaluateeId: true },
+    })
+    return { success: true, evaluatees: scope.evaluatees, doneIds: done.map((d) => d.evaluateeId) }
   } catch (error) {
     console.error("평가 대상자 조회 에러:", error)
-    return { success: false, evaluatees: [] }
+    return { success: false, evaluatees: [], doneIds: [] as string[] }
   }
 }
 

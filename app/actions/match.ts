@@ -279,3 +279,53 @@ export async function completeMatchAction(accessToken: string | null, matchId: s
     return { success: false, error: "경기 상태 업데이트에 실패했습니다." };
   }
 }
+
+interface UpdateMatchInput {
+  matchDate: string
+  startTime: string
+  costPerPerson: string | number
+  description: string
+}
+
+/** 방장이 모집 중인 방의 날짜·시간·참가비·설명을 고칩니다. 신청자/참가자에게 변경 알림을 보냅니다. */
+export async function updateMatchRoom(accessToken: string | null, matchId: string, data: UpdateMatchInput) {
+  try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false, error: auth.error }
+
+    const match = await prisma.match.findUnique({ where: { id: matchId }, select: { hostId: true, status: true, deletedAt: true } })
+    if (!match || match.deletedAt || match.hostId !== auth.userId) return { success: false, error: "권한이 없습니다. (방장만 가능)" }
+    if (match.status !== "OPEN") return { success: false, error: "모집 중인 방만 수정할 수 있어요." }
+
+    const cost = typeof data.costPerPerson === "string" ? parseInt(data.costPerPerson) || 0 : data.costPerPerson
+    if (!Number.isFinite(cost) || cost < 0 || cost > 1_000_000) return { success: false, error: "참가비는 0원 ~ 100만원 사이로 입력해주세요." }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.matchDate ?? "") || Number.isNaN(new Date(data.matchDate).getTime())) return { success: false, error: "경기 날짜가 올바르지 않습니다." }
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(data.startTime ?? "")) return { success: false, error: "시작 시간이 올바르지 않습니다." }
+    const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString()
+    if (`${data.matchDate}T${data.startTime}` < kstNow.slice(0, 16)) return { success: false, error: "이미 지난 날짜·시간으로는 바꿀 수 없어요." }
+    if ((data.description ?? "").length > 2000) return { success: false, error: "상세 설명은 2000자 이내로 작성해주세요." }
+
+    await prisma.match.update({
+      where: { id: matchId },
+      data: {
+        matchDate: new Date(data.matchDate),
+        startTime: new Date(`1970-01-01T${data.startTime}:00`),
+        costPerPerson: cost,
+        description: data.description,
+      },
+    })
+
+    const people = await prisma.matchParticipant.findMany({
+      where: { matchId, status: { in: ["ACCEPTED", "PENDING"] } },
+      select: { userId: true },
+    })
+    await sendPushToUsers(
+      people.map((p) => p.userId),
+      { title: "방 정보가 수정됐어요", body: `${data.matchDate} ${data.startTime} · 참가비 ${cost.toLocaleString()}원. 내용을 확인해 주세요.`, url: `/matches/${matchId}` }
+    )
+    return { success: true }
+  } catch (error) {
+    console.error("방 수정 에러:", error)
+    return { success: false, error: "방 정보를 수정하지 못했습니다." }
+  }
+}
