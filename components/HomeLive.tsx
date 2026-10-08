@@ -41,10 +41,10 @@ export default async function HomeLive() {
   if (!data) return null;
 
   const stats = [
-    { label: "모집 중인 방", value: data.openMatches },
-    { label: "함께하는 회원", value: data.members },
-    { label: "치러진 경기", value: data.completed },
-    { label: "열린 대회", value: data.tournaments },
+    { label: "모집 중인 방", value: data.openMatches, href: "/matches" },
+    { label: "함께하는 회원", value: data.members, href: null },
+    { label: "치러진 경기", value: data.completed, href: "/history" },
+    { label: "열린 대회", value: data.tournaments, href: "/tournaments" },
   ];
 
   return (
@@ -52,12 +52,23 @@ export default async function HomeLive() {
       {/* 서비스 현황 */}
       <section className="max-w-6xl mx-auto px-4 pt-5 pb-2">
         <div className="surface rounded-2xl grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 border-line">
-          {stats.map((s) => (
-            <div key={s.label} className="py-4 text-center border-line">
-              <div className="font-display text-2xl text-court">{s.value.toLocaleString()}</div>
-              <div className="text-xs mt-1 text-ink-muted">{s.label}</div>
-            </div>
-          ))}
+          {stats.map((s) => {
+            const body = (
+              <>
+                <div className="font-display text-2xl text-court">{s.value.toLocaleString()}</div>
+                <div className="text-xs mt-1 text-ink-muted">{s.label}{s.href ? " ›" : ""}</div>
+              </>
+            );
+            return s.href ? (
+              <Link key={s.label} href={s.href} className="py-4 text-center border-line block hover:bg-black/5 transition-colors">
+                {body}
+              </Link>
+            ) : (
+              <div key={s.label} className="py-4 text-center border-line">
+                {body}
+              </div>
+            );
+          })}
         </div>
       </section>
 
