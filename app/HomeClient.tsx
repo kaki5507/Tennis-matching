@@ -80,8 +80,8 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
                 <Link key={href} href={href} className={`shortcut-card ${cls}`}>
                   <Icon className="w-6 h-6 shrink-0" aria-hidden />
                   <span className="flex flex-col leading-tight">
-                    <span className="text-sm">{label}</span>
-                    <span className="text-[11px] font-medium text-white/85">{sub}</span>
+                    <span className="text-sm whitespace-nowrap">{label}</span>
+                    <span className="text-[11px] font-medium text-white/85 truncate max-w-[9.5rem]">{sub}</span>
                   </span>
                 </Link>
               ))}
