@@ -30,7 +30,6 @@ export default function CourtSearch({ onSelect, selected }: Props) {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [recent, setRecent] = useState<SelectedCourt[]>([]);
-  const [picking, setPicking] = useState("");
 
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
 
@@ -46,25 +45,45 @@ export default function CourtSearch({ onSelect, selected }: Props) {
     };
   }, []);
 
-  // 부천 11곳: 눌렀을 때 지도에서 정확한 주소/좌표를 찾아 채움 (지도가 아직이면 주소 없이 이름으로 대체)
-  const pickBucheon = (name: string) => {
-    const fallback = () =>
-      onSelect({ name, address: `경기도 부천시 ${name}`, latitude: 37.5035, longitude: 126.766 });
-    if (!sdkReady || !window.kakao) return fallback();
-    setPicking(name);
+  // 부천 11곳: 지도가 준비되면 백그라운드에서 한 번에 찾아 두고(브라우저에도 저장), 누르면 바로 선택됩니다.
+  const [bucheon, setBucheon] = useState<Record<string, SelectedCourt>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("tm_bucheon_courts_v1") ?? "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (!sdkReady || !window.kakao) return;
     const places = new window.kakao.maps.services.Places();
-    places.keywordSearch(`부천 ${name.replace(/\(.*\)/, "")}`, (data, status) => {
-      setPicking("");
-      if (status !== window.kakao.maps.services.Status.OK || data.length === 0) return fallback();
-      const p = data[0];
-      onSelect({
-        name,
-        address: p.road_address_name || p.address_name,
-        latitude: parseFloat(p.y),
-        longitude: parseFloat(p.x),
+    BUCHEON_COURTS.forEach((c) => {
+      if (bucheon[c.name]) return;
+      places.keywordSearch(`부천 ${c.name.replace(/\(.*\)/, "")}`, (data, status) => {
+        if (status !== window.kakao.maps.services.Status.OK || data.length === 0) return;
+        const p = data[0];
+        const found: SelectedCourt = {
+          name: c.name,
+          address: p.road_address_name || p.address_name,
+          latitude: parseFloat(p.y),
+          longitude: parseFloat(p.x),
+        };
+        setBucheon((prev) => {
+          const next = { ...prev, [c.name]: found };
+          try {
+            localStorage.setItem("tm_bucheon_courts_v1", JSON.stringify(next));
+          } catch {
+            /* 저장 못 해도 이번 화면에서는 동작 */
+          }
+          return next;
+        });
       });
     });
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sdkReady]);
+
+  const pickBucheon = (name: string) =>
+    onSelect(bucheon[name] ?? { name, address: `경기도 부천시 ${name}`, latitude: 37.5035, longitude: 126.766 });
 
   const recentNames = new Set(recent.map((c) => c.name));
 
@@ -165,11 +184,10 @@ export default function CourtSearch({ onSelect, selected }: Props) {
                 <button
                   key={c.facilityId}
                   type="button"
-                  disabled={picking !== ""}
                   onClick={() => pickBucheon(c.name)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium border surface border-line chip-off-court disabled:opacity-60"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium border surface border-line chip-off-court"
                 >
-                  {picking === c.name ? "찾는 중…" : c.name}
+                  {c.name}
                 </button>
               ))}
             </div>

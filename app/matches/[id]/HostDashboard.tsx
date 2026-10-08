@@ -152,7 +152,7 @@ export default function HostDashboard({
   if (!viewerChecked || !hostId) return null;
 
   return (
-    <div className="mt-12 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
+    <div className="mt-12 mb-10 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
       {/* 왕관 뱃지 디자인 */}
       <div className="absolute top-0 right-0 bg-court-solid px-4 py-1 rounded-bl-xl font-bold text-sm">
         방장 전용
