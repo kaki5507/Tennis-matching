@@ -9,7 +9,7 @@ import { unverifiedSignupAllowed } from "@/lib/portone"
 import { getSupabaseAdmin, findAuthUserByEmail } from "@/lib/supabaseAdmin"
 import { createUserInDB } from "@/app/actions/auth"
 
-type Result = { success: boolean; error?: string; code?: "DISABLED" }
+type Result = { success: boolean; error?: string; code?: "DISABLED"; needsEmailConfirm?: boolean }
 
 const DISABLED: Result = { success: false, code: "DISABLED", error: "이메일 인증 건너뛰기가 꺼져 있습니다." }
 
@@ -53,8 +53,10 @@ export async function signUpWithoutEmailVerification(data: {
       await admin.auth.admin.deleteUser(existing.id)
     }
 
-    // 2) 이메일 인증 완료 상태로 Auth 계정 생성
-    const created = await admin.auth.admin.createUser({ email, password: data.password, email_confirm: true })
+    // 2) Auth 계정 생성. 서버에서 만들면 메일 발송을 기다리지 않아 빠릅니다.
+    //    REQUIRE_EMAIL_CONFIRM=true 면 인증 안 된 상태로 만들고(메일은 화면이 따로 보냄), 아니면 인증 완료로 만듭니다.
+    const needsEmailConfirm = process.env.REQUIRE_EMAIL_CONFIRM === "true"
+    const created = await admin.auth.admin.createUser({ email, password: data.password, email_confirm: !needsEmailConfirm })
     if (created.error || !created.data.user) {
       return { success: false, error: created.error?.message ?? "계정 생성에 실패했습니다." }
     }
@@ -76,7 +78,7 @@ export async function signUpWithoutEmailVerification(data: {
       await admin.auth.admin.deleteUser(userId).catch(() => {})
       return { success: false, error: profile.error }
     }
-    return { success: true }
+    return { success: true, needsEmailConfirm }
   } catch (error) {
     console.error("테스트 가입 에러:", error)
     return { success: false, error: "가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요." }

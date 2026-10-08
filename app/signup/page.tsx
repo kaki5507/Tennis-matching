@@ -158,6 +158,15 @@ export default function SignupPage() {
           email, password, nickname, termsAgreed, privacyAgreed, marketingAgreed,
           adminCode: wantsAdmin ? adminCode : undefined,
         });
+        if (fast.success && fast.needsEmailConfirm) {
+          // 인증 메일은 기다리지 않고 백그라운드로 보냄 → 안내 후 바로 메인으로
+          void supabase.auth
+            .resend({ type: "signup", email, options: { emailRedirectTo: `${window.location.origin}/login` } })
+            .catch(() => {});
+          alert("회원가입이 완료되었습니다!\n인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)");
+          router.push("/");
+          return;
+        }
         if (fast.success) {
           const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
           if (loginError) {

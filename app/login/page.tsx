@@ -44,8 +44,9 @@ const handleLogin = async (e: React.SyntheticEvent) => {
       if (error) throw new Error(error.message);
 
       // 로그인 성공 시!
-      alert("로그인 성공! 환영합니다 🎾");
-      router.push("/"); // 일단 메인 페이지로 이동 (나중에는 매칭 리스트로 이동할 수도 있음)
+      // 알림창을 띄우면 확인을 누를 때까지 이동이 멈추므로, 바로 이동합니다.
+      router.replace("/");
+      router.refresh();
       
     } catch (error: unknown) {
       // TypeScript 에러 안전 처리

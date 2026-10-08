@@ -42,10 +42,10 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
     <div className="min-h-screen flex flex-col tint">
       {/* 헤더 */}
       <header className="border-b sticky top-0 z-10 app-bar">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <BrandLogo size="lg" mood="happy" />
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+          <BrandLogo size="md" mood="happy" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             {user ? (
               <>
                 <span className="text-sm font-medium hidden sm:inline-block text-ink">
@@ -53,21 +53,21 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
                 </span>
                 <NotificationBell />
                 <Link href="/mypage">
-                  <Button variant="ghost" className="h-9 font-medium text-court">
+                  <Button variant="ghost" className="h-9 px-2 sm:px-3 text-sm font-medium text-court">
                     마이페이지
                   </Button>
                 </Link>
-                <Button onClick={handleLogout} variant="outline" className="h-9">
+                <Button onClick={handleLogout} variant="outline" className="h-9 px-2.5 sm:px-3 text-sm">
                   로그아웃
                 </Button>
               </>
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="h-9">로그인</Button>
+                  <Button variant="ghost" className="h-9 px-2.5 sm:px-3 text-sm">로그인</Button>
                 </Link>
                 <Link href="/signup">
-                  <Button className="h-9 text-white hover:opacity-90 bg-clay text-white">
+                  <Button className="h-9 px-3 text-sm btn-clay">
                     회원가입
                   </Button>
                 </Link>
