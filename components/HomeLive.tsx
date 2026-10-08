@@ -6,6 +6,8 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/tournamentData";
 import EmptyState from "@/components/EmptyState";
+import AvatarStack from "@/components/AvatarStack";
+import { seatInfo } from "@/lib/matchDisplay";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
 const fetchLive = unstable_cache(async () => {
@@ -18,7 +20,8 @@ const fetchLive = unstable_cache(async () => {
         where: { status: "OPEN", deletedAt: null },
         include: {
           court: true,
-          _count: { select: { participants: { where: { status: "ACCEPTED" } } } },
+          host: { select: { id: true, nickname: true } },
+          participants: { where: { status: "ACCEPTED" }, select: { user: { select: { id: true, nickname: true } } } },
         },
         orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
         take: 4,
@@ -122,7 +125,14 @@ export default async function HomeLive() {
                   })}
                 </p>
                 <div className="flex items-center justify-between mt-4 text-xs text-ink-muted">
-                  <span>참가 확정 {m._count.participants}명</span>
+                  <AvatarStack
+                    users={[
+                      ...(m.host ? [{ id: m.host.id, nickname: m.host.nickname }] : []),
+                      ...m.participants.map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                    ]}
+                    joined={seatInfo(m.gameType, m.participants.length, m.recruitCount).joined}
+                    capacity={seatInfo(m.gameType, m.participants.length, m.recruitCount).capacity}
+                  />
                   <span className="font-bold text-court">
                     {m.costPerPerson === 0 ? "무료" : `${m.costPerPerson.toLocaleString()}원`}
                   </span>
