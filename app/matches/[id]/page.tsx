@@ -44,11 +44,11 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
 
   return (
-    <div className="min-h-screen page-bg py-12 px-4">
+    <div className="min-h-screen page-bg py-6 sm:py-12 px-3 sm:px-4">
       <div className="max-w-3xl mx-auto surface rounded-2xl shadow-sm overflow-hidden">
         
         {/* 상단 헤더 영역 (그라데이션 배경) */}
-        <div className="px-8 py-10 text-white hero-court">
+        <div className="px-5 sm:px-8 py-8 sm:py-10 text-white hero-court">
           <div className="flex justify-between items-start mb-4">
             <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm">
               {statusBadge}
@@ -72,7 +72,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         </div>
 
         {/* 상세 정보 요약 카드 영역 */}
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 p-6 tint rounded-xl border border-slate-100">
             <div>
               <p className="text-sm text-slate-500 mb-1">시작 시간</p>

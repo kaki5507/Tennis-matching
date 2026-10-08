@@ -48,7 +48,7 @@ export default function CourtSearch({ onSelect, selected }: Props) {
   // 부천 11곳: 지도가 준비되면 백그라운드에서 한 번에 찾아 두고(브라우저에도 저장), 누르면 바로 선택됩니다.
   const [bucheon, setBucheon] = useState<Record<string, SelectedCourt>>(() => {
     try {
-      return JSON.parse(localStorage.getItem("tm_bucheon_courts_v1") ?? "{}");
+      return JSON.parse(localStorage.getItem("tm_bucheon_courts_v2") ?? "{}");
     } catch {
       return {};
     }
@@ -61,7 +61,8 @@ export default function CourtSearch({ onSelect, selected }: Props) {
       if (bucheon[c.name]) return;
       places.keywordSearch(`부천 ${c.name.replace(/\(.*\)/, "")}`, (data, status) => {
         if (status !== window.kakao.maps.services.Status.OK || data.length === 0) return;
-        const p = data[0];
+        const core = c.name.replace(/\(.*\)/, "").replace(/테니스장$/, "").trim();
+        const p = data.find((d) => d.place_name.includes(core)) ?? data[0];
         const found: SelectedCourt = {
           name: c.name,
           address: p.road_address_name || p.address_name,
@@ -71,7 +72,7 @@ export default function CourtSearch({ onSelect, selected }: Props) {
         setBucheon((prev) => {
           const next = { ...prev, [c.name]: found };
           try {
-            localStorage.setItem("tm_bucheon_courts_v1", JSON.stringify(next));
+            localStorage.setItem("tm_bucheon_courts_v2", JSON.stringify(next));
           } catch {
             /* 저장 못 해도 이번 화면에서는 동작 */
           }
@@ -82,8 +83,16 @@ export default function CourtSearch({ onSelect, selected }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sdkReady]);
 
-  const pickBucheon = (name: string) =>
-    onSelect(bucheon[name] ?? { name, address: `경기도 부천시 ${name}`, latitude: 37.5035, longitude: 126.766 });
+  const pickBucheon = (name: string) => {
+    const found = bucheon[name];
+    if (!found) {
+      // 정확한 위치를 아직 못 찾았으면 엉뚱한 위치로 저장하지 않고 잠시 기다리게 안내
+      setErrorMsg("지도에서 정확한 위치를 찾는 중이에요. 잠시 후 다시 눌러 주세요.");
+      return;
+    }
+    setErrorMsg("");
+    onSelect(found);
+  };
 
   const recentNames = new Set(recent.map((c) => c.name));
 
@@ -193,6 +202,8 @@ export default function CourtSearch({ onSelect, selected }: Props) {
             </div>
           </div>
 
+          {errorMsg && <p className="text-xs text-danger">{errorMsg}</p>}
+
           <p className="text-xs text-ink-muted pt-1">목록에 없다면 지도에서 검색하세요</p>
           <div className="flex gap-2">
             <Input
@@ -208,7 +219,6 @@ export default function CourtSearch({ onSelect, selected }: Props) {
             </Button>
           </div>
 
-          {errorMsg && <p className="text-xs text-danger">{errorMsg}</p>}
 
           {results.length > 0 && (
             <ul className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-56 overflow-y-auto">

@@ -29,6 +29,12 @@ export async function findOrCreateCourt(accessToken: string | null, data: FindOr
       return { success: false, error: "테니스장 위치 정보가 올바르지 않습니다." }
     }
 
+    // 예전에 지도 확인 없이 임시 주소("경기도 부천시 ○○")와 부천시청 좌표로 저장된 코트를 정확한 값으로 바로잡음
+    await prisma.court.updateMany({
+      where: { address: `경기도 부천시 ${name}` },
+      data: { address, latitude: data.latitude, longitude: data.longitude },
+    })
+
     const existing = await prisma.court.findFirst({
       where: { address },
     })

@@ -88,29 +88,29 @@ export default function MatchComments({ matchId }: { matchId: string }) {
   };
 
   return (
-    <div className="mt-12 surface p-6 md:p-8 rounded-xl shadow-sm">
-      <h3 className="text-xl heading mb-6 flex items-center gap-2">
+    <div className="mt-8 surface p-4 md:p-8 rounded-xl shadow-sm">
+      <h3 className="text-lg md:text-xl heading mb-4 md:mb-6 flex items-center gap-2">
         💬 Q&A 및 소통 <span className="text-ok bg-ok-soft px-2 py-0.5 rounded-full text-sm">{comments.length}</span>
       </h3>
 
       {/* 댓글 목록 영역 */}
-      <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
+      <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto md:pr-2">
         {comments.length === 0 ? (
           <p className="text-slate-500 text-center py-8 tint rounded-lg border border-dashed border-slate-200">
             아직 작성된 댓글이 없습니다.<br/>방장에게 궁금한 점이나 인사말을 남겨보세요!
           </p>
         ) : (
           comments.map((comment) => (
-            <div key={comment.id} className="flex gap-4 p-4 tint rounded-lg border border-slate-100">
-              <div className="w-10 h-10 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold shrink-0">
+            <div key={comment.id} className="flex gap-3 p-3 md:p-4 tint rounded-lg border border-slate-100">
+              <div className="w-8 h-8 md:w-10 md:h-10 text-sm bg-slate-200 text-slate-600 rounded-full flex items-center justify-center font-bold shrink-0">
                 {(comment.user.nickname || "?").charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-slate-800 text-sm">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-baseline gap-x-2 mb-1">
+                  <span className="font-bold text-slate-800 text-sm whitespace-nowrap">
                     {comment.user.nickname || "익명"}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-400 whitespace-nowrap">
                     {new Date(comment.createdAt).toLocaleString("ko-KR", { 
                       month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
                     })}
@@ -124,18 +124,18 @@ export default function MatchComments({ matchId }: { matchId: string }) {
       </div>
 
       {/* 댓글 작성 폼 */}
-      <form onSubmit={handleSubmit} className="flex gap-3">
+      <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3">
         <Input
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder={currentUserId ? "궁금한 점이나 인사말을 남겨보세요!" : "로그인 후 댓글을 작성할 수 있습니다."}
           disabled={!currentUserId || isLoading}
-          className="flex-1 h-12 tint"
+          className="flex-1 min-w-0 h-11 md:h-12 tint"
         />
         <Button 
           type="submit" 
           disabled={!currentUserId || isLoading || !newComment.trim()}
-          className="btn-clay h-12 px-6"
+          className="btn-clay h-11 md:h-12 px-4 md:px-6 shrink-0"
         >
           {isLoading ? "등록 중..." : "등록"}
         </Button>
