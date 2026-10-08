@@ -144,7 +144,7 @@ export default function CourtsPage() {
                 <>🕘 <span className="text-court">{ago(bucket.updatedAt, now)}</span> 갱신</>
               ) : loading ? "불러오는 중..." : "아직 수집된 정보가 없어요"}
             </p>
-            <p className="text-xs text-ink-muted mt-0.5">매시 정각에 자동 갱신 · 오전 9시~밤 11시</p>
+            <p className="text-xs text-ink-muted mt-0.5">1시간마다 자동 갱신 · 정보는 저장된 수집본이에요</p>
           </div>
           <button
             type="button"
@@ -177,7 +177,9 @@ export default function CourtsPage() {
               <p className="text-xs text-warn mb-2">예약 사이트 달력이 이번 달만 보여서, 다음 달 날짜는 빠져 있어요.</p>
             )}
             {byDate.length === 0 ? (
-              <div className="surface rounded-2xl p-5 text-sm text-ink-muted text-center">조회한 범위에 가능한 시간대가 없어요.</div>
+              <div className="surface rounded-2xl p-5 text-sm text-ink-muted text-center">
+                {bucket.updatedAt ? "조회한 범위에 가능한 시간대가 없어요." : "아직 수집 전이에요. 첫 수집이 끝나면 여기에 나타나요."}
+              </div>
             ) : (
               <ul className="space-y-3">
                 {byDate.map(([date, d]) => {
@@ -220,7 +222,7 @@ export default function CourtsPage() {
                 <li key={r.facilityId} className="surface rounded-xl px-4 py-3">
                   <div className="font-bold text-sm text-ink truncate">{r.name}</div>
                   <div className={`text-xs mt-0.5 ${r.ok && r.days.length ? "text-ok font-bold" : r.ok ? "text-ink-muted" : "text-danger"}`}>
-                    {!r.ok ? r.error : r.days.length === 0 ? "가능한 시간대 없음" : `${r.days.length}일 가능 · 가장 빠른 날 ${r.days[0].label}`}
+                    {!r.ok ? r.error : !r.updatedAt ? "수집 전" : r.days.length === 0 ? "가능한 시간대 없음" : `${r.days.length}일 가능 · 가장 빠른 날 ${r.days[0].label}`}
                     {r.ok && r.updatedAt ? ` · ${ago(r.updatedAt, now)} 갱신` : ""}
                   </div>
                 </li>

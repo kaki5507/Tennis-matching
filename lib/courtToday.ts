@@ -87,7 +87,8 @@ function build(court: { facilityId: string; name: string }, info: RangeInfo, sna
     return { facilityId: court.facilityId, name: court.name, ok: false, days: [], error: "다음 달 달력은 아직 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
   }
   if (!snap) {
-    return { facilityId: court.facilityId, name: court.name, ok: false, days: [], error: "아직 수집된 정보가 없어요. 매시 정각에 갱신돼요." }
+    // 아직 한 번도 수집되지 않음: 오류가 아니라 "빈 결과"로 (화면에서 수집 전이라고만 안내)
+    return { facilityId: court.facilityId, name: court.name, ok: true, days: [] }
   }
   const days: CourtDay[] = info.dates
     .map((d) => ({ date: d.date, label: d.label, times: [...(snap.byDay[d.dd] ?? [])].sort() }))
