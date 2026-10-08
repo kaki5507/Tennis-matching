@@ -607,3 +607,9 @@
 .guide-lines { position: relative; }
 .guide-lines::before { content: ""; position: absolute; inset: 8px; border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; pointer-events: none; }
 .guide-lines::after { content: ""; position: absolute; left: 8px; right: 8px; top: 20px; border-top: 2px solid rgba(255,255,255,0.3); pointer-events: none; }
+
+/* 시간대 칩: 오전 = 따뜻한 노랑, 오후 = 하늘빛 */
+.time-am { background: var(--warn-soft); color: var(--warn); }
+.time-pm { background: var(--info-soft); color: var(--info); }
+/* 모바일에서 맨 위를 당겨도 헤더가 겹쳐 보이지 않도록 바운스 제거 */
+html, body { overscroll-behavior-y: none; }

@@ -1,67 +1,99 @@
 // lib/courtToday.ts
-// "내일 예약 가능한 코트 시간대"를 조회합니다. (당일 예약은 불가) (조회만 하며 예약은 절대 대신 하지 않습니다)
-// 예약 사이트에 부담이 가지 않도록 시설별 결과를 3분간 서버 메모리에 기억합니다.
+// 부천 테니스장의 "예약 가능한 날짜·시간대"를 조회합니다. (조회만 하며 예약은 절대 대신 하지 않습니다)
+// 당일 예약은 불가하므로 항상 "내일부터" 보여줍니다. 범위: 내일 / 7일 / 이번 달 남은 날.
+// 예약 사이트의 기본 달력은 이번 달만 읽을 수 있어서, 이번 달을 넘어가는 날짜는 조회에서 빠집니다(truncated).
+// 시설별 결과(달 전체)는 3분간 서버 메모리에 기억해 사이트에 부담을 주지 않습니다.
 
 import { fetchAvailableSlots } from "@/lib/bucheonScraper"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
 
-export interface CourtNowResult {
+export type RangeKey = "tomorrow" | "week" | "month"
+
+export interface CourtDay {
+  date: string // YYYY-MM-DD
+  label: string // 10/9(금)
+  times: string[] // "09:00~11:00"
+}
+
+export interface CourtRangeResult {
   facilityId: string
   name: string
   ok: boolean
-  /** 내일 예약 가능한 시간대 ("19:00~21:00") */
-  times: string[]
+  days: CourtDay[]
   error?: string
 }
 
+export interface RangeInfo {
+  dates: { date: string; dd: string; label: string }[]
+  truncated: boolean
+  rangeLabel: string
+}
+
 const TTL_MS = 3 * 60_000
-const cache = new Map<string, { at: number; times: string[] }>()
+const cache = new Map<string, { at: number; byDay: Record<string, string[]> }>()
+const WEEK = ["일", "월", "화", "수", "목", "금", "토"]
 
-/** 한국 시간 기준 "오늘/내일"의 일(DD), 월, 표시용 라벨 */
-function kstDates() {
-  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...o }).format(d)
-  const now = new Date()
-  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-  return {
-    todayMonth: fmt(now, { month: "2-digit" }),
-    tomorrowMonth: fmt(tomorrow, { month: "2-digit" }),
-    tomorrowDay: fmt(tomorrow, { day: "2-digit" }).replace(/\D/g, "").padStart(2, "0"),
-    label: fmt(tomorrow, { month: "long", day: "numeric", weekday: "short" }),
-  }
-}
+const pad = (n: number) => String(n).padStart(2, "0")
 
-export function tomorrowLabel() {
-  return kstDates().label
-}
-
-export async function checkCourtNow(facilityId: string): Promise<CourtNowResult> {
-  const court = BUCHEON_COURTS.find((c) => c.facilityId === facilityId)
-  if (!court) return { facilityId, name: "", ok: false, times: [], error: "알 수 없는 테니스장입니다." }
-
-  // 당일 예약은 불가하므로 "내일" 날짜의 시간대를 찾습니다.
-  const { todayMonth, tomorrowMonth, tomorrowDay } = kstDates()
-  if (todayMonth !== tomorrowMonth) {
-    // 예약 사이트의 기본 달력은 이번 달만 읽으므로, 내일이 다음 달 1일이면 아직 조회할 수 없습니다.
-    return { facilityId, name: court.name, ok: false, times: [], error: "내일은 다음 달이라 오늘은 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
-  }
-
-  const key = `${facilityId}:${tomorrowDay}`
-  try {
-    let hit = cache.get(key)
-    if (!hit || Date.now() - hit.at > TTL_MS) {
-      const slots = await fetchAvailableSlots(facilityId)
-      const tomorrow = slots.filter((s) => s.date === tomorrowDay).map((s) => s.time)
-      hit = { at: Date.now(), times: [...new Set(tomorrow)] }
-      if (cache.size > 100) cache.clear()
-      cache.set(key, hit)
+/** 한국 시간 기준으로 조회할 날짜 목록 (내일부터, 이번 달 안에서만) */
+export function getRangeInfo(range: RangeKey): RangeInfo {
+  const kst = new Date(Date.now() + 9 * 3600_000)
+  const y = kst.getUTCFullYear()
+  const m = kst.getUTCMonth()
+  const today = kst.getUTCDate()
+  const lastDay = new Date(Date.UTC(y, m + 1, 0)).getUTCDate()
+  const want = range === "tomorrow" ? 1 : range === "week" ? 7 : 31
+  const dates: RangeInfo["dates"] = []
+  let truncated = false
+  for (let i = 1; i <= Math.min(want, 31); i++) {
+    const d = today + i
+    if (range !== "month" && i > want) break
+    if (d > lastDay) {
+      if (range !== "month") truncated = true
+      break
     }
-    return { facilityId, name: court.name, ok: true, times: [...hit.times].sort() }
+    const dow = WEEK[new Date(Date.UTC(y, m, d)).getUTCDay()]
+    dates.push({ date: `${y}-${pad(m + 1)}-${pad(d)}`, dd: pad(d), label: `${m + 1}/${d}(${dow})` })
+  }
+  if (range === "month") truncated = true // 다음 달은 조회 불가
+  const rangeLabel = dates.length === 0 ? "" : dates.length === 1 ? dates[0].label : `${dates[0].label} ~ ${dates[dates.length - 1].label}`
+  return { dates, truncated, rangeLabel }
+}
+
+async function monthSlots(facilityId: string) {
+  const hit = cache.get(facilityId)
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.byDay
+  const slots = await fetchAvailableSlots(facilityId)
+  const byDay: Record<string, string[]> = {}
+  for (const s of slots) {
+    const list = (byDay[s.date] ??= [])
+    if (!list.includes(s.time)) list.push(s.time)
+  }
+  if (cache.size > 100) cache.clear()
+  cache.set(facilityId, { at: Date.now(), byDay })
+  return byDay
+}
+
+export async function checkCourtRange(facilityId: string, range: RangeKey): Promise<CourtRangeResult> {
+  const court = BUCHEON_COURTS.find((c) => c.facilityId === facilityId)
+  if (!court) return { facilityId, name: "", ok: false, days: [], error: "알 수 없는 테니스장입니다." }
+
+  const info = getRangeInfo(range)
+  if (info.dates.length === 0) {
+    return { facilityId, name: court.name, ok: false, days: [], error: "다음 달 달력은 아직 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
+  }
+  try {
+    const byDay = await monthSlots(facilityId)
+    const days: CourtDay[] = info.dates
+      .map((d) => ({ date: d.date, label: d.label, times: [...(byDay[d.dd] ?? [])].sort() }))
+      .filter((d) => d.times.length > 0)
+    return { facilityId, name: court.name, ok: true, days }
   } catch (e) {
-    console.error(`[courtToday:${court.name}]`, e)
-    return { facilityId, name: court.name, ok: false, times: [], error: "예약 사이트에서 불러오지 못했어요." }
+    console.error(`[courtRange:${court.name}]`, e)
+    return { facilityId, name: court.name, ok: false, days: [], error: "예약 사이트에서 불러오지 못했어요." }
   }
 }
 
-export async function checkAllCourtsNow(): Promise<CourtNowResult[]> {
-  return Promise.all(BUCHEON_COURTS.map((c) => checkCourtNow(c.facilityId)))
+export async function checkAllCourtsRange(range: RangeKey): Promise<CourtRangeResult[]> {
+  return Promise.all(BUCHEON_COURTS.map((c) => checkCourtRange(c.facilityId, range)))
 }

@@ -6,8 +6,8 @@ import { subscribeCourtWatch, unsubscribeCourtWatch, getMyCourtWatches } from "@
 import TennisLoader from "@/components/TennisLoader";
 import { Bell, BellOff } from "lucide-react";
 import { getAccessToken } from "@/lib/authToken";
-import { getCourtNow } from "@/app/actions/courtNow";
-import type { CourtNowResult } from "@/lib/courtToday";
+import { getCourtRange } from "@/app/actions/courtNow";
+import type { CourtRangeResult } from "@/lib/courtToday";
 
 interface Props {
   userId: string;
@@ -17,13 +17,13 @@ export default function CourtWatchList({ userId }: Props) {
   const [watchedIds, setWatchedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [nowResults, setNowResults] = useState<Record<string, CourtNowResult>>({});
+  const [nowResults, setNowResults] = useState<Record<string, CourtRangeResult>>({});
   const [checkingId, setCheckingId] = useState<string | null>(null);
 
   // 코트를 누르면 내일 가능한 시간대를 바로 확인
   const checkNow = async (facilityId: string) => {
     setCheckingId(facilityId);
-    const r = await getCourtNow(await getAccessToken(), facilityId);
+    const r = await getCourtRange(await getAccessToken(), "tomorrow", facilityId);
     if (r.success) setNowResults((prev) => ({ ...prev, [facilityId]: r.results[0] }));
     setCheckingId(null);
   };
@@ -94,11 +94,11 @@ export default function CourtWatchList({ userId }: Props) {
               </button>
              </div>
              {nowResults[court.facilityId] && (
-               <p className={`mt-2 text-xs font-bold ${nowResults[court.facilityId].ok && nowResults[court.facilityId].times.length ? "text-ok" : "text-ink-muted"}`}>
+               <p className={`mt-2 text-xs font-bold ${nowResults[court.facilityId].ok && (nowResults[court.facilityId].days[0]?.times.length ?? 0) ? "text-ok" : "text-ink-muted"}`}>
                  {!nowResults[court.facilityId].ok
                    ? nowResults[court.facilityId].error
-                   : nowResults[court.facilityId].times.length
-                     ? `내일 가능: ${nowResults[court.facilityId].times.join(", ")}`
+                   : (nowResults[court.facilityId].days[0]?.times.length ?? 0)
+                     ? `내일 가능: ${(nowResults[court.facilityId].days[0]?.times ?? []).join(", ")}`
                      : "내일 가능한 시간대가 없어요."}
                </p>
              )}

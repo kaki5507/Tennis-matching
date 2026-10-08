@@ -22,6 +22,19 @@ export default function SignupPage() {
   const [nickStatus, setNickStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  // 입력칸 바로 아래에 보여줄 안내 (맨 위 에러 박스까지 올라가지 않아도 어디가 문제인지 바로 보이게)
+  const [confirmTouched, setConfirmTouched] = useState(false);
+  const [pwTouched, setPwTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const pwTooShort = (pwTouched || submitted) && password.length > 0 && password.length < 6;
+  const pwMismatch = (confirmTouched || submitted) && passwordConfirm.length > 0 && password !== passwordConfirm;
+  const pwMatch = passwordConfirm.length > 0 && password === passwordConfirm;
+  const nickBad = nickStatus !== null && !nickStatus.ok;
+  const focusField = (id: string) => {
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    (el as HTMLInputElement | null)?.focus({ preventScroll: true });
+  };
 
   // 서버가 "본인인증 없이 가입"을 허용 중인지 (운영에서는 ALLOW_UNVERIFIED_SIGNUP 스위치)
   const [unverifiedAllowed, setUnverifiedAllowed] = useState(false);
@@ -144,9 +157,25 @@ export default function SignupPage() {
       return setErrorMsg("이용약관과 개인정보처리방침에 동의해야 가입할 수 있습니다.");
     }
 
-    // 1. 비밀번호 확인 검사
+    // 1. 입력값 검사: 틀린 칸으로 바로 이동 + 그 칸 아래에 이유 표시
+    setSubmitted(true);
+    let nick = nickStatus;
+    if (!nick && nickname.trim()) {
+      const r = await checkNickname(null, nickname);
+      nick = { ok: r.available, message: r.message };
+      setNickStatus(nick);
+    }
+    if (nick && !nick.ok) {
+      focusField("nickname");
+      return;
+    }
+    if (password.length < 6) {
+      focusField("password");
+      return;
+    }
     if (password !== passwordConfirm) {
-      return setErrorMsg("비밀번호가 서로 다릅니다.");
+      focusField("passwordConfirm");
+      return;
     }
 
     setIsLoading(true);
@@ -381,7 +410,10 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-6">
-          <fieldset disabled={!verifiedId} className="space-y-6 disabled:opacity-50">
+          {!allRequiredAgreed && (
+            <p className="text-xs rounded-lg p-2.5 alert-info text-center">위의 필수 약관에 동의하면 아래 칸을 입력할 수 있어요.</p>
+          )}
+          <fieldset disabled={!allRequiredAgreed} className="space-y-6 disabled:opacity-50">
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
@@ -391,6 +423,8 @@ export default function SignupPage() {
               <Label htmlFor="nickname">닉네임</Label>
               <Input
                 id="nickname" type="text" value={nickname} maxLength={20} required
+                aria-invalid={nickBad}
+                style={nickBad ? { borderColor: "var(--danger)" } : undefined}
                 onChange={(e) => { setNickname(e.target.value); setNickStatus(null); }}
                 onBlur={async () => {
                   if (!nickname.trim()) return;
@@ -399,22 +433,43 @@ export default function SignupPage() {
                 }}
                 aria-describedby="nickname-status"
               />
-              <p id="nickname-status" aria-live="polite" className={`text-xs min-h-4 ${nickStatus ? (nickStatus.ok ? "text-ok" : "text-danger") : "text-ink-muted"}`}>
-                {nickStatus ? nickStatus.message : "2~20자, 다른 회원과 겹치지 않아야 해요."}
+              <p id="nickname-status" aria-live="polite" className={`text-xs min-h-4 ${nickBad ? "font-bold" : ""} ${nickStatus ? (nickStatus.ok ? "text-ok" : "text-danger") : "text-ink-muted"}`}>
+                {nickStatus ? `${nickStatus.ok ? "✓ " : "✕ "}${nickStatus.message}` : "2~20자, 다른 회원과 겹치지 않아야 해요."}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">비밀번호</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="6자리 이상 입력" required />
+              <Input
+                id="password" type="password" value={password} placeholder="6자리 이상 입력" required
+                aria-invalid={pwTooShort}
+                style={pwTooShort ? { borderColor: "var(--danger)" } : undefined}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => setPwTouched(true)}
+              />
+              <p aria-live="polite" className={`text-xs min-h-4 ${pwTooShort ? "text-danger font-bold" : "text-ink-muted"}`}>
+                {pwTooShort ? "✕ 비밀번호는 6자리 이상이어야 해요." : "6자리 이상"}
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="passwordConfirm">비밀번호 확인</Label>
-              <Input id="passwordConfirm" type="password" value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)} required />
+              <Input
+                id="passwordConfirm" type="password" value={passwordConfirm} required
+                aria-invalid={pwMismatch}
+                style={pwMismatch ? { borderColor: "var(--danger)" } : pwMatch ? { borderColor: "var(--ok)" } : undefined}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                onBlur={() => setConfirmTouched(true)}
+              />
+              <p aria-live="polite" className={`text-xs min-h-4 ${pwMismatch ? "text-danger font-bold" : pwMatch ? "text-ok font-bold" : "text-ink-muted"}`}>
+                {pwMismatch ? "✕ 비밀번호가 일치하지 않아요." : pwMatch ? "✓ 비밀번호가 일치해요." : "위와 같은 비밀번호를 한 번 더 입력해요."}
+              </p>
             </div>
           </fieldset>
 
+          {allRequiredAgreed && !verifiedId && (
+            <p className="text-xs text-warn font-bold text-center">위의 &quot;본인인증&quot; 또는 &quot;본인인증 없이 가입하기(임시)&quot;를 먼저 눌러주세요.</p>
+          )}
           <Button type="submit" disabled={isLoading || !verifiedId || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
             {isLoading ? "가입 처리 중..." : "가입하기"}
           </Button>

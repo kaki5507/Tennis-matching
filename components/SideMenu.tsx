@@ -105,8 +105,8 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
                   <CalendarClock className="w-5 h-5" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block font-extrabold text-sm">내일 빈 코트 찾기</span>
-                  <span className="block text-xs text-white/85">내일 가능한 시간 바로 확인</span>
+                  <span className="block font-extrabold text-sm">빈 코트 찾기</span>
+                  <span className="block text-xs text-white/85">내일·7일·이번 달 한 번에 확인</span>
                 </span>
                 <ChevronRight className="w-4 h-4 shrink-0" />
               </Link>

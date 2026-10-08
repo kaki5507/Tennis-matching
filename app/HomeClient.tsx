@@ -13,7 +13,7 @@ import SideMenu from "@/components/SideMenu";
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
   { href: "/matches/create", label: "방 만들기", sub: "내가 방장", Icon: PlusCircle, cls: "sc-clay" },
-  { href: "/courts", label: "내일 빈 코트 찾기", sub: "내일 가능한 시간 확인", Icon: CalendarClock, cls: "sc-grass" },
+  { href: "/courts", label: "빈 코트 찾기", sub: "내일·7일·이번 달 확인", Icon: CalendarClock, cls: "sc-grass" },
   { href: "/tournaments", label: "대회", sub: "대진표·결과", Icon: Trophy, cls: "sc-sky" },
   { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
   { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
@@ -80,7 +80,7 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
               {user ? (
                 <div className="max-w-md">
                   <Link href="/courts" className="block">
-                    <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 내일 빈 코트 찾기</Button>
+                    <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 빈 코트 찾기</Button>
                   </Link>
                 </div>
               ) : (
