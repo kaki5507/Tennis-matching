@@ -12,6 +12,7 @@ import type { CourtRangeResult, RangeKey } from "@/lib/courtToday";
 import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
 import TennisMascot from "@/components/TennisMascot";
+import { dayKind } from "@/lib/koHolidays";
 
 const RANGES: { key: RangeKey; label: string; hint: string }[] = [
   { key: "tomorrow", label: "내일", hint: "내일 가능한 시간" },
@@ -147,6 +148,7 @@ export default function CourtsPage() {
           <span className="time-am px-2 py-0.5 rounded-full font-bold">오전</span>
           <span className="time-pm px-2 py-0.5 rounded-full font-bold">오후</span>
           <span>시간대 색으로 구분해요</span>
+          <span className="off-day-head px-2 py-0.5 rounded-full font-bold ml-auto">🔥 쉬는 날</span>
         </div>
 
         {/* 날짜별 정리 */}
@@ -162,9 +164,19 @@ export default function CourtsPage() {
               <div className="surface rounded-2xl p-5 text-sm text-ink-muted text-center">조회한 범위에 가능한 시간대가 없어요.</div>
             ) : (
               <ul className="space-y-3">
-                {byDate.map(([date, d]) => (
-                  <li key={date} className="surface rounded-2xl overflow-hidden">
-                    <div className="px-4 py-2 bg-court-solid font-extrabold text-sm">{d.label}</div>
+                {byDate.map(([date, d]) => {
+                  const k = dayKind(date);
+                  const off = k.kind !== "weekday";
+                  return (
+                  <li key={date} className={`surface rounded-2xl overflow-hidden ${off ? "off-day-card" : ""}`}>
+                    <div className={`px-4 py-2 font-extrabold text-sm flex items-center justify-between gap-2 ${off ? "off-day-head" : "bg-court-solid"}`}>
+                      <span>{d.label}</span>
+                      {off && (
+                        <span className="text-[11px] font-extrabold bg-white/95 text-clay rounded-full px-2.5 py-0.5">
+                          🔥 {k.kind === "holiday" ? `공휴일 · ${k.name}` : "주말"} · 경쟁 치열
+                        </span>
+                      )}
+                    </div>
                     <ul className="divide-y divide-line">
                       {d.courts.map((c) => (
                         <li key={c.name} className="px-4 py-3">
@@ -176,7 +188,8 @@ export default function CourtsPage() {
                       ))}
                     </ul>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </section>

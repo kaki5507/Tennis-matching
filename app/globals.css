@@ -613,3 +613,7 @@
 .time-pm { background: var(--info-soft); color: var(--info); }
 /* 모바일에서 맨 위를 당겨도 헤더가 겹쳐 보이지 않도록 바운스 제거 */
 html, body { overscroll-behavior-y: none; }
+
+/* 쉬는 날(주말·공휴일) 강조: 클레이색 헤더 + 테두리 */
+.off-day-head { background: var(--clay); color: #fff; }
+.off-day-card { border: 2px solid var(--clay); }
