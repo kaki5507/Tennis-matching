@@ -4,6 +4,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
 import { updateParticipantStatus, completeMatchAction, updateMatchRoom } from "@/app/actions/match";
@@ -171,56 +174,71 @@ export default function HostDashboard({
   if (!viewerChecked || !hostId) return null;
 
   return (
-    <div className="mt-12 mb-10 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
-      {/* 왕관 뱃지 디자인 */}
-      <div className="absolute top-0 right-0 bg-court-solid px-4 py-1 rounded-bl-xl font-bold text-sm">
-        방장 전용
-      </div>
-
-      {currentStatus === "OPEN" && (
-        <div className="mb-6">
-          {!editing ? (
-            <Button type="button" variant="outline" onClick={() => setEditing(true)} className="h-10">
-              ✏️ 방 정보 수정 (날짜·시간·참가비·설명)
+    <>
+    {currentStatus === "OPEN" && (
+      <div className="mt-12 surface p-6 md:p-8 rounded-xl border-2 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg heading">✏️ 방 정보 수정</h3>
+          {!editing && (
+            <Button type="button" variant="outline" onClick={() => setEditing(true)} className="h-9 px-4">
+              수정하기
             </Button>
-          ) : (
-            <div className="tint rounded-lg p-4 space-y-3">
-              <label className="block text-xs font-bold text-slate-500">날짜·시간</label>
-              <input
+          )}
+        </div>
+        {!editing ? (
+          <p className="text-sm text-ink-muted mt-2">날짜·시간, 참가비, 상세 안내를 바꿀 수 있어요.</p>
+        ) : (
+          <div className="mt-5 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-dt">날짜·시간</Label>
+              <Input
+                id="edit-dt"
                 type="datetime-local"
                 value={form.dateTime}
                 onChange={(e) => setForm((f) => ({ ...f, dateTime: e.target.value }))}
-                className="w-full h-11 rounded-md border border-slate-200 px-3 text-sm"
+                className="h-12 w-full min-w-0 max-w-full text-base"
               />
-              <label className="block text-xs font-bold text-slate-500">1인당 참가비 (원)</label>
-              <input
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cost">1인당 참가비 (원)</Label>
+              <Input
+                id="edit-cost"
                 type="number"
                 inputMode="numeric"
                 min={0}
                 value={form.cost}
                 onChange={(e) => setForm((f) => ({ ...f, cost: e.target.value }))}
-                className="w-full h-11 rounded-md border border-slate-200 px-3 text-sm"
+                className="h-12 text-base"
               />
-              <label className="block text-xs font-bold text-slate-500">상세 안내</label>
-              <textarea
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-desc">상세 안내</Label>
+              <Textarea
+                id="edit-desc"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 rows={4}
-                className="w-full rounded-md border border-slate-200 p-3 text-sm"
               />
-              <div className="flex gap-2">
-                <Button type="button" onClick={handleSaveEdit} disabled={isLoading} className="btn-clay h-10">
-                  {isLoading ? "저장 중..." : "저장"}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setEditing(false)} className="h-10">
-                  취소
-                </Button>
-              </div>
-              <p className="text-xs text-slate-400">저장하면 신청자·참가자에게 변경 알림이 가요.</p>
             </div>
-          )}
-        </div>
-      )}
+            <div className="flex gap-2 pt-1">
+              <Button type="button" onClick={handleSaveEdit} disabled={isLoading} className="btn-clay h-11 px-6 font-bold">
+                {isLoading ? "저장 중..." : "저장"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setEditing(false)} className="h-11 px-5">
+                취소
+              </Button>
+            </div>
+            <p className="text-xs text-ink-muted">저장하면 신청자·참가자에게 변경 알림이 가요.</p>
+          </div>
+        )}
+      </div>
+    )}
+
+    <div className="mt-6 mb-10 surface p-6 md:p-8 rounded-xl border-2 shadow-sm relative overflow-hidden">
+      {/* 왕관 뱃지 디자인 */}
+      <div className="absolute top-0 right-0 bg-court-solid px-4 py-1 rounded-bl-xl font-bold text-sm">
+        방장 전용
+      </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h3 className="text-xl heading flex items-center gap-2">
@@ -323,5 +341,6 @@ export default function HostDashboard({
         )}
       </div>
     </div>
+    </>
   );
 }
