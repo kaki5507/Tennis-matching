@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/tournamentData";
 import { Button } from "@/components/ui/button";
 import JoinButton from "./JoinButton";
+import AvatarStack from "@/components/AvatarStack";
 import HostDashboard from "./HostDashboard";
 import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
@@ -24,8 +25,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
     }, 
     include: {
       court: true,
-      host: true,
-      participants: true, // 이 방에 신청한 사람들의 정보도 다 가져와!
+      host: { select: { id: true, nickname: true } },
+      participants: { include: { user: { select: { id: true, nickname: true } } } }, // 신청한 사람들 + 프로필 표시용 닉네임
     },
   });
 
@@ -97,11 +98,15 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             </div>
             <div>
               <p className="text-sm text-slate-500 mb-1">참여 현황</p>
-              <p className="font-bold text-slate-900">
-                {seat.joined}
-                {seat.capacity ? `/${seat.capacity}명` : "명"}
-                {waiting > 0 && <span className="font-normal text-slate-500 text-sm"> · 대기 {waiting}</span>}
-              </p>
+              <AvatarStack
+                users={[
+                  ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname }] : []),
+                  ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                ]}
+                joined={seat.joined}
+                capacity={seat.capacity}
+              />
+              {waiting > 0 && <p className="text-xs text-slate-500 mt-1">신청 대기 {waiting}명</p>}
             </div>
             <div>
               <p className="text-sm text-slate-500 mb-1">방장</p>

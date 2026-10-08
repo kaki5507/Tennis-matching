@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/EmptyState";
 import TennisMascot from "@/components/TennisMascot";
 import CourtThumb from "@/components/CourtThumb";
+import AvatarStack from "@/components/AvatarStack";
 import LevelFilterToggle from "@/components/LevelFilterToggle";
 import { dayLabel, isPast, seatInfo } from "@/lib/matchDisplay";
 
@@ -23,8 +24,8 @@ export default async function MatchesPage({
     where: { status: "OPEN", deletedAt: null, ...(gameType ? { gameType } : {}) },
     include: {
       court: true,
-      host: true,
-      participants: { select: { status: true } },
+      host: { select: { id: true, nickname: true } },
+      participants: { select: { status: true, user: { select: { id: true, nickname: true } } } },
     },
     orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
   });
@@ -186,11 +187,15 @@ export default async function MatchesPage({
 
                   {/* 참여 현황: 확정 인원/정원 + 대기 인원 */}
                   <div className="mb-5">
-                    <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-                      <span>
-                        참여 확정 <b className="text-slate-700">{seat.joined}</b>
-                        {seat.capacity ? `/${seat.capacity}명` : "명"}
-                      </span>
+                    <div className="flex justify-between items-center text-xs text-slate-500 mb-2">
+                      <AvatarStack
+                        users={[
+                          ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname }] : []),
+                          ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                        ]}
+                        joined={seat.joined}
+                        capacity={seat.capacity}
+                      />
                       {waiting > 0 && <span>신청 대기 {waiting}명</span>}
                     </div>
                     {seat.ratio !== null && (
