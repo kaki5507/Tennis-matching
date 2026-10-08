@@ -28,6 +28,7 @@ export async function verifyToken(
   // 1) 서명 키(JWKS)로 로컬 검증 — 네트워크 왕복이 거의 없음. 지원되지 않는 설정이면 내부적으로 getUser로 대체됨
   let id: string | null = null
   let email: string | null = null
+  const c0 = Date.now()
   try {
     const { data, error } = await supabase.auth.getClaims(accessToken)
     if (!error && data?.claims?.sub) {
@@ -40,6 +41,7 @@ export async function verifyToken(
 
   // 2) 실패하면 기존 방식(서버에 직접 확인)
   if (!id) {
+    console.log(`[perf] getClaims 실패(${Date.now() - c0}ms) → getUser로 대체`)
     const { data, error } = await supabase.auth.getUser(accessToken)
     if (error || !data.user) return { ok: false, error: "로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요." }
     id = data.user.id

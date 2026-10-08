@@ -14,7 +14,9 @@ const adminCache = new Map<string, { ok: boolean; exp: number }>()
 
 export async function requireAdmin(accessToken: string | null | undefined): Promise<AdminCheck> {
   // 토큰 검증: 서명 키로 서버 안에서 확인 + 60초 캐시 (lib/serverAuth.ts)
+  const t0 = Date.now()
   const t = await verifyToken(accessToken)
+  const tToken = Date.now() - t0
   if (!t.ok) return { ok: false, error: t.error }
 
   const hit = adminCache.get(t.id)
@@ -26,6 +28,7 @@ export async function requireAdmin(accessToken: string | null | undefined): Prom
     where: { id: t.id },
     select: { role: true, deletedAt: true, isBanned: true },
   })
+  console.log(`[perf] requireAdmin 토큰확인 ${tToken}ms · DB조회 ${Date.now() - t0 - tToken}ms`)
   const ok = !!user && user.role === "ADMIN" && !user.deletedAt && !user.isBanned
   if (adminCache.size > 200) adminCache.clear()
   adminCache.set(t.id, { ok, exp: Date.now() + 30_000 })
