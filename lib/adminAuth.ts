@@ -4,23 +4,30 @@
 // Supabase 로그인 토큰(access token)을 서버에서 직접 검증해서 "진짜 로그인한 사람"을 확인한 뒤
 // 그 사람이 관리자인지 DB에서 확인합니다.
 
-import { supabase } from "@/lib/supabase"
+import { verifyToken } from "@/lib/serverAuth"
 import { prisma } from "@/lib/tournamentData"
 
 export type AdminCheck = { ok: true; userId: string } | { ok: false; error: string }
 
-export async function requireAdmin(accessToken: string | null | undefined): Promise<AdminCheck> {
-  if (!accessToken) return { ok: false, error: "로그인이 필요합니다." }
+// 관리자 여부는 30초만 서버 메모리에 기억 (권한 해제/정지는 최대 30초 안에 반영). 화면 한 장이 액션을 여러 개 부를 때 매번 DB를 안 가게 함
+const adminCache = new Map<string, { ok: boolean; exp: number }>()
 
-  const { data, error } = await supabase.auth.getUser(accessToken)
-  if (error || !data.user) return { ok: false, error: "로그인 정보를 확인할 수 없습니다." }
+export async function requireAdmin(accessToken: string | null | undefined): Promise<AdminCheck> {
+  // 토큰 검증: 서명 키로 서버 안에서 확인 + 60초 캐시 (lib/serverAuth.ts)
+  const t = await verifyToken(accessToken)
+  if (!t.ok) return { ok: false, error: t.error }
+
+  const hit = adminCache.get(t.id)
+  if (hit && hit.exp > Date.now()) {
+    return hit.ok ? { ok: true, userId: t.id } : { ok: false, error: "관리자만 접근할 수 있습니다." }
+  }
 
   const user = await prisma.user.findUnique({
-    where: { id: data.user.id },
+    where: { id: t.id },
     select: { role: true, deletedAt: true, isBanned: true },
   })
-  if (!user || user.role !== "ADMIN" || user.deletedAt || user.isBanned) {
-    return { ok: false, error: "관리자만 접근할 수 있습니다." }
-  }
-  return { ok: true, userId: data.user.id }
+  const ok = !!user && user.role === "ADMIN" && !user.deletedAt && !user.isBanned
+  if (adminCache.size > 200) adminCache.clear()
+  adminCache.set(t.id, { ok, exp: Date.now() + 30_000 })
+  return ok ? { ok: true, userId: t.id } : { ok: false, error: "관리자만 접근할 수 있습니다." }
 }

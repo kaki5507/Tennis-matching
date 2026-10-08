@@ -111,24 +111,20 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      const [statsResult, visitResult, recentResult, timeResult, trendResult] = await Promise.all([
-        getAdminStats(token),
-        getVisitStats(token, 30),
-        getRecentActivity(token),
-        getMatchTimeStats(token, 90),
-        getMatchTrend(token, 12),
-      ]);
-
-      if (!statsResult.success) {
-        setStatus("denied");
-        return;
-      }
-      setStats(statsResult as unknown as Stats);
-      if (visitResult.success) setVisit(visitResult);
-      if (recentResult.success) setRecent(recentResult);
-      if (trendResult.success) setTrend(trendResult);
-      if (timeResult.success) setTimeCells({ days: timeResult.days, total: timeResult.totalRooms, cells: timeResult.cells });
-      setStatus("ok");
+      // 가장 가벼운 현황 숫자가 오면 바로 화면을 열고, 나머지 무거운 통계는 오는 대로 채웁니다.
+      // (전부 기다리느라 "권한 확인 중..."이 길어지던 문제)
+      getAdminStats(token).then((r) => {
+        if (!r.success) {
+          setStatus("denied");
+          return;
+        }
+        setStats(r as unknown as Stats);
+        setStatus("ok");
+      });
+      getVisitStats(token, 30).then((r) => r.success && setVisit(r));
+      getRecentActivity(token).then((r) => r.success && setRecent(r));
+      getMatchTrend(token, 12).then((r) => r.success && setTrend(r));
+      getMatchTimeStats(token, 90).then((r) => r.success && setTimeCells({ days: r.days, total: r.totalRooms, cells: r.cells }));
     };
     load();
   }, [router]);
