@@ -20,7 +20,7 @@ export default function CourtWatchList({ userId }: Props) {
   const [nowResults, setNowResults] = useState<Record<string, CourtNowResult>>({});
   const [checkingId, setCheckingId] = useState<string | null>(null);
 
-  // 코트를 누르면 오늘 남은 시간대를 바로 확인
+  // 코트를 누르면 내일 가능한 시간대를 바로 확인
   const checkNow = async (facilityId: string) => {
     setCheckingId(facilityId);
     const r = await getCourtNow(await getAccessToken(), facilityId);
@@ -72,10 +72,10 @@ export default function CourtWatchList({ userId }: Props) {
           return (
             <li key={court.facilityId} className="px-4 py-3 surface">
              <div className="flex items-center justify-between gap-3">
-              <button type="button" onClick={() => checkNow(court.facilityId)} className="text-left min-w-0" aria-label={`${court.name} 오늘 남은 시간 확인`}>
+              <button type="button" onClick={() => checkNow(court.facilityId)} className="text-left min-w-0" aria-label={`${court.name} 내일 가능한 시간 확인`}>
                 <div className="text-sm font-medium text-slate-800 truncate">{court.name}</div>
                 <div className="text-xs text-court font-bold">
-                  {checkingId === court.facilityId ? "확인 중..." : "눌러서 오늘 남은 시간 보기"}
+                  {checkingId === court.facilityId ? "확인 중..." : "눌러서 내일 가능한 시간 보기"}
                   {court.indoor ? " · 실내" : ""}
                 </div>
               </button>
@@ -98,8 +98,8 @@ export default function CourtWatchList({ userId }: Props) {
                  {!nowResults[court.facilityId].ok
                    ? nowResults[court.facilityId].error
                    : nowResults[court.facilityId].times.length
-                     ? `오늘 가능: ${nowResults[court.facilityId].times.join(", ")}`
-                     : "오늘 남은 시간대가 없어요."}
+                     ? `내일 가능: ${nowResults[court.facilityId].times.join(", ")}`
+                     : "내일 가능한 시간대가 없어요."}
                </p>
              )}
             </li>

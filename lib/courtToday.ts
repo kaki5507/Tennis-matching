@@ -1,5 +1,5 @@
 // lib/courtToday.ts
-// "지금 이 시각 기준, 오늘 남아 있는 코트 시간대"를 조회합니다. (조회만 하며 예약은 절대 대신 하지 않습니다)
+// "내일 예약 가능한 코트 시간대"를 조회합니다. (당일 예약은 불가) (조회만 하며 예약은 절대 대신 하지 않습니다)
 // 예약 사이트에 부담이 가지 않도록 시설별 결과를 3분간 서버 메모리에 기억합니다.
 
 import { fetchAvailableSlots } from "@/lib/bucheonScraper"
@@ -9,7 +9,7 @@ export interface CourtNowResult {
   facilityId: string
   name: string
   ok: boolean
-  /** 오늘 아직 시작 전인 예약 가능 시간대 ("19:00~21:00") */
+  /** 내일 예약 가능한 시간대 ("19:00~21:00") */
   times: string[]
   error?: string
 }
@@ -17,43 +17,45 @@ export interface CourtNowResult {
 const TTL_MS = 3 * 60_000
 const cache = new Map<string, { at: number; times: string[] }>()
 
-function kstNow() {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Seoul",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(new Date())
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00"
-  const hour = Number(get("hour")) % 24
-  return { day: get("day"), minutes: hour * 60 + Number(get("minute")) }
+/** 한국 시간 기준 "오늘/내일"의 일(DD), 월, 표시용 라벨 */
+function kstDates() {
+  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", ...o }).format(d)
+  const now = new Date()
+  const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  return {
+    todayMonth: fmt(now, { month: "2-digit" }),
+    tomorrowMonth: fmt(tomorrow, { month: "2-digit" }),
+    tomorrowDay: fmt(tomorrow, { day: "2-digit" }).replace(/\D/g, "").padStart(2, "0"),
+    label: fmt(tomorrow, { month: "long", day: "numeric", weekday: "short" }),
+  }
+}
+
+export function tomorrowLabel() {
+  return kstDates().label
 }
 
 export async function checkCourtNow(facilityId: string): Promise<CourtNowResult> {
   const court = BUCHEON_COURTS.find((c) => c.facilityId === facilityId)
   if (!court) return { facilityId, name: "", ok: false, times: [], error: "알 수 없는 테니스장입니다." }
 
-  const { day, minutes } = kstNow()
+  // 당일 예약은 불가하므로 "내일" 날짜의 시간대를 찾습니다.
+  const { todayMonth, tomorrowMonth, tomorrowDay } = kstDates()
+  if (todayMonth !== tomorrowMonth) {
+    // 예약 사이트의 기본 달력은 이번 달만 읽으므로, 내일이 다음 달 1일이면 아직 조회할 수 없습니다.
+    return { facilityId, name: court.name, ok: false, times: [], error: "내일은 다음 달이라 오늘은 조회할 수 없어요. 예약 사이트에서 직접 확인해 주세요." }
+  }
+
+  const key = `${facilityId}:${tomorrowDay}`
   try {
-    let hit = cache.get(facilityId)
+    let hit = cache.get(key)
     if (!hit || Date.now() - hit.at > TTL_MS) {
       const slots = await fetchAvailableSlots(facilityId)
-      // 날짜는 "이번 달의 일(DD)"이므로 오늘 날짜만 남기고, 이미 시작한 시간대는 뺍니다.
-      const today = slots
-        .filter((s) => s.date === day)
-        .map((s) => s.time)
-      hit = { at: Date.now(), times: [...new Set(today)] }
+      const tomorrow = slots.filter((s) => s.date === tomorrowDay).map((s) => s.time)
+      hit = { at: Date.now(), times: [...new Set(tomorrow)] }
       if (cache.size > 100) cache.clear()
-      cache.set(facilityId, hit)
+      cache.set(key, hit)
     }
-    const times = hit.times
-      .filter((t) => {
-        const m = t.match(/^(\d{2}):(\d{2})/)
-        return m ? Number(m[1]) * 60 + Number(m[2]) > minutes : true
-      })
-      .sort()
-    return { facilityId, name: court.name, ok: true, times }
+    return { facilityId, name: court.name, ok: true, times: [...hit.times].sort() }
   } catch (e) {
     console.error(`[courtToday:${court.name}]`, e)
     return { facilityId, name: court.name, ok: false, times: [], error: "예약 사이트에서 불러오지 못했어요." }

@@ -13,7 +13,7 @@ import SideMenu from "@/components/SideMenu";
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
   { href: "/matches/create", label: "방 만들기", sub: "내가 방장", Icon: PlusCircle, cls: "sc-clay" },
-  { href: "/courts", label: "지금 빈 코트 찾기", sub: "오늘 남은 시간 확인", Icon: CalendarClock, cls: "sc-grass" },
+  { href: "/courts", label: "내일 빈 코트 찾기", sub: "내일 가능한 시간 확인", Icon: CalendarClock, cls: "sc-grass" },
   { href: "/tournaments", label: "대회", sub: "대진표·결과", Icon: Trophy, cls: "sc-sky" },
   { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
   { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
@@ -78,18 +78,10 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
               </p>
 
               {user ? (
-                <div className="flex flex-col gap-4 max-w-md">
+                <div className="max-w-md">
                   <Link href="/courts" className="block">
-                    <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 지금 빈 코트 찾기</Button>
+                    <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 내일 빈 코트 찾기</Button>
                   </Link>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Link href="/matches" className="block">
-                      <Button variant="outline" className="h-12 px-4 text-base w-full bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">방 찾기</Button>
-                    </Link>
-                    <Link href="/matches/create" className="block">
-                      <Button variant="outline" className="h-12 px-4 text-base w-full bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">방 만들기</Button>
-                    </Link>
-                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -129,8 +121,31 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
           </section>
         )}
 
-        {/* 서버에서 가져온 실시간 현황/안내 섹션들 (app/page.tsx에서 주입) */}
+        {/* 실시간 현황 + 모집 중인 방 (app/page.tsx에서 주입) */}
+        {live}
+
+        {/* 안내 섹션들 */}
         {children}
+
+        {/* 하드·잔디·클레이: 작게 줄여 맨 아래에 */}
+        <section className="max-w-6xl mx-auto px-4 py-8" aria-label="서비스 특징">
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { cls: "panel-hard", Icon: Target, tag: "하드코트", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
+              { cls: "panel-grass", Icon: Thermometer, tag: "잔디", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
+              { cls: "panel-clay", Icon: MapPin, tag: "클레이", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
+            ].map(({ cls, Icon, tag, title, desc }) => (
+              <div key={title} className={`${cls} panel-lines rounded-xl p-4 pt-5 flex flex-col`}>
+                <span className="relative z-10 self-start text-[11px] font-extrabold bg-white/95 text-ink rounded-full px-2.5 py-0.5">{tag}</span>
+                <div className="relative z-10 flex items-center gap-2 mt-3">
+                  <Icon className="w-6 h-6 shrink-0" strokeWidth={2.4} aria-hidden />
+                  <h3 className="font-display text-lg">{title}</h3>
+                </div>
+                <p className="relative z-10 text-xs text-white/90 leading-relaxed mt-1">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

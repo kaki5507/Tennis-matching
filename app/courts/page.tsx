@@ -1,7 +1,7 @@
 "use client";
 
 // app/courts/page.tsx
-// 메인 기능: 지금 이 시각 기준으로 오늘 남아 있는 부천 테니스장 시간대를 바로 확인합니다.
+// 메인 기능: 당일 예약은 불가하므로 "내일" 예약 가능한 부천 테니스장 시간대를 바로 확인합니다.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -21,9 +21,11 @@ export default function CourtsPage() {
   const [loadingAll, setLoadingAll] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
+  const [dateLabel, setDateLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const apply = (list: CourtNowResult[], at: string) => {
+  const apply = (list: CourtNowResult[], at: string, label: string) => {
+    setDateLabel(label);
     setResults((prev) => ({ ...prev, ...Object.fromEntries(list.map((r) => [r.facilityId, r])) }));
     setCheckedAt(at);
   };
@@ -32,7 +34,7 @@ export default function CourtsPage() {
     setLoadingAll(true);
     setError(null);
     const r = await getAllCourtsNow(await getAccessToken());
-    if (r.success) apply(r.results, r.checkedAt);
+    if (r.success) apply(r.results, r.checkedAt, r.dateLabel);
     else setError(r.error);
     setLoadingAll(false);
   };
@@ -41,7 +43,7 @@ export default function CourtsPage() {
     setLoadingId(facilityId);
     setError(null);
     const r = await getCourtNow(await getAccessToken(), facilityId);
-    if (r.success) apply(r.results, r.checkedAt);
+    if (r.success) apply(r.results, r.checkedAt, r.dateLabel);
     else setError(r.error);
     setLoadingId(null);
   };
@@ -54,9 +56,9 @@ export default function CourtsPage() {
       <section className="hero-blue relative overflow-hidden">
         <div className="max-w-3xl mx-auto px-4 pt-7 pb-8 grid grid-cols-[1fr_auto] items-center gap-2">
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl leading-tight text-white">지금 빈 코트 찾기</h1>
+            <h1 className="font-display text-3xl sm:text-4xl leading-tight text-white">내일 빈 코트 찾기</h1>
             <p className="mt-2 text-sm sm:text-base text-white/85">
-              오늘, 지금부터 쓸 수 있는 부천 테니스장 시간대를 바로 보여드려요.
+              당일 예약은 안 돼요. 내일 쓸 수 있는 부천 테니스장 시간대를 바로 보여드려요.
             </p>
             <button
               type="button"
@@ -65,7 +67,7 @@ export default function CourtsPage() {
               className="btn-clay mt-5 h-12 px-6 rounded-xl text-base inline-flex items-center gap-2 disabled:opacity-60"
             >
               <RefreshCw className={`w-5 h-5 ${loadingAll ? "animate-spin" : ""}`} />
-              {loadingAll ? "확인하는 중..." : checked.length ? "다시 확인하기" : "지금 전체 확인하기"}
+              {loadingAll ? "확인하는 중..." : checked.length ? "다시 확인하기" : "내일 전체 확인하기"}
             </button>
           </div>
           <TennisMascot pose="search" className="w-24 sm:w-36 h-auto mascot-float" />
@@ -85,7 +87,7 @@ export default function CourtsPage() {
 
         {checkedAt && (
           <p className="text-xs text-ink-muted mb-3" aria-live="polite">
-            {fmt(checkedAt)} 기준 · 오늘 자리가 있는 곳 <b className="text-court">{openCount}곳</b>
+            {fmt(checkedAt)} 확인 · {dateLabel} 자리가 있는 곳 <b className="text-court">{openCount}곳</b>
             <span className="block sm:inline"> (같은 시설은 3분 안에 다시 확인하면 직전 결과를 보여줘요)</span>
           </p>
         )}
@@ -116,10 +118,10 @@ export default function CourtsPage() {
                     {!r.ok ? (
                       <p className="text-sm text-danger">{r.error}</p>
                     ) : r.times.length === 0 ? (
-                      <p className="text-sm text-ink-muted">오늘 남은 시간대가 없어요.</p>
+                      <p className="text-sm text-ink-muted">가능한 시간대가 없어요.</p>
                     ) : (
                       <>
-                        <p className="text-sm font-bold text-ok mb-2">오늘 {r.times.length}개 시간대 가능해요</p>
+                        <p className="text-sm font-bold text-ok mb-2">{dateLabel} {r.times.length}개 시간대 가능해요</p>
                         <div className="flex flex-wrap gap-2">
                           {r.times.map((t) => (
                             <span key={t} className="badge-ok inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-full">
