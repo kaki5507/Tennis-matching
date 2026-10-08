@@ -140,7 +140,7 @@ export default function CourtSearch({ onSelect, selected }: Props) {
         />
       )}
 
-      {selected ? (
+      {selected && selected.address ? (
         <div className="flex items-start justify-between gap-3 p-3 bg-ok-soft border border-ok rounded-lg">
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 text-ok mt-0.5 shrink-0" />

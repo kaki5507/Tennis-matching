@@ -34,7 +34,7 @@ export default function CreateMatchPage() {
   const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" }); // 오늘 날짜 (한국 시간 기준, YYYY-MM-DD)
   const [formData, setFormData] = useState({
     matchDate: todayStr, // [NEW] 오늘 날짜를 기본값으로
-    startTime: "19:00", // [NEW] 저녁 시간대를 기본값으로 (직접 수정 가능)
+    startTime: new Date().toLocaleTimeString("sv-SE", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit" }), // 지금 시각 (눌러서 바꿀 수 있음)
     gameType: "단식",
     targetLevel: "누구나", // 기본값
     genderRequirement: "제한없음",
@@ -166,36 +166,22 @@ export default function CreateMatchPage() {
             <CourtSearch selected={selectedCourt} onSelect={setSelectedCourt} />
           </div>
 
-          {/* 1. 날짜 및 시간 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="matchDate">경기 날짜</Label>
-              <Input
-                type="date"
-                id="matchDate"
-                name="matchDate"
-                value={formData.matchDate}
-                onChange={handleChange}
-                min={todayStr}
-                className="h-12 text-base"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="startTime">시작 시간</Label>
-              <Input
-                type="text"
-                id="startTime"
-                name="startTime"
-                value={formData.startTime}
-                onChange={handleChange}
-                placeholder="19:00"
-                inputMode="numeric"
-                className="h-12 text-lg font-medium tracking-wide"
-                required
-              />
-              <p className="text-xs text-slate-400">직접 입력해주세요 (예: 07:30, 19:00)</p>
-            </div>
+          {/* 1. 날짜 + 시간 (한 번에 선택, 기본값은 지금 시각) */}
+          <div className="space-y-2">
+            <Label htmlFor="matchDateTime">경기 날짜·시간</Label>
+            <Input
+              type="datetime-local"
+              id="matchDateTime"
+              value={`${formData.matchDate}T${formData.startTime}`}
+              onChange={(e) => {
+                const [d, t] = e.target.value.split("T");
+                if (d && t) setFormData((prev) => ({ ...prev, matchDate: d, startTime: t.slice(0, 5) }));
+              }}
+              min={`${todayStr}T00:00`}
+              className="h-12 text-base"
+              required
+            />
+            <p className="text-xs text-slate-400">눌러서 날짜와 시간을 고르세요 (지금 시각으로 채워져 있어요)</p>
           </div>
 
           {popular.length > 0 && (
