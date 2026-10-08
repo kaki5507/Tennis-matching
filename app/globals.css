@@ -617,3 +617,18 @@ html, body { overscroll-behavior-y: none; }
 /* 쉬는 날(주말·공휴일) 강조: 클레이색 헤더 + 테두리 */
 .off-day-head { background: var(--clay); color: #fff; }
 .off-day-card { border: 2px solid var(--clay); }
+
+/* 날짜·시간 선택칸: iOS 사파리에서 기본 폭이 커서 카드 밖으로 튀어나오는 문제를 막음 */
+.dt-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.dt-input::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+}

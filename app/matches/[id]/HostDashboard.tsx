@@ -196,7 +196,7 @@ export default function HostDashboard({
                 type="datetime-local"
                 value={form.dateTime}
                 onChange={(e) => setForm((f) => ({ ...f, dateTime: e.target.value }))}
-                className="h-12 w-full min-w-0 max-w-full text-base"
+                className="dt-input h-12 text-base"
               />
             </div>
             <div className="space-y-2">

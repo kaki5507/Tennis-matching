@@ -178,7 +178,7 @@ export default function CreateMatchPage() {
                 if (d && t) setFormData((prev) => ({ ...prev, matchDate: d, startTime: t.slice(0, 5) }));
               }}
               min={`${todayStr}T00:00`}
-              className="h-12 text-base"
+              className="dt-input h-12 text-base"
               required
             />
             <p className="text-xs text-slate-400">눌러서 날짜와 시간을 고르세요 (지금 시각으로 채워져 있어요)</p>
