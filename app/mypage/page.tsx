@@ -34,6 +34,7 @@ interface UserProfile {
   ntrpScore?: number | string | null; // Prisma의 Decimal 타입 대응
   ntrpCount?: number;
   levelMismatchCount?: number; // [NEW] 허위구력 자동조정 이력
+  profileUrl?: string | null;
 }
 
 export default function MyPage() {
@@ -69,6 +70,7 @@ export default function MyPage() {
           ntrpScore: profileResult.user.ntrpScore?.toString(), 
           ntrpCount: profileResult.user.ntrpCount || 0,
           levelMismatchCount: profileResult.user.levelMismatchCount || 0,
+          profileUrl: profileResult.user.profileUrl,
         });
         setMarketingAgreed(!!profileResult.user.marketingAgreedAt);
       }
@@ -127,9 +129,14 @@ export default function MyPage() {
         {/* 프로필 헤더 */}
         <div className="surface p-8 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-ok-soft text-ok rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
-              {displayNickname.charAt(0).toUpperCase()}
-            </div>
+            {profile?.profileUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.profileUrl} alt={`${displayNickname} 프로필 사진`} className="w-20 h-20 rounded-full object-cover shrink-0 ring-4 ring-ok-soft" />
+            ) : (
+              <div className="w-20 h-20 bg-ok-soft text-ok rounded-full flex items-center justify-center text-3xl font-bold shrink-0">
+                {displayNickname.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
               <h1 className="text-2xl heading">{displayNickname} 님</h1>
               

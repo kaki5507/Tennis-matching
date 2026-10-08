@@ -6,6 +6,7 @@ import { prisma } from "@/lib/tournamentData"
 import { requireUser } from "@/lib/serverAuth"
 import { normalizeNickname, nicknameFormatError, NICKNAME_TAKEN_MESSAGE } from "@/lib/nickname"
 import { isNicknameTaken } from "@/lib/nicknameDb"
+import { AVATAR_PREFIX, AVATAR_MAX_LENGTH } from "@/lib/avatarImage"
 
 // 프로필 데이터 타입 설계도 (이메일은 로그인 계정 정보라 여기서 바꿀 수 없습니다)
 interface ProfileData {
@@ -14,6 +15,7 @@ interface ProfileData {
   gender: string
   tennisLevel: string
   preferredPos: Position
+  profileUrl?: string | null // undefined = 그대로, null = 사진 삭제
 }
 
 /** 내 프로필 수정 (로그인한 본인만) */
@@ -39,11 +41,20 @@ export async function updateProfile(accessToken: string | null, data: ProfileDat
       return { success: false, error: "선호 위치 값이 올바르지 않습니다." }
     }
 
+    // 프로필 사진: 우리 화면이 만든 JPEG 글자열만 허용 (임의 주소/스크립트 차단)
+    let photo: string | null | undefined = undefined
+    if (data.profileUrl === null) photo = null
+    else if (typeof data.profileUrl === "string") {
+      const ok = data.profileUrl.startsWith(AVATAR_PREFIX) && data.profileUrl.length <= AVATAR_MAX_LENGTH && /^[A-Za-z0-9+/=]+$/.test(data.profileUrl.slice(AVATAR_PREFIX.length))
+      if (!ok) return { success: false, error: "프로필 사진 형식이 올바르지 않습니다." }
+      photo = data.profileUrl
+    }
+
     // 프로필 "수정"만 허용합니다. 유저 생성은 회원가입(createUserInDB)에서만 이뤄져야
     // 본인인증(CI/DI)과 약관 동의를 반드시 거칩니다.
     await prisma.user.update({
       where: { id: auth.userId },
-      data: { nickname, gender: data.gender, tennisLevel, preferredPos: data.preferredPos },
+      data: { nickname, gender: data.gender, tennisLevel, preferredPos: data.preferredPos, ...(photo !== undefined ? { profileUrl: photo } : {}) },
     })
 
     return { success: true }
@@ -79,6 +90,7 @@ export async function getProfile(accessToken: string | null) {
         ntrpCount: true,
         levelMismatchCount: true,
         marketingAgreedAt: true,
+        profileUrl: true,
       },
     })
     if (!u) return { success: false, user: null }
