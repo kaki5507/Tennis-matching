@@ -178,6 +178,8 @@ export default function SignupPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        // 인증 메일의 링크가 localhost 가 아니라 지금 보고 있는 사이트로 돌아오게 함
+        options: { emailRedirectTo: `${window.location.origin}/login` },
       });
 
       if (error) {

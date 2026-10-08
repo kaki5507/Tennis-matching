@@ -93,7 +93,7 @@ const handleLogin = async (e: React.SyntheticEvent) => {
     setErrorMsg("");
     setInfoMsg("");
     if (!email) return setErrorMsg("위에 이메일을 먼저 입력해 주세요.");
-    const { error } = await supabase.auth.resend({ type: "signup", email });
+    const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: `${window.location.origin}/login` } });
     if (error) return setErrorMsg(error.message.includes("rate") ? "잠시 후에 다시 시도해 주세요. (너무 자주 요청했어요)" : error.message);
     setInfoMsg("인증 메일을 다시 보냈어요. 메일함(스팸함 포함)을 확인해 주세요.");
   };
