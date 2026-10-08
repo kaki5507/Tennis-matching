@@ -10,8 +10,8 @@ import TennisMascot from "@/components/TennisMascot";
 const TABS = [
   {
     key: "hard",
-    label: "하드코트",
-    sub: "매칭",
+    label: "매칭",
+    sub: "",
     panel: "panel-hard",
     mascot: "ready" as const,
     items: [
@@ -23,8 +23,8 @@ const TABS = [
   },
   {
     key: "grass",
-    label: "잔디",
-    sub: "대회 · 기록",
+    label: "대회 · 기록",
+    sub: "",
     panel: "panel-grass",
     mascot: "cheer" as const,
     items: [
@@ -36,8 +36,8 @@ const TABS = [
   },
   {
     key: "clay",
-    label: "클레이",
-    sub: "코트 · 알림",
+    label: "코트 · 알림",
+    sub: "",
     panel: "panel-clay",
     mascot: "search" as const,
     items: [
@@ -69,7 +69,6 @@ export default function HomeGuide() {
               className={`py-2.5 text-center ${i === active ? t.panel : "chip-off"}`}
             >
               <span className="block text-sm font-extrabold">{t.label}</span>
-              <span className={`block text-[11px] ${i === active ? "text-white/85" : "text-ink-muted"}`}>{t.sub}</span>
             </button>
           ))}
         </div>

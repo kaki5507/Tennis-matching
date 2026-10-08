@@ -11,29 +11,8 @@ const LIST_URL = "https://reserv.bucheon.go.kr/site/main/lending/lendingList?len
 const detailUrl = (seq: string) =>
   `https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=${seq}&cp=1&pageSize=16&listType=list&inst_cate=01&lending_inst_nm=tennis`;
 
-// 코트 표면 색 (하드 → 잔디 → 클레이 순서로 돌려 씀)
-const SURFACES = [
-  { bg: "#6b96c6", deep: "#3e6592" },
-  { bg: "#6fb27d", deep: "#3e8755" },
-  { bg: "#de8561", deep: "#b2573a" },
-];
-
-function CourtArt({ i }: { i: number }) {
-  const c = SURFACES[i % SURFACES.length];
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" aria-hidden>
-      <rect width="100" height="100" fill={c.deep} />
-      <rect x="9" y="7" width="82" height="86" fill={c.bg} />
-      <g stroke="#fff" strokeWidth="1.3" fill="none" strokeOpacity="0.9">
-        <path d="M 9 7 H 91 V 93 H 9 Z" />
-        <path d="M 20 7 V 93 M 80 7 V 93" />
-        <path d="M 20 30 H 80 M 20 70 H 80 M 50 30 V 70" />
-      </g>
-      <rect x="6" y="48" width="88" height="3.2" fill="#fff" opacity="0.9" />
-      <circle cx={i % 2 ? 68 : 32} cy={i % 3 === 0 ? 24 : 78} r="3.4" fill="#dde43a" />
-    </svg>
-  );
-}
+// 타일 배경색 (하드 → 잔디 → 클레이 순서로 돌려 씀)
+const COLORS = ["var(--court-soft)", "var(--grass)", "var(--clay)"];
 
 export default function CourtLinks() {
   const [open, setOpen] = useState(false);
@@ -55,22 +34,21 @@ export default function CourtLinks() {
 
       {open && (
         <div className="mt-3">
-          <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <ul className="grid grid-cols-3 gap-2">
             {BUCHEON_COURTS.map((c, i) => (
               <li key={c.facilityId}>
                 <a
                   href={detailUrl(c.facilityId)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="card-link relative block aspect-square rounded-2xl overflow-hidden text-white"
+                  className="card-link relative flex h-16 flex-col justify-end rounded-xl px-2 py-1.5 text-white"
+                  style={{ background: COLORS[i % COLORS.length] }}
                 >
-                  <CourtArt i={i} />
-                  <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" aria-hidden />
                   {c.indoor && (
-                    <span className="absolute left-2 top-2 chip-on text-[10px] font-bold px-2 py-0.5 rounded-full">실내</span>
+                    <span className="absolute left-1.5 top-1.5 bg-white/90 text-court text-[9px] font-bold px-1.5 rounded-full">실내</span>
                   )}
-                  <span className="absolute right-2 top-2 text-xs font-bold bg-white/90 text-court rounded-full w-6 h-6 flex items-center justify-center" aria-hidden>↗</span>
-                  <span className="absolute left-3 right-3 bottom-2.5 text-sm font-extrabold leading-tight line-clamp-2">{c.name}</span>
+                  <span className="absolute right-1.5 top-1 text-[11px] font-bold opacity-90" aria-hidden>↗</span>
+                  <span className="text-[11px] font-extrabold leading-tight line-clamp-2">{c.name}</span>
                 </a>
               </li>
             ))}
