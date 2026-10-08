@@ -14,6 +14,11 @@ export default function CourtMap({ latitude, longitude, name }: Props) {
   const [sdkReady, setSdkReady] = useState(false);
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
 
+  // 다른 화면에서 이미 SDK를 불러온 상태로 들어오면 <Script>의 완료 이벤트가 다시 오지 않으므로 직접 확인
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.kakao?.maps) window.kakao.maps.load(() => setSdkReady(true));
+  }, []);
+
   useEffect(() => {
     if (!sdkReady || !mapRef.current || !window.kakao) return;
 
@@ -43,9 +48,9 @@ export default function CourtMap({ latitude, longitude, name }: Props) {
   return (
     <>
       <Script
-        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`}
+        src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services&autoload=false`}
         strategy="afterInteractive"
-        onLoad={() => window.kakao.maps.load(() => setSdkReady(true))}
+        onReady={() => window.kakao.maps.load(() => setSdkReady(true))}
       />
       <div ref={mapRef} role="img" aria-label={`${name} 위치 지도`} className="w-full h-52 rounded-xl overflow-hidden border border-slate-200" />
     </>

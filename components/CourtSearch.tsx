@@ -29,6 +29,10 @@ export default function CourtSearch({ onSelect, selected }: Props) {
   const [isSearching, setIsSearching] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.kakao?.maps) window.kakao.maps.load(() => setSdkReady(true));
+  }, []);
+
   const [recent, setRecent] = useState<SelectedCourt[]>([]);
 
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_APP_KEY;
@@ -145,7 +149,7 @@ export default function CourtSearch({ onSelect, selected }: Props) {
         <Script
           src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&libraries=services&autoload=false`}
           strategy="afterInteractive"
-          onLoad={() => window.kakao.maps.load(() => setSdkReady(true))}
+          onReady={() => window.kakao.maps.load(() => setSdkReady(true))}
         />
       )}
 

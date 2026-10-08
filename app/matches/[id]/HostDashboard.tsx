@@ -267,15 +267,16 @@ export default function HostDashboard({
         ) : (
           applicants.map((applicant) => (
             <div key={applicant.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 tint rounded-lg border border-slate-200 gap-4">
-              <div>
-                <div className="flex items-center gap-2">
+              <div className="min-w-0">
+                {/* 닉네임은 한 줄(길면 …), 상태 배지는 줄바꿈 없이 그 아래/옆에 */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <Link
                     href={`/users/${applicant.userId}`}
-                    className="font-bold text-slate-900 text-lg hover:text-[color:var(--ok)] hover:underline"
+                    className="font-bold text-slate-900 text-base truncate max-w-full hover:text-[color:var(--ok)] hover:underline"
                   >
                     {applicant.user.nickname || "익명"}
                   </Link>
-                  <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                  <span className={`text-xs px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0 ${
                     applicant.status === "ACCEPTED" ? "badge-ok" :
                     applicant.status === "REJECTED" ? "badge-danger" :
                     "badge-warn"
@@ -284,14 +285,14 @@ export default function HostDashboard({
                   </span>
                   {/* [NEW] 수락된 참가자에게만 입금확인 배지 표시 */}
                   {applicant.status === "ACCEPTED" && costPerPerson > 0 && (
-                    <span className={`text-xs px-2 py-1 rounded-full font-bold ${
+                    <span className={`text-xs px-2 py-1 rounded-full font-bold whitespace-nowrap shrink-0 ${
                       applicant.paymentConfirmed ? "badge-info" : "bg-slate-200 text-slate-500"
                     }`}>
                       {applicant.paymentConfirmed ? "💰 입금확인" : "입금대기"}
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-slate-600 mt-1 flex gap-3">
+                <div className="text-sm text-slate-600 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                   <span>🎾 구력: {applicant.user.tennisLevel}</span>
                   {applicant.user.ntrpScore && (
                     <span className="font-bold text-info">
