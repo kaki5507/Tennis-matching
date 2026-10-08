@@ -10,8 +10,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { checkAdminAccess } from "@/app/actions/admin";
-import { getAccessToken } from "@/lib/authToken";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 
 const ITEMS = [
   { href: "/matches", label: "방 찾기", Icon: Search },
@@ -22,34 +21,14 @@ const ITEMS = [
   { href: "/mypage", label: "마이페이지", Icon: User },
 ];
 
-// 관리자 여부는 세션 동안 한 번만 확인
-let adminCache: { userId: string; value: boolean } | null = null;
-
 export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { userId, email } = useAuthUser();
   const [open, setOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 관리자 여부 (메뉴를 처음 열 때 확인)
-  useEffect(() => {
-    if (!open || !userId) return;
-    if (adminCache?.userId === userId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsAdmin(adminCache.value);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const value = await checkAdminAccess(await getAccessToken());
-      adminCache = { userId, value };
-      if (!cancelled) setIsAdmin(value);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, userId]);
+  // 관리자 여부: 로그인 직후 미리 확인해 두고 탭에 기억 → 메뉴를 열 때 기다리지 않음
+  const isAdmin = useIsAdmin(userId);
 
   // 페이지가 바뀌면 닫기
   useEffect(() => {
@@ -72,8 +51,11 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
 
   const logout = async () => {
     setOpen(false);
-    adminCache = null;
-    setIsAdmin(false);
+    try {
+      sessionStorage.removeItem("tm_admin_flag");
+    } catch {
+      /* 무시 */
+    }
     await supabase.auth.signOut();
     router.replace("/");
     router.refresh();

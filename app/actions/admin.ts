@@ -53,8 +53,6 @@ export async function getAdminStats(accessToken: string | null) {
     mannerRanking,
     ntrpRanking,
     monthlyWinRanking,
-    pageViewsByPath,
-    deviceBreakdown,
   ] = await Promise.all([
     prisma.user.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: { createdAt: { gte: kstDayStart(0) } } }),
@@ -90,13 +88,6 @@ export async function getAdminStats(accessToken: string | null) {
       orderBy: { _count: { evaluateeId: "desc" } },
       take: 10,
     }),
-    prisma.pageView.groupBy({
-      by: ["path"],
-      _count: true,
-      orderBy: { _count: { path: "desc" } },
-      take: 15,
-    }),
-    prisma.pageView.groupBy({ by: ["device"], _count: true }),
   ])
 
   // 코트 이름 매핑 (courtUsage는 courtId만 주므로 별도 조회)
@@ -140,8 +131,6 @@ export async function getAdminStats(accessToken: string | null) {
       nickname: winnerNameMap.get(w.evaluateeId) ?? "알 수 없음",
       wins: w._count,
     })),
-    pageViewsByPath: pageViewsByPath.map((p) => ({ path: p.path, count: p._count })),
-    deviceBreakdown: deviceBreakdown.map((d) => ({ device: d.device, count: d._count })),
   }
 }
 
@@ -370,5 +359,42 @@ export async function getMatchTrend(accessToken: string | null, weeks: number = 
     weekTotals,
     regions: top(byRegion, 8),
     courts: top(byCourt, 10),
+  }
+}
+
+
+/** 대시보드 첫 화면용: 숫자 몇 개만 (아주 가벼움) */
+export async function getAdminOverview(accessToken: string | null) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+  const startOfThisMonth = kstMonthStart()
+  const [total, today, week, month, matchTotal, completed, open] = await Promise.all([
+    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { createdAt: { gte: kstDayStart(0) } } }),
+    prisma.user.count({ where: { createdAt: { gte: kstDayStart(6) } } }),
+    prisma.user.count({ where: { createdAt: { gte: startOfThisMonth } } }),
+    prisma.match.count(),
+    prisma.match.count({ where: { status: "COMPLETED" } }),
+    prisma.match.count({ where: { status: "OPEN" } }),
+  ])
+  return {
+    success: true as const,
+    users: { total, today, week, month },
+    matches: { total: matchTotal, completed, open },
+  }
+}
+
+/** 방문 통계 화면용: 많이 방문한 페이지 + 기기 비율 */
+export async function getPageStats(accessToken: string | null) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+  const [pageViewsByPath, deviceBreakdown] = await Promise.all([
+    prisma.pageView.groupBy({ by: ["path"], _count: true, orderBy: { _count: { path: "desc" } }, take: 15 }),
+    prisma.pageView.groupBy({ by: ["device"], _count: true }),
+  ])
+  return {
+    success: true as const,
+    pageViewsByPath: pageViewsByPath.map((p) => ({ path: p.path, count: p._count })),
+    deviceBreakdown: deviceBreakdown.map((d) => ({ device: d.device, count: d._count })),
   }
 }

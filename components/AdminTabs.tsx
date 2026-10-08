@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/admin", label: "📊 대시보드", exact: true },
+  { href: "/admin/traffic", label: "👀 방문 통계", exact: false },
+  { href: "/admin/matches", label: "🎾 매칭 분석", exact: false },
+  { href: "/admin/ranking", label: "🏆 랭킹·분포", exact: false },
   { href: "/admin/users", label: "👥 회원 관리", exact: false },
   { href: "/admin/tournaments/create", label: "🏆 대회 개설", exact: false },
   { href: "/admin/audit", label: "🧾 작업 기록", exact: false },

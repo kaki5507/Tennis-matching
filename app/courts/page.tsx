@@ -231,12 +231,6 @@ export default function CourtsPage() {
           </>
         )}
 
-        <Link href="/mypage#court-watch" className="surface rounded-2xl p-4 mt-5 flex items-center gap-3">
-          <Bell className="w-5 h-5 text-clay shrink-0" />
-          <span className="text-sm">
-            <b className="text-court">3시간마다 자동으로 확인</b>하고 알림받고 싶다면 알림 받을 테니스장을 골라 보세요.
-          </span>
-        </Link>
         <p className="text-xs text-ink-muted mt-3">예약은 부천시 공공서비스예약 사이트에서 직접 해야 해요. 여기서는 조회만 합니다. (여기 보이는 정보는 저장된 수집본이라 사용자가 눌러도 예약 사이트에는 요청이 가지 않아요)</p>
       </div>
     </div>

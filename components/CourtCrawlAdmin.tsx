@@ -5,14 +5,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { checkAdminAccess } from "@/app/actions/admin";
 import { getCrawlAdmin, runCrawlNow, setCrawlEnabled, type CrawlAdminView } from "@/app/actions/adminCourtCrawl";
 import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
+import { useIsAdmin } from "@/lib/useIsAdmin";
 
 export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => void }) {
   const { userId } = useAuthUser();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = useIsAdmin(userId);
   const [view, setView] = useState<CrawlAdminView | null>(null);
   const [busy, setBusy] = useState<"toggle" | "run" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -23,18 +23,10 @@ export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => vo
   }, []);
 
   useEffect(() => {
-    if (!userId) return;
-    let alive = true;
-    (async () => {
-      const ok = await checkAdminAccess(await getAccessToken());
-      if (!alive) return;
-      setIsAdmin(ok);
-      if (ok) await load();
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [userId, load]);
+    if (!isAdmin) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [isAdmin, load]);
 
   if (!isAdmin || !view) return null;
 

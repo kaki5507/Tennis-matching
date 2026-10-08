@@ -64,7 +64,7 @@ export default function CourtWatchList({ userId }: Props) {
   return (
     <div className="space-y-2">
       <p className="text-xs text-slate-400 mb-2">
-        부천시 공공서비스예약 기준 (3시간마다 자동 확인 · 알림 수신 동의 필요)
+        부천시 공공서비스예약 기준 (알림 수신 동의 필요)
       </p>
       <ul className="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
         {BUCHEON_COURTS.map((court) => {
