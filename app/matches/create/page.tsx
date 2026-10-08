@@ -13,6 +13,7 @@ import { getProfile } from "@/app/actions/profile"; // 👈 유저 진짜 점수
 import CourtSearch, { SelectedCourt } from "@/components/CourtSearch";
 import { ChevronDown } from "lucide-react";
 import { getAccessToken } from "@/lib/authToken";
+import { capacityOf } from "@/lib/matchDisplay";
 import { getPopularTimes, type PopularSlot } from "@/app/actions/popularTimes";
 
 export default function CreateMatchPage() {
@@ -38,7 +39,9 @@ export default function CreateMatchPage() {
     targetLevel: "누구나", // 기본값
     genderRequirement: "제한없음",
     ageRequirement: "제한없음",
-    costPerPerson: "",
+    courtFee: "", // 코트 대여료 (총액)
+    ballFee: "", // 공값 (총액)
+    headcount: "2", // 랠리처럼 정원이 없는 경기의 예상 인원
     description: "",
     minMannerScore: "", // [NEW] 빈 값 = 제한없음
   });
@@ -101,7 +104,7 @@ export default function CreateMatchPage() {
       return;
     }
 
-    const result = await createMatchRoom(await getAccessToken(), { ...formData, courtId: courtResult.courtId });
+    const result = await createMatchRoom(await getAccessToken(), { ...formData, costPerPerson: perPerson, courtId: courtResult.courtId });
 
     if (result.success) {
       alert("매칭 방이 성공적으로 만들어졌습니다! 🎾");
@@ -137,6 +140,12 @@ export default function CreateMatchPage() {
       startTime: `${pad(slot.hour)}:00`,
     }));
   };
+
+  // 코트비 + 공값을 정원(단식 2 / 복식 4 / 랠리는 입력 인원)으로 나눠 1인당 금액 계산 (100원 단위 올림)
+  const fixedCap = capacityOf(formData.gameType);
+  const people = fixedCap ?? Math.min(20, Math.max(1, parseInt(formData.headcount) || 1));
+  const totalFee = (parseInt(formData.courtFee) || 0) + (parseInt(formData.ballFee) || 0);
+  const perPerson = totalFee > 0 ? Math.ceil(totalFee / people / 100) * 100 : 0;
 
   const levelOptions = [
     { label: "누구나 (초보 환영)", value: "누구나" },
@@ -259,10 +268,29 @@ export default function CreateMatchPage() {
             </div>
           </div>
 
-          {/* 3. 참가비 (N빵 자동화 대비) */}
+          {/* 3. 비용: 코트비 + 공값을 인원수로 자동 N빵 */}
           <div className="space-y-2">
-            <Label htmlFor="costPerPerson">1인당 참가비 (원)</Label>
-            <Input type="number" id="costPerPerson" name="costPerPerson" value={formData.costPerPerson} onChange={handleChange} placeholder="예: 6000 (코트비+공값 1/N)" />
+            <Label>비용 (총액을 적으면 인원수대로 나눠요)</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Input type="number" inputMode="numeric" min={0} name="courtFee" value={formData.courtFee} onChange={handleChange} placeholder="코트비 (원)" aria-label="코트비" />
+              </div>
+              <div>
+                <Input type="number" inputMode="numeric" min={0} name="ballFee" value={formData.ballFee} onChange={handleChange} placeholder="공값 (원)" aria-label="공값" />
+              </div>
+            </div>
+            {fixedCap === null && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="headcount" className="text-sm">예상 인원</Label>
+                <Input type="number" inputMode="numeric" min={1} max={20} id="headcount" name="headcount" value={formData.headcount} onChange={handleChange} className="w-24" />
+                <span className="text-xs text-slate-400">명</span>
+              </div>
+            )}
+            <p className="text-sm font-bold text-court" aria-live="polite">
+              {totalFee > 0
+                ? `1인당 ${perPerson.toLocaleString()}원 (총 ${totalFee.toLocaleString()}원 ÷ ${people}명, 100원 단위 올림)`
+                : "비용을 비워 두면 무료로 올라가요"}
+            </p>
           </div>
 
           {/* [NEW] 매너 온도 최소기준 */}
