@@ -12,6 +12,7 @@ import NotificationBell from "@/components/NotificationBell";
 import SideMenu from "@/components/SideMenu";
 
 const NAV = [
+  { href: "/courts", label: "빈 코트" },
   { href: "/matches", label: "매칭" },
   { href: "/tournaments", label: "대회" },
   { href: "/history", label: "기록실" },

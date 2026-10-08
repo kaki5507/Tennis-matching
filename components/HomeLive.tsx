@@ -3,11 +3,12 @@
 // DB 조회가 실패해도(점검/일시정지 등) 메인 화면 전체가 깨지지 않도록 섹션만 조용히 숨깁니다.
 
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/tournamentData";
 import EmptyState from "@/components/EmptyState";
 
-async function loadLive() {
-  try {
+// 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
+const fetchLive = unstable_cache(async () => {
     const [openMatches, members, completed, tournaments, upcoming] = await Promise.all([
       prisma.match.count({ where: { status: "OPEN", deletedAt: null } }),
       prisma.user.count(),
@@ -24,6 +25,11 @@ async function loadLive() {
       }),
     ]);
     return { openMatches, members, completed, tournaments, upcoming };
+}, ["home-live"], { revalidate: 30 });
+
+async function loadLive() {
+  try {
+    return await fetchLive();
   } catch (e) {
     console.error("[HomeLive] 현황 조회 실패:", e);
     return null;
@@ -44,11 +50,11 @@ export default async function HomeLive() {
   return (
     <>
       {/* 서비스 현황 */}
-      <section className="max-w-6xl mx-auto px-4 pb-4">
+      <section className="max-w-6xl mx-auto px-4 pt-5 pb-2">
         <div className="surface rounded-2xl grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 border-line">
           {stats.map((s) => (
-            <div key={s.label} className="py-6 text-center border-line">
-              <div className="font-display text-3xl text-court">{s.value.toLocaleString()}</div>
+            <div key={s.label} className="py-4 text-center border-line">
+              <div className="font-display text-2xl text-court">{s.value.toLocaleString()}</div>
               <div className="text-xs mt-1 text-ink-muted">{s.label}</div>
             </div>
           ))}
@@ -56,7 +62,7 @@ export default async function HomeLive() {
       </section>
 
       {/* 지금 모집 중인 방 */}
-      <section className="max-w-6xl mx-auto px-4 py-12">
+      <section className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-end justify-between mb-6">
           <div>
             <h2 className="font-display text-2xl md:text-3xl text-court">지금 모집 중인 매칭</h2>

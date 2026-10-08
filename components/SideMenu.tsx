@@ -100,13 +100,13 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
 
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
             {userId && (
-              <Link href="/mypage#court-watch" className="drawer-feature flex items-center gap-3 rounded-xl p-3 mb-2">
+              <Link href="/courts" className="drawer-feature flex items-center gap-3 rounded-xl p-3 mb-2">
                 <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
                   <CalendarClock className="w-5 h-5" />
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block font-extrabold text-sm">3시간마다 빈 코트 찾기</span>
-                  <span className="block text-xs text-white/85">자리가 나면 알림으로 알려드려요</span>
+                  <span className="block font-extrabold text-sm">지금 빈 코트 찾기</span>
+                  <span className="block text-xs text-white/85">오늘 남은 시간 바로 확인</span>
                 </span>
                 <ChevronRight className="w-4 h-4 shrink-0" />
               </Link>

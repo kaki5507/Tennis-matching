@@ -13,13 +13,13 @@ import SideMenu from "@/components/SideMenu";
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
   { href: "/matches/create", label: "방 만들기", sub: "내가 방장", Icon: PlusCircle, cls: "sc-clay" },
-  { href: "/mypage#court-watch", label: "빈 코트 찾기", sub: "3시간마다 자동 확인", Icon: CalendarClock, cls: "sc-grass" },
+  { href: "/courts", label: "지금 빈 코트 찾기", sub: "오늘 남은 시간 확인", Icon: CalendarClock, cls: "sc-grass" },
   { href: "/tournaments", label: "대회", sub: "대진표·결과", Icon: Trophy, cls: "sc-sky" },
   { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
   { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
 ];
 
-export default function HomeClient({ children }: { children?: ReactNode }) {
+export default function HomeClient({ live, children }: { live?: ReactNode; children?: ReactNode }) {
   // 로그인 여부는 저장된 세션에서 바로 읽음 (서버 왕복 없음)
   const { userId } = useAuthUser();
   const user = userId;
@@ -63,37 +63,40 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
         <section className="hero-blue relative overflow-hidden">
           <div className="hero-cloud w-72 h-16 top-10 left-[6%]" aria-hidden />
           <div className="hero-cloud w-96 h-20 top-40 right-[4%]" style={{ animationDelay: "-6s" }} aria-hidden />
-          <div className="max-w-6xl mx-auto px-4 pt-14 pb-16 md:pt-20 md:pb-24 grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center relative">
+          <div className="max-w-6xl mx-auto px-4 pt-8 pb-10 md:pt-12 md:pb-14 grid md:grid-cols-[1.05fr_0.95fr] gap-8 md:gap-10 items-center relative">
             {/* 왼쪽: 큰 타이포 + 행동 버튼 */}
             <div>
-              <h1 className="font-display text-[2.6rem] md:text-7xl leading-[1.08] mb-6 text-white">
+              <h1 className="font-display text-[2.1rem] md:text-6xl leading-[1.1] mb-4 text-white">
                 실력 맞는
                 <br />
                 파트너,
                 <br />
                 오늘 코트에서.
               </h1>
-              <p className="text-lg mb-9 max-w-md text-white/85 leading-relaxed">
+              <p className="text-base md:text-lg mb-6 max-w-md text-white/85 leading-relaxed">
                 레벨·연령·성별 조건으로 방을 찾고, 매너 온도로 쾌적하게 치세요. 방 하나 열면 끝이에요.
               </p>
 
               {user ? (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href="/matches">
-                    <Button className="h-13 px-8 text-lg w-full sm:w-auto btn-clay">매칭 방 찾기</Button>
+                <div className="flex flex-col gap-4 max-w-md">
+                  <Link href="/courts" className="block">
+                    <Button className="h-14 px-8 text-lg w-full btn-clay">🎾 지금 빈 코트 찾기</Button>
                   </Link>
-                  <Link href="/matches/create">
-                    <Button variant="outline" className="h-13 px-8 text-lg w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">
-                      방 만들기
-                    </Button>
-                  </Link>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link href="/matches" className="block">
+                      <Button variant="outline" className="h-12 px-4 text-base w-full bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">방 찾기</Button>
+                    </Link>
+                    <Link href="/matches/create" className="block">
+                      <Button variant="outline" className="h-12 px-4 text-base w-full bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">방 만들기</Button>
+                    </Link>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href="/signup">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link href="/signup" className="block">
                     <Button className="h-13 px-8 text-lg w-full sm:w-auto btn-clay">지금 바로 시작하기</Button>
                   </Link>
-                  <Link href="/matches">
+                  <Link href="/matches" className="block">
                     <Button variant="outline" className="h-13 px-8 text-lg w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">
                       열린 방 구경하기
                     </Button>
@@ -125,24 +128,6 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
             </div>
           </section>
         )}
-
-        {/* 세 가지 코트 표면 = 세 가지 장점 */}
-        <section className="max-w-6xl mx-auto px-4 py-8 md:py-10">
-          <div className="grid md:grid-cols-3 gap-3 md:gap-4">
-            {[
-              { cls: "panel-hard", Icon: Target, tag: "하드코트", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
-              { cls: "panel-grass", Icon: Thermometer, tag: "잔디", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
-              { cls: "panel-clay", Icon: MapPin, tag: "클레이", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
-            ].map(({ cls, Icon, tag, title, desc }) => (
-              <div key={title} className={`${cls} panel-lines rounded-2xl p-5 md:p-6 flex flex-col`}>
-                <span className="relative z-10 self-start text-xs font-extrabold bg-white/95 text-ink rounded-full px-3 py-1">{tag}</span>
-                <Icon className="relative z-10 w-8 h-8 mt-3 mb-2" strokeWidth={2.4} aria-hidden />
-                <h3 className="relative z-10 font-display text-xl mb-1">{title}</h3>
-                <p className="relative z-10 text-sm text-white/90 leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         {/* 서버에서 가져온 실시간 현황/안내 섹션들 (app/page.tsx에서 주입) */}
         {children}
