@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>이메일 인증으로 가입을 마무리해요</title>
+</head>
+<body style="margin:0;padding:0;background:#eef3f8;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#eef3f8;">버튼 한 번이면 가입이 끝나요.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef3f8;padding:24px 12px;">
+<tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:20px;overflow:hidden;font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif;">
+    <!-- 상단 헤더: 하드코트 블루 -->
+    <tr><td align="center" style="background:#44709f;padding:28px 24px 22px;">
+      <img src="{{ .SiteURL }}/apple-icon.png" width="64" height="64" alt="" style="display:block;border-radius:16px;margin:0 auto 10px;">
+      <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.02em;">테니스매칭</div>
+      <div style="font-size:12px;color:#dbe7f3;margin-top:4px;">우리 동네 테니스 파트너</div>
+    </td></tr>
+    <!-- 3색 코트 띠: 하드 · 잔디 · 클레이 -->
+    <tr><td style="font-size:0;line-height:0;height:6px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td width="34%" style="height:6px;background:#5b87b9;font-size:0;line-height:0;">&nbsp;</td>
+        <td width="33%" style="height:6px;background:#4f9a62;font-size:0;line-height:0;">&nbsp;</td>
+        <td width="33%" style="height:6px;background:#d0653f;font-size:0;line-height:0;">&nbsp;</td>
+      </tr></table>
+    </td></tr>
+    <!-- 본문 -->
+    <tr><td style="padding:32px 28px 8px;">
+      <h1 style="margin:0 0 12px;font-size:22px;line-height:1.35;font-weight:800;color:#1c2a40;letter-spacing:-0.02em;">이메일 인증으로 가입을 마무리해요</h1>
+      <p style="margin:0;font-size:15px;line-height:1.7;color:#1c2a40;">환영해요! 아래 버튼을 눌러 이메일을 인증하면 바로 방을 찾고 만들 수 있어요.</p>
+    </td></tr>
+    <tr><td align="center" style="padding:22px 28px 8px;">
+      <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#d0653f;color:#ffffff;font-size:16px;font-weight:800;text-decoration:none;padding:14px 36px;border-radius:12px;border-bottom:3px solid #a84e2c;">이메일 인증하기</a>
+    </td></tr>
+    <tr><td style="padding:18px 28px 28px;">
+      <p style="margin:0 0 6px;font-size:12px;line-height:1.6;color:#5d6b7e;">인증 링크는 한 번만 쓸 수 있고, 일정 시간이 지나면 만료돼요.</p>
+      <p style="margin:0;font-size:12px;line-height:1.6;color:#5d6b7e;">버튼이 눌리지 않으면 아래 주소를 브라우저에 붙여 넣어 주세요.<br><a href="{{ .ConfirmationURL }}" style="color:#34649d;word-break:break-all;">{{ .ConfirmationURL }}</a></p>
+    </td></tr>
+    <tr><td style="background:#f6f9fc;padding:16px 28px;border-top:1px solid #d8e2ec;">
+      <p style="margin:0;font-size:11px;line-height:1.6;color:#8693a5;">본인이 요청하지 않았다면 이 메일을 무시해 주세요. 계정에는 아무 변화도 없어요.<br>© 테니스매칭</p>
+    </td></tr>
+  </table>
+</td></tr>
+</table>
+</body>
+</html>

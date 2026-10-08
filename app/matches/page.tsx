@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/tournamentData";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/EmptyState";
+import TennisMascot from "@/components/TennisMascot";
+import CourtThumb from "@/components/CourtThumb";
 import LevelFilterToggle from "@/components/LevelFilterToggle";
 import { dayLabel, isPast, seatInfo } from "@/lib/matchDisplay";
 
@@ -53,27 +55,29 @@ export default async function MatchesPage({
   return (
     <div className="min-h-screen page-bg py-12 px-4">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl heading">오픈된 매칭 방 🎾</h1>
-            <p className="text-slate-500 mt-2">나에게 맞는 조건의 테니스 게임을 찾아보세요.</p>
+        {/* 상단 배너: 하드코트 블루 + 마스코트 */}
+        <section className="hero-blue rounded-3xl overflow-hidden mb-6 relative">
+          <div className="hero-cloud w-56 h-12 top-4 left-[8%]" aria-hidden />
+          <div className="relative grid grid-cols-[1fr_auto] items-center gap-2 px-6 pt-7 pb-6 sm:px-9 sm:pt-9">
+            <div>
+              <h1 className="font-display text-3xl sm:text-4xl leading-tight text-white">오늘 칠 파트너,<br />여기서 찾아요</h1>
+              <p className="mt-2 text-sm sm:text-base text-white/85">레벨·경기 종류로 골라서 바로 신청하세요.</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link href="/matches/create">
+                  <Button className="btn-clay h-10 px-5">새 방 만들기</Button>
+                </Link>
+                <Link href="/tournaments">
+                  <Button variant="outline" className="h-10 px-4 bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">대회</Button>
+                </Link>
+                <Link href="/history">
+                  <Button variant="outline" className="h-10 px-4 bg-transparent text-white border-2 border-white hover:bg-white/10 hover:text-white">기록실</Button>
+                </Link>
+              </div>
+            </div>
+            <TennisMascot pose="ready" className="w-28 sm:w-40 h-auto mascot-float" />
           </div>
-          <div className="flex gap-2">
-            <Link href="/tournaments">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                🏆 대회
-              </Button>
-            </Link>
-            <Link href="/history">
-              <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                📋 전체 기록실
-              </Button>
-            </Link>
-            <Link href="/matches/create">
-              <Button className="btn-clay">새 방 만들기</Button>
-            </Link>
-          </div>
-        </div>
+          <div className="surface-band" />
+        </section>
 
         {/* 필터: 경기 종류 + 내 레벨 */}
         <div className="mb-6 flex flex-wrap items-center gap-2" role="group" aria-label="매칭 방 필터">
@@ -140,6 +144,7 @@ export default async function MatchesPage({
               const seat = seatInfo(match.gameType, accepted);
               return (
                 <div key={match.id} className="surface p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden">
+                  <CourtThumb gameType={match.gameType} className="-mx-6 -mt-6 mb-4 w-[calc(100%+3rem)] h-20 max-w-none" />
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-1.5">
                       <span className={`text-xs font-bold px-3 py-1 rounded-full ${seat.full ? "badge-warn" : "badge-ok"}`}>
