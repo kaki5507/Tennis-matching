@@ -152,6 +152,7 @@ model Match {
   genderRequirement String  @default("ANY") @map("gender_requirement") // 성별 제한
   ageRequirement    String  @default("ANY") @map("age_requirement") // 연령 제한
   costPerPerson     Int     @default(0) @map("cost_per_person") // 1인당 참가비
+  recruitCount      Int?    @map("recruit_count") // 복식에서 방장 제외 모집 인원 (1~3). null = 경기 종류별 기본 정원
   description       String? @db.Text // 상세 설명, 공지사항
   minMannerScore    Decimal? @map("min_manner_score") @db.Decimal(4, 1) // [NEW] 참여 최소 매너온도 (null = 제한없음)
 

@@ -141,7 +141,7 @@ export default async function MatchesPage({
               const day = dayLabel(dateStr);
               const accepted = match.participants.filter((p) => p.status === "ACCEPTED").length;
               const waiting = match.participants.filter((p) => p.status === "PENDING").length;
-              const seat = seatInfo(match.gameType, accepted);
+              const seat = seatInfo(match.gameType, accepted, match.recruitCount);
               return (
                 <div key={match.id} className="surface p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow flex flex-col relative overflow-hidden">
                   <CourtThumb gameType={match.gameType} className="-mx-6 -mt-6 mb-4 w-[calc(100%+3rem)] h-20 max-w-none" />

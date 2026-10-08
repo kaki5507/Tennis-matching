@@ -42,9 +42,10 @@ export function capacityOf(gameType: string): number | null {
 }
 
 /** 참여 확정 인원(방장 포함) 표시용 계산 */
-export function seatInfo(gameType: string, acceptedCount: number) {
+export function seatInfo(gameType: string, acceptedCount: number, recruitCount?: number | null) {
   const joined = acceptedCount + 1 // 방장
-  const capacity = capacityOf(gameType)
+  // 복식에서 방장이 지인과 함께 온다면 "모집 인원(방장 제외)"만큼만 받음: 정원 = 방장 + 모집 인원
+  const capacity = recruitCount != null && recruitCount > 0 ? 1 + recruitCount : capacityOf(gameType)
   const full = capacity !== null && joined >= capacity
   const ratio = capacity === null ? null : Math.min(1, joined / capacity)
   return { joined, capacity, full, ratio }

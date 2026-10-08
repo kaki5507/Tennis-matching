@@ -41,6 +41,7 @@ export default function CreateMatchPage() {
     ageRequirement: "제한없음",
     courtFee: "", // 코트 대여료 (총액)
     ballFee: "", // 공값 (총액)
+    recruitCount: "3", // 복식: 방장 제외 모집 인원 (지인과 함께면 줄임)
     headcount: "2", // 랠리처럼 정원이 없는 경기의 예상 인원
     description: "",
     minMannerScore: "", // [NEW] 빈 값 = 제한없음
@@ -104,7 +105,7 @@ export default function CreateMatchPage() {
       return;
     }
 
-    const result = await createMatchRoom(await getAccessToken(), { ...formData, costPerPerson: perPerson, courtId: courtResult.courtId });
+    const result = await createMatchRoom(await getAccessToken(), { ...formData, costPerPerson: perPerson, recruitCount: formData.recruitCount, courtId: courtResult.courtId });
 
     if (result.success) {
       alert("매칭 방이 성공적으로 만들어졌습니다! 🎾");
@@ -253,6 +254,27 @@ export default function CreateMatchPage() {
               </div>
             </div>
           </div>
+
+          {/* 복식: 이번에 몇 명을 모집할지 (지인과 같이 오면 줄이세요) */}
+          {(formData.gameType === "복식" || formData.gameType === "혼합복식") && (
+            <div className="space-y-2">
+              <Label>모집 인원 (방장 제외)</Label>
+              <div className="flex gap-2">
+                {[1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, recruitCount: String(n) }))}
+                    aria-pressed={formData.recruitCount === String(n)}
+                    className={`flex-1 h-11 rounded-lg text-sm font-bold border ${formData.recruitCount === String(n) ? "chip-on border-transparent" : "surface border-line chip-off-court"}`}
+                  >
+                    {n}명
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">지인과 함께 온다면 모집 인원을 줄이세요. 비용은 4명 기준으로 나눠요.</p>
+            </div>
+          )}
 
           {/* 3. 비용: 코트비 + 공값을 인원수로 자동 N빵 */}
           <div className="space-y-2">

@@ -38,7 +38,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const day = dayLabel(dateStr);
   const accepted = match.participants.filter((p) => p.status === "ACCEPTED").length;
   const waiting = match.participants.filter((p) => p.status === "PENDING").length;
-  const seat = seatInfo(match.gameType, accepted);
+  const seat = seatInfo(match.gameType, accepted, match.recruitCount);
   const statusBadge =
     match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
 

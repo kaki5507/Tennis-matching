@@ -4,6 +4,7 @@ import { MatchStatus } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireUser } from "@/lib/serverAuth"
 import { sendPushToUser, sendPushToUsers } from "@/lib/push"
+import { seatInfo } from "@/lib/matchDisplay"
 
 
 // 💡 폼에서 넘어오는 데이터들의 '타입 설계도'를 만들어 줍니다.
@@ -18,6 +19,7 @@ interface CreateMatchInput {
   costPerPerson: string | number; // 문자로 올 수도 있고 숫자로 올 수도 있음
   description: string;
   minMannerScore?: string | number | null; // [NEW] 참여 최소 매너온도, 빈 값이면 제한없음
+  recruitCount?: string | number | null; // 복식에서 방장 제외 모집 인원 (1~3)
 }
 
 export async function createMatchRoom(accessToken: string | null, data: CreateMatchInput) {
@@ -60,6 +62,16 @@ export async function createMatchRoom(accessToken: string | null, data: CreateMa
       }
     }
 
+    // 복식류만 모집 인원(방장 제외 1~3명)을 받습니다. 그 외 종류는 기본 정원 사용
+    let recruitCount: number | null = null
+    if (data.gameType === "복식" || data.gameType === "혼합복식") {
+      const n = typeof data.recruitCount === "string" ? parseInt(data.recruitCount) : data.recruitCount
+      if (n !== undefined && n !== null) {
+        if (!Number.isInteger(n) || n < 1 || n > 3) return { success: false, error: "모집 인원은 1~3명으로 선택해주세요." }
+        recruitCount = n === 3 ? null : n // 3명(=기본 정원)은 null로 저장
+      }
+    }
+
     // 1. 코트 존재 여부 확인 (프론트에서 findOrCreateCourt로 미리 만들어서 넘겨주지만, 방어적으로 한 번 더 확인)
     const court = await prisma.court.findUnique({ where: { id: data.courtId } });
     if (!court) {
@@ -82,6 +94,7 @@ export async function createMatchRoom(accessToken: string | null, data: CreateMa
         costPerPerson: cost,
         description: data.description,
         minMannerScore: minManner,
+        recruitCount,
       }
     });
 
@@ -179,7 +192,7 @@ export async function updateParticipantStatus(accessToken: string | null, partic
     // 방장만 수락/거절할 수 있습니다.
     const target = await prisma.matchParticipant.findUnique({
       where: { id: participantId },
-      include: { match: { select: { hostId: true, status: true } } },
+      include: { match: { select: { hostId: true, status: true, gameType: true, recruitCount: true } } },
     })
     if (!target) return { success: false, error: "신청 내역을 찾을 수 없습니다." }
     if (target.match.hostId !== auth.userId) return { success: false, error: "방장만 수락/거절할 수 있습니다." }
@@ -187,6 +200,13 @@ export async function updateParticipantStatus(accessToken: string | null, partic
       return { success: false, error: "이미 끝났거나 취소된 방입니다." }
     }
     if (target.status === status) return { success: true } // 변화 없음: 알림 중복 발송 방지
+
+    // 모집 인원이 이미 찼으면 더 수락할 수 없습니다 (방장 포함 정원)
+    if (status === "ACCEPTED") {
+      const accepted = await prisma.matchParticipant.count({ where: { matchId: target.matchId, status: "ACCEPTED" } })
+      const seat = seatInfo(target.match.gameType, accepted, target.match.recruitCount)
+      if (seat.full) return { success: false, error: "모집 인원이 이미 다 찼어요." }
+    }
 
     const participant = await prisma.matchParticipant.update({
       where: { id: participantId },
