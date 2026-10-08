@@ -140,11 +140,32 @@ export async function getAdminStats(accessToken: string | null) {
  * "방문자"는 브라우저별 익명 ID(visitor_id) 또는 로그인 유저 ID 기준 고유 수입니다.
  * 익명 ID가 도입되기 전의 옛 기록은 비로그인이면 방문자 수에서 빠집니다(조회수에는 포함).
  */
+// 누적 방문자/페이지뷰는 테이블 전체를 세야 해서 가장 무거움 → 10분 캐시
+const totalsCached = unstable_cache(
+  async () => {
+    const visitor = Prisma.sql`COALESCE(visitor_id, user_id::text)`
+    const rows = await prisma.$queryRaw<{ uv_total: bigint; pv_total: bigint }[]>(Prisma.sql`
+      SELECT COUNT(DISTINCT ${visitor}) AS uv_total, COUNT(*) AS pv_total FROM page_views`)
+    return { uvTotal: Number(rows[0]?.uv_total ?? 0), pvTotal: Number(rows[0]?.pv_total ?? 0) }
+  },
+  ["admin-visit-totals"],
+  { revalidate: 600 }
+)
+
 export async function getVisitStats(accessToken: string | null, days: number = 30) {
   const auth = await requireAdmin(accessToken)
   if (!auth.ok) return { success: false as const, error: auth.error }
-
   const span = Math.min(Math.max(Math.floor(days), 1), 90)
+  return { success: true as const, ...(await visitStatsCached(span)) }
+}
+
+const visitStatsCached = unstable_cache(
+  async (span: number) => computeVisitStats(span),
+  ["admin-visit-stats"],
+  { revalidate: 120 }
+)
+
+async function computeVisitStats(span: number) {
   const since = kstDayStart(span - 1)
   const today = kstDayStart(0)
   const week = kstDayStart(6)
@@ -153,7 +174,7 @@ export async function getVisitStats(accessToken: string | null, days: number = 3
   const kstTs = Prisma.sql`((created_at AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Seoul')`
   const visitor = Prisma.sql`COALESCE(visitor_id, user_id::text)`
 
-  const [daily, summary, hourly, signups] = await Promise.all([
+  const [daily, summary, hourly, signups, totals] = await Promise.all([
     prisma.$queryRaw<{ d: string; pv: bigint; uv: bigint }[]>(Prisma.sql`
       SELECT to_char(${kstTs}::date, 'YYYY-MM-DD') AS d,
              COUNT(*) AS pv,
@@ -162,21 +183,21 @@ export async function getVisitStats(accessToken: string | null, days: number = 3
       WHERE created_at >= ${since}
       GROUP BY 1 ORDER BY 1`),
     prisma.$queryRaw<
-      { uv_today: bigint; uv_week: bigint; uv_month: bigint; uv_total: bigint; pv_today: bigint; pv_total: bigint }[]
+      { uv_today: bigint; uv_week: bigint; uv_month: bigint; pv_today: bigint }[]
     >(Prisma.sql`
       SELECT COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${today}) AS uv_today,
              COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${week}) AS uv_week,
              COUNT(DISTINCT ${visitor}) FILTER (WHERE created_at >= ${month}) AS uv_month,
-             COUNT(DISTINCT ${visitor}) AS uv_total,
-             COUNT(*) FILTER (WHERE created_at >= ${today}) AS pv_today,
-             COUNT(*) AS pv_total
-      FROM page_views`),
+             COUNT(*) FILTER (WHERE created_at >= ${today}) AS pv_today
+      FROM page_views
+      WHERE created_at >= ${month}`),
     prisma.$queryRaw<{ h: number; pv: bigint }[]>(Prisma.sql`
       SELECT EXTRACT(HOUR FROM ${kstTs})::int AS h, COUNT(*) AS pv
       FROM page_views
       WHERE created_at >= ${month}
       GROUP BY 1 ORDER BY 1`),
     prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+    totalsCached(),
   ])
 
   // 빈 날짜도 0으로 채워서 그래프가 끊기지 않게
@@ -204,16 +225,15 @@ export async function getVisitStats(accessToken: string | null, days: number = 3
 
   const sm = summary[0]
   return {
-    success: true as const,
     series: Array.from(byDate.values()),
     hourly: hourlyFull,
     summary: {
       visitorsToday: Number(sm?.uv_today ?? 0),
       visitorsWeek: Number(sm?.uv_week ?? 0),
       visitorsMonth: Number(sm?.uv_month ?? 0),
-      visitorsTotal: Number(sm?.uv_total ?? 0),
+      visitorsTotal: totals.uvTotal,
       pageViewsToday: Number(sm?.pv_today ?? 0),
-      pageViewsTotal: Number(sm?.pv_total ?? 0),
+      pageViewsTotal: totals.pvTotal,
     },
   }
 }
@@ -393,8 +413,8 @@ export async function getAdminOverview(accessToken: string | null) {
 const pageStatsCached = unstable_cache(
   async () => {
     const [pageViewsByPath, deviceBreakdown] = await Promise.all([
-      prisma.pageView.groupBy({ by: ["path"], _count: true, orderBy: { _count: { path: "desc" } }, take: 15 }),
-      prisma.pageView.groupBy({ by: ["device"], _count: true }),
+      prisma.pageView.groupBy({ by: ["path"], where: { createdAt: { gte: kstDayStart(29) } }, _count: true, orderBy: { _count: { path: "desc" } }, take: 15 }),
+      prisma.pageView.groupBy({ by: ["device"], where: { createdAt: { gte: kstDayStart(29) } }, _count: true }),
     ])
     return {
       pageViewsByPath: pageViewsByPath.map((p) => ({ path: p.path, count: p._count })),

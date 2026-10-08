@@ -1,6 +1,6 @@
 "use client";
 
-// 관리자 · 방문 통계: 방문자/페이지뷰/가입 추이, 시간대, 많이 방문한 페이지, 기기 비율
+// 관리자 · 방문 통계: 방문자/페이지뷰/가입 추이, 시간대, 많이 방문한 페이지 (최근 30일), 기기 비율
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAccessToken } from "@/lib/authToken";
@@ -86,7 +86,7 @@ export default function AdminTrafficPage() {
             <PanelSkeleton />
           ) : (
             <div className="grid md:grid-cols-2 gap-6">
-              <Panel title="🔍 많이 방문한 페이지 Top 15">
+              <Panel title="🔍 많이 방문한 페이지 (최근 30일) Top 15">
                 {pages.pageViewsByPath.length === 0 ? (
                   <p className="text-sm text-ink-muted">아직 방문 기록이 없어요.</p>
                 ) : (
