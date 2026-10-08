@@ -18,8 +18,14 @@ const fmt = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { hour: "
 export default function CourtsPage() {
   const { ready, userId } = useAuthUser();
   const [results, setResults] = useState<Record<string, CourtNowResult>>({});
-  const [loadingAll, setLoadingAll] = useState(false);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  // 확인 중인 시설들 (여러 곳을 동시에 눌러도 서로 초기화되지 않음)
+  const [checking, setChecking] = useState<Set<string>>(new Set());
+  const setBusy = (ids: string[], on: boolean) =>
+    setChecking((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+      return next;
+    });
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const [dateLabel, setDateLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -31,21 +37,24 @@ export default function CourtsPage() {
   };
 
   const checkAll = async () => {
-    setLoadingAll(true);
+    const ids = BUCHEON_COURTS.map((c) => c.facilityId).filter((id) => !checking.has(id));
+    if (ids.length === 0) return;
+    setBusy(ids, true);
     setError(null);
     const r = await getAllCourtsNow(await getAccessToken());
-    if (r.success) apply(r.results, r.checkedAt, r.dateLabel);
+    if (r.success) apply(r.results.filter((x) => ids.includes(x.facilityId)), r.checkedAt, r.dateLabel);
     else setError(r.error);
-    setLoadingAll(false);
+    setBusy(ids, false);
   };
 
   const checkOne = async (facilityId: string) => {
-    setLoadingId(facilityId);
+    if (checking.has(facilityId)) return;
+    setBusy([facilityId], true);
     setError(null);
     const r = await getCourtNow(await getAccessToken(), facilityId);
     if (r.success) apply(r.results, r.checkedAt, r.dateLabel);
     else setError(r.error);
-    setLoadingId(null);
+    setBusy([facilityId], false);
   };
 
   const checked = Object.values(results);
@@ -63,11 +72,11 @@ export default function CourtsPage() {
             <button
               type="button"
               onClick={checkAll}
-              disabled={loadingAll || !userId}
+              disabled={checking.size === BUCHEON_COURTS.length || !userId}
               className="btn-clay mt-5 h-12 px-6 rounded-xl text-base inline-flex items-center gap-2 disabled:opacity-60"
             >
-              <RefreshCw className={`w-5 h-5 ${loadingAll ? "animate-spin" : ""}`} />
-              {loadingAll ? "확인하는 중..." : checked.length ? "다시 확인하기" : "내일 전체 확인하기"}
+              <RefreshCw className={`w-5 h-5 ${checking.size ? "animate-spin" : ""}`} />
+              {checking.size === BUCHEON_COURTS.length ? "확인하는 중..." : checked.length ? "다시 확인하기" : "내일 전체 확인하기"}
             </button>
           </div>
           <TennisMascot pose="search" className="w-24 sm:w-36 h-auto mascot-float" />
@@ -95,7 +104,7 @@ export default function CourtsPage() {
         <ul className="space-y-3">
           {BUCHEON_COURTS.map((court) => {
             const r = results[court.facilityId];
-            const busy = loadingAll || loadingId === court.facilityId;
+            const busy = checking.has(court.facilityId);
             return (
               <li key={court.facilityId} className="surface rounded-2xl p-4">
                 <div className="flex items-center justify-between gap-3">
@@ -107,13 +116,16 @@ export default function CourtsPage() {
                     type="button"
                     onClick={() => checkOne(court.facilityId)}
                     disabled={busy || !userId}
-                    className="btn-outline-court border-2 shrink-0 text-xs font-bold px-3 py-1.5 rounded-full disabled:opacity-60"
+                    className={`shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border-2 ${busy ? "checking-btn" : "btn-outline-court"} disabled:opacity-100`}
                   >
-                    {busy ? "확인 중..." : r ? "다시 확인" : "지금 확인"}
+                    {busy ? "확인 중..." : r ? "다시 확인" : "확인하기"}
                   </button>
                 </div>
 
-                {r && (
+                {busy && (
+                  <p className="mt-3 text-sm font-bold text-warn animate-pulse">확인 중...</p>
+                )}
+                {r && !busy && (
                   <div className="mt-3">
                     {!r.ok ? (
                       <p className="text-sm text-danger">{r.error}</p>

@@ -597,3 +597,6 @@
 .shortcut-card.sc-grass { background: linear-gradient(135deg, var(--grass), #3a7a4c); }
 .shortcut-card.sc-clay { background: linear-gradient(135deg, var(--clay), var(--clay-deep)); }
 .shortcut-card.sc-sky { background: linear-gradient(135deg, #7aa7d3, var(--court-soft)); }
+
+/* 확인 중 상태 버튼 (노란빛) */
+.checking-btn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
