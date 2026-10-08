@@ -6,9 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useAuthUser } from "@/lib/useAuthUser";
 import HeroCourt from "@/components/HeroCourt";
 import { Search, PlusCircle, CalendarClock, Trophy, History, User } from "lucide-react";
-import BrandLogo from "@/components/BrandLogo";
-import NotificationBell from "@/components/NotificationBell";
-import SideMenu from "@/components/SideMenu";
 
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
@@ -26,38 +23,6 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
 
   return (
     <div className="min-h-screen flex flex-col tint">
-      {/* 헤더 */}
-      <header className="border-b sticky top-0 z-10 app-bar">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <BrandLogo size="md" />
-
-          <div className="flex items-center gap-1 sm:gap-2">
-            {user ? (
-              <>
-                <NotificationBell />
-                <Link href="/mypage" className="hidden sm:block">
-                  <Button variant="ghost" className="h-9 px-3 text-sm font-medium text-court">
-                    마이페이지
-                  </Button>
-                </Link>
-                <SideMenu buttonClassName="-mr-1" />
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="ghost" className="h-9 px-2.5 sm:px-3 text-sm">로그인</Button>
-                </Link>
-                <Link href="/signup">
-                  <Button className="h-9 px-3 text-sm btn-clay">
-                    회원가입
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
       {/* 히어로 섹션: 하드코트 블루 */}
       <main className="flex-1">
         <section className="hero-blue relative overflow-hidden">

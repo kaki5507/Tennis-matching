@@ -23,7 +23,8 @@ export default function SiteHeader() {
   const { userId } = useAuthUser();
 
   // 자체 헤더/레이아웃을 가진 화면에서는 숨김
-  if (pathname === "/" || pathname.endsWith("/bracket")) return null;
+  // (메인 화면도 이 헤더를 그대로 씁니다. 화면마다 헤더를 따로 두면 두 개로 겹쳐 보일 수 있어요)
+  if (pathname.endsWith("/bracket")) return null;
 
   return (
     <header className="sticky top-0 z-30 border-b app-bar">
@@ -49,7 +50,11 @@ export default function SiteHeader() {
               </>
             )}
           </nav>
-          {userId && <NotificationBell />}
+          {userId ? (
+            <NotificationBell />
+          ) : (
+            <Link href="/login" className="sm:hidden chip-off px-2.5 py-1.5 rounded-full text-sm font-bold">로그인</Link>
+          )}
           <SideMenu buttonClassName="-mr-2 sm:mr-0" />
         </div>
       </div>
