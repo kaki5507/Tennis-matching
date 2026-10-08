@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthUser } from "@/lib/useAuthUser";
 import HeroCourt from "@/components/HeroCourt";
-import { Target, Thermometer, MapPin, Search, PlusCircle, CalendarClock, Trophy, History, User } from "lucide-react";
+import { Search, PlusCircle, CalendarClock, Trophy, History, User } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 import NotificationBell from "@/components/NotificationBell";
 import SideMenu from "@/components/SideMenu";
@@ -126,26 +126,6 @@ export default function HomeClient({ live, children }: { live?: ReactNode; child
 
         {/* 안내 섹션들 */}
         {children}
-
-        {/* 하드·잔디·클레이: 작게 줄여 맨 아래에 */}
-        <section className="max-w-6xl mx-auto px-4 py-8" aria-label="서비스 특징">
-          <div className="grid sm:grid-cols-3 gap-3">
-            {[
-              { cls: "panel-hard", Icon: Target, tag: "하드코트", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
-              { cls: "panel-grass", Icon: Thermometer, tag: "잔디", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
-              { cls: "panel-clay", Icon: MapPin, tag: "클레이", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
-            ].map(({ cls, Icon, tag, title, desc }) => (
-              <div key={title} className={`${cls} panel-lines rounded-xl p-4 pt-5 flex flex-col`}>
-                <span className="relative z-10 self-start text-[11px] font-extrabold bg-white/95 text-ink rounded-full px-2.5 py-0.5">{tag}</span>
-                <div className="relative z-10 flex items-center gap-2 mt-3">
-                  <Icon className="w-6 h-6 shrink-0" strokeWidth={2.4} aria-hidden />
-                  <h3 className="font-display text-lg">{title}</h3>
-                </div>
-                <p className="relative z-10 text-xs text-white/90 leading-relaxed mt-1">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </section>
       </main>
     </div>
   );
