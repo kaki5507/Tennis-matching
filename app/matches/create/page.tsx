@@ -95,6 +95,14 @@ export default function CreateMatchPage() {
       return;
     }
 
+    // 비현실적으로 큰 금액은 오타일 수 있어 한 번 더 확인 (보통 코트비는 10만원을 넘지 않음)
+    const court = parseInt(formData.courtFee) || 0;
+    const ball = parseInt(formData.ballFee) || 0;
+    if (court >= 100_000 || ball >= 100_000) {
+      const label = court >= 100_000 ? `코트비 ${court.toLocaleString()}원` : `공값 ${ball.toLocaleString()}원`;
+      if (!window.confirm(`${label}이 맞나요?\n보통 코트비는 10만원을 넘지 않아요. 금액을 다시 확인해 주세요.`)) return;
+    }
+
     setIsLoading(true);
 
     // [NEW] 선택한 장소를 courts 테이블에서 찾거나 새로 생성

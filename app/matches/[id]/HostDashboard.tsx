@@ -55,6 +55,8 @@ export default function HostDashboard({
 
   const handleSaveEdit = async () => {
     const [d, t] = form.dateTime.split("T");
+    const cost = parseInt(form.cost) || 0;
+    if (cost >= 50_000 && !window.confirm(`1인당 참가비 ${cost.toLocaleString()}원이 맞나요?\n보통 1인당 비용은 이보다 훨씬 적어요.`)) return;
     setIsLoading(true);
     const r = await updateMatchRoom(await getAccessToken(), matchId, { matchDate: d, startTime: (t ?? "").slice(0, 5), costPerPerson: form.cost, description: form.description });
     setIsLoading(false);
