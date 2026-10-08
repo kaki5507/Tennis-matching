@@ -1,7 +1,7 @@
 "use client";
 
 // lib/useIsAdmin.ts
-// 관리자 여부를 "바로" 알려주는 훅. 서버에 한 번 물어본 결과를 브라우저 탭(sessionStorage)에 기억해 두어서
+// 관리자 여부를 "바로" 알려주는 훅. 서버에 한 번 물어본 결과를 브라우저 탭(localStorage)에 기억해 두어서
 // 메뉴를 열 때마다 기다리지 않아요. 로그인 직후 미리 확인해 두고, 실제 권한 검사는 각 서버 액션이 따로 합니다.
 
 import { useEffect, useState } from "react";
@@ -14,7 +14,7 @@ const inflight = new Map<string, Promise<boolean>>();
 function readCache(userId: string | null): boolean | null {
   if (!userId) return null;
   try {
-    const v = sessionStorage.getItem(KEY);
+    const v = localStorage.getItem(KEY);
     if (v?.startsWith(userId + ":")) return v.endsWith(":1");
   } catch {
     /* 저장소를 못 쓰는 환경이면 그냥 서버에 물어봄 */
@@ -28,7 +28,7 @@ function fetchAdmin(userId: string): Promise<boolean> {
     p = (async () => {
       const ok = await checkAdminAccess(await getAccessToken());
       try {
-        sessionStorage.setItem(KEY, `${userId}:${ok ? 1 : 0}`);
+        localStorage.setItem(KEY, `${userId}:${ok ? 1 : 0}`);
       } catch {
         /* 무시 */
       }

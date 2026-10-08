@@ -2,6 +2,7 @@
 "use server"
 
 import { Prisma } from "@prisma/client"
+import { unstable_cache } from "next/cache"
 import { prisma } from "@/lib/tournamentData"
 import { requireAdmin } from "@/lib/adminAuth"
 import { regionOf } from "@/lib/region"
@@ -364,37 +365,49 @@ export async function getMatchTrend(accessToken: string | null, weeks: number = 
 
 
 /** 대시보드 첫 화면용: 숫자 몇 개만 (아주 가벼움) */
+const overviewCached = unstable_cache(
+  async () => {
+    const startOfThisMonth = kstMonthStart()
+    const [total, today, week, month, matchTotal, completed, open] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.user.count({ where: { createdAt: { gte: kstDayStart(0) } } }),
+      prisma.user.count({ where: { createdAt: { gte: kstDayStart(6) } } }),
+      prisma.user.count({ where: { createdAt: { gte: startOfThisMonth } } }),
+      prisma.match.count(),
+      prisma.match.count({ where: { status: "COMPLETED" } }),
+      prisma.match.count({ where: { status: "OPEN" } }),
+    ])
+    return { users: { total, today, week, month }, matches: { total: matchTotal, completed, open } }
+  },
+  ["admin-overview"],
+  { revalidate: 60 }
+)
+
+/** 대시보드 첫 화면용: 숫자 몇 개만 (60초 캐시) */
 export async function getAdminOverview(accessToken: string | null) {
   const auth = await requireAdmin(accessToken)
   if (!auth.ok) return { success: false as const, error: auth.error }
-  const startOfThisMonth = kstMonthStart()
-  const [total, today, week, month, matchTotal, completed, open] = await Promise.all([
-    prisma.user.count({ where: { deletedAt: null } }),
-    prisma.user.count({ where: { createdAt: { gte: kstDayStart(0) } } }),
-    prisma.user.count({ where: { createdAt: { gte: kstDayStart(6) } } }),
-    prisma.user.count({ where: { createdAt: { gte: startOfThisMonth } } }),
-    prisma.match.count(),
-    prisma.match.count({ where: { status: "COMPLETED" } }),
-    prisma.match.count({ where: { status: "OPEN" } }),
-  ])
-  return {
-    success: true as const,
-    users: { total, today, week, month },
-    matches: { total: matchTotal, completed, open },
-  }
+  return { success: true as const, ...(await overviewCached()) }
 }
 
-/** 방문 통계 화면용: 많이 방문한 페이지 + 기기 비율 */
+const pageStatsCached = unstable_cache(
+  async () => {
+    const [pageViewsByPath, deviceBreakdown] = await Promise.all([
+      prisma.pageView.groupBy({ by: ["path"], _count: true, orderBy: { _count: { path: "desc" } }, take: 15 }),
+      prisma.pageView.groupBy({ by: ["device"], _count: true }),
+    ])
+    return {
+      pageViewsByPath: pageViewsByPath.map((p) => ({ path: p.path, count: p._count })),
+      deviceBreakdown: deviceBreakdown.map((d) => ({ device: d.device, count: d._count })),
+    }
+  },
+  ["admin-page-stats"],
+  { revalidate: 120 }
+)
+
+/** 방문 통계 화면용: 많이 방문한 페이지 + 기기 비율 (120초 캐시) */
 export async function getPageStats(accessToken: string | null) {
   const auth = await requireAdmin(accessToken)
   if (!auth.ok) return { success: false as const, error: auth.error }
-  const [pageViewsByPath, deviceBreakdown] = await Promise.all([
-    prisma.pageView.groupBy({ by: ["path"], _count: true, orderBy: { _count: { path: "desc" } }, take: 15 }),
-    prisma.pageView.groupBy({ by: ["device"], _count: true }),
-  ])
-  return {
-    success: true as const,
-    pageViewsByPath: pageViewsByPath.map((p) => ({ path: p.path, count: p._count })),
-    deviceBreakdown: deviceBreakdown.map((d) => ({ device: d.device, count: d._count })),
-  }
+  return { success: true as const, ...(await pageStatsCached()) }
 }
