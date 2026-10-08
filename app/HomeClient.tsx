@@ -1,65 +1,46 @@
 "use client"; // 화면에서 유저 상태(State)를 실시간으로 확인하기 위해 추가합니다.
 
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
+import { useAuthUser } from "@/lib/useAuthUser";
 import HeroCourt from "@/components/HeroCourt";
-import { Target, Thermometer, MapPin } from "lucide-react";
+import { Target, Thermometer, MapPin, Search, PlusCircle, CalendarClock, Trophy, History, User } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 import NotificationBell from "@/components/NotificationBell";
+import SideMenu from "@/components/SideMenu";
+
+const SHORTCUTS = [
+  { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
+  { href: "/matches/create", label: "방 만들기", sub: "내가 방장", Icon: PlusCircle, cls: "sc-clay" },
+  { href: "/mypage#court-watch", label: "빈 코트 찾기", sub: "3시간마다 자동 확인", Icon: CalendarClock, cls: "sc-grass" },
+  { href: "/tournaments", label: "대회", sub: "대진표·결과", Icon: Trophy, cls: "sc-sky" },
+  { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
+  { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
+];
 
 export default function HomeClient({ children }: { children?: ReactNode }) {
-  // 현재 로그인한 유저 정보를 담을 공간
-  const [user, setUser] = useState<User | null>(null);
-
-  // 화면이 처음 켜질 때, Supabase에 "지금 로그인한 사람 있어?" 라고 물어보는 기능
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
-    };
-    checkUser();
-
-    // 유저가 로그인/로그아웃 할 때마다 실시간으로 화면을 바꿔주기 위한 감지기(Listener)
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
-
-  // 로그아웃 버튼을 눌렀을 때 실행될 함수
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    alert("안전하게 로그아웃 되었습니다.");
-  };
+  // 로그인 여부는 저장된 세션에서 바로 읽음 (서버 왕복 없음)
+  const { userId } = useAuthUser();
+  const user = userId;
 
   return (
     <div className="min-h-screen flex flex-col tint">
       {/* 헤더 */}
       <header className="border-b sticky top-0 z-10 app-bar">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
           <BrandLogo size="md" mood="happy" />
 
-          <div className="flex items-center gap-1 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2">
             {user ? (
               <>
-                <span className="text-sm font-medium hidden sm:inline-block text-ink">
-                  환영합니다!
-                </span>
                 <NotificationBell />
-                <Link href="/mypage">
-                  <Button variant="ghost" className="h-9 px-2 sm:px-3 text-sm font-medium text-court">
+                <Link href="/mypage" className="hidden sm:block">
+                  <Button variant="ghost" className="h-9 px-3 text-sm font-medium text-court">
                     마이페이지
                   </Button>
                 </Link>
-                <Button onClick={handleLogout} variant="outline" className="h-9 px-2.5 sm:px-3 text-sm">
-                  로그아웃
-                </Button>
+                <SideMenu buttonClassName="-mr-1" />
               </>
             ) : (
               <>
@@ -127,18 +108,36 @@ export default function HomeClient({ children }: { children?: ReactNode }) {
           <div className="surface-band" />
         </section>
 
+        {/* 바로가기 슬라이드 배너 (로그인 후) */}
+        {user && (
+          <section className="max-w-6xl mx-auto pt-5" aria-label="바로가기">
+            <h2 className="px-4 mb-2 text-sm font-extrabold text-court">바로가기</h2>
+            <div className="shortcut-rail">
+              {SHORTCUTS.map(({ href, label, sub, Icon, cls }) => (
+                <Link key={href} href={href} className={`shortcut-card ${cls}`}>
+                  <Icon className="w-6 h-6 shrink-0" aria-hidden />
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-sm">{label}</span>
+                    <span className="text-[11px] font-medium text-white/85">{sub}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* 세 가지 코트 표면 = 세 가지 장점 */}
-        <section className="max-w-6xl mx-auto px-4 py-16">
-          <div className="grid md:grid-cols-3 gap-5">
+        <section className="max-w-6xl mx-auto px-4 py-8 md:py-10">
+          <div className="grid md:grid-cols-3 gap-3 md:gap-4">
             {[
               { cls: "panel-hard", Icon: Target, tag: "하드코트", title: "레벨별 매칭", desc: "내 실력에 맞는 상대만 골라서 만나요." },
               { cls: "panel-grass", Icon: Thermometer, tag: "잔디", title: "매너 온도", desc: "블라인드 평가로 쾌적한 코트 문화를 만듭니다." },
               { cls: "panel-clay", Icon: MapPin, tag: "클레이", title: "지도로 확인", desc: "테니스장 위치와 예약 현황을 한눈에." },
             ].map(({ cls, Icon, tag, title, desc }) => (
-              <div key={title} className={`${cls} panel-lines rounded-2xl p-8 pt-9 min-h-[220px] flex flex-col`}>
+              <div key={title} className={`${cls} panel-lines rounded-2xl p-5 md:p-6 flex flex-col`}>
                 <span className="relative z-10 self-start text-xs font-extrabold bg-white/95 text-ink rounded-full px-3 py-1">{tag}</span>
-                <Icon className="relative z-10 w-10 h-10 mt-6 mb-3" strokeWidth={2.4} aria-hidden />
-                <h3 className="relative z-10 font-display text-2xl mb-1.5">{title}</h3>
+                <Icon className="relative z-10 w-8 h-8 mt-3 mb-2" strokeWidth={2.4} aria-hidden />
+                <h3 className="relative z-10 font-display text-xl mb-1">{title}</h3>
                 <p className="relative z-10 text-sm text-white/90 leading-relaxed">{desc}</p>
               </div>
             ))}

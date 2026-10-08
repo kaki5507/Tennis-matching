@@ -87,10 +87,10 @@ export default function BrandLogo({ size = "md", mood }: { size?: "md" | "lg"; m
   const big = size === "lg";
 
   return (
-    <Link href="/" className="brand-link flex items-center gap-2.5 shrink-0" aria-label="테니스매칭 홈">
-      <LogoBall mood={m} className={`brand-ball ${big ? "w-12 h-12" : "w-10 h-10"}`} />
+    <Link href="/" className="brand-link flex items-center gap-2 shrink-0" aria-label="테니스매칭 홈">
+      <LogoBall mood={m} className={`brand-ball ${big ? "w-10 h-10" : "w-8 h-8"}`} />
       <span className="flex flex-col leading-none">
-        <span className={`font-display text-court ${big ? "text-2xl" : "text-xl"}`}>테니스매칭</span>
+        <span className={`font-display text-court ${big ? "text-xl" : "text-lg"}`}>테니스매칭</span>
         <span className="hidden sm:block mt-1 text-[11px] font-medium tracking-tight text-ink-muted">우리 동네 테니스 파트너</span>
       </span>
     </Link>

@@ -181,7 +181,7 @@ export default function MyPage() {
         </div>
 
         {/* [NEW] 관심 테니스장 예약 알림 */}
-        <div className="surface p-6 rounded-2xl shadow-sm mt-6">
+        <div id="court-watch" className="surface p-6 rounded-2xl shadow-sm mt-6 scroll-mt-20">
           <h2 className="text-lg heading mb-3">📅 테니스장 예약 오픈 알림</h2>
           {userId && <CourtWatchList userId={userId} />}
         </div>

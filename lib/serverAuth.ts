@@ -10,14 +10,45 @@ import { getMaintenanceState, MAINTENANCE_BLOCK_MESSAGE } from "@/lib/maintenanc
 
 export type UserCheck = { ok: true; userId: string } | { ok: false; error: string }
 
+// 같은 토큰을 짧은 시간 안에 반복 검증하지 않도록 서버 인스턴스 메모리에 잠깐 기억 (60초)
+// 정지/탈퇴 여부는 아래 requireUser에서 매번 DB로 확인하므로 이 캐시는 "토큰이 진짜인가"만 기억합니다.
+const TOKEN_TTL_MS = 60_000
+const tokenCache = new Map<string, { id: string; email: string | null; exp: number }>()
+
 /** 토큰만 검증 (아직 우리 DB에 프로필이 없어도 됨) */
 export async function verifyToken(
   accessToken: string | null | undefined
 ): Promise<{ ok: true; id: string; email: string | null } | { ok: false; error: string }> {
   if (!accessToken) return { ok: false, error: "로그인이 필요합니다." }
-  const { data, error } = await supabase.auth.getUser(accessToken)
-  if (error || !data.user) return { ok: false, error: "로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요." }
-  return { ok: true, id: data.user.id, email: data.user.email ?? null }
+
+  const now = Date.now()
+  const hit = tokenCache.get(accessToken)
+  if (hit && hit.exp > now) return { ok: true, id: hit.id, email: hit.email }
+
+  // 1) 서명 키(JWKS)로 로컬 검증 — 네트워크 왕복이 거의 없음. 지원되지 않는 설정이면 내부적으로 getUser로 대체됨
+  let id: string | null = null
+  let email: string | null = null
+  try {
+    const { data, error } = await supabase.auth.getClaims(accessToken)
+    if (!error && data?.claims?.sub) {
+      id = data.claims.sub
+      email = (data.claims.email as string | undefined) ?? null
+    }
+  } catch {
+    // 아래 getUser로 대체
+  }
+
+  // 2) 실패하면 기존 방식(서버에 직접 확인)
+  if (!id) {
+    const { data, error } = await supabase.auth.getUser(accessToken)
+    if (error || !data.user) return { ok: false, error: "로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요." }
+    id = data.user.id
+    email = data.user.email ?? null
+  }
+
+  if (tokenCache.size > 500) tokenCache.clear()
+  tokenCache.set(accessToken, { id, email, exp: now + TOKEN_TTL_MS })
+  return { ok: true, id, email }
 }
 
 /**
