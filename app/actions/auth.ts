@@ -107,7 +107,7 @@ export async function createUserInDB(data: {
         email: data.email,
         nickname,
         ciDi,
-        tennisLevel: "테린이",
+        tennisLevel: "NTRP 1.0",
         termsAgreedAt: now,
         privacyAgreedAt: now,
         marketingAgreedAt: data.marketingAgreed ? now : null,

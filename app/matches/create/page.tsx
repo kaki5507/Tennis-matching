@@ -127,7 +127,7 @@ export default function CreateMatchPage() {
   };
 
   // 🌟 내 점수를 기준으로 선택할 수 있는 4가지 타겟 레벨 옵션 계산
-  const minLevel = Math.max(1.0, myRoundedNtrp - 0.5).toFixed(1);
+  const minLevel = Math.max(0.5, myRoundedNtrp - 0.5).toFixed(1);
   const currentLevel = myRoundedNtrp.toFixed(1);
   const maxLevel = (myRoundedNtrp + 0.5).toFixed(1);
 
@@ -157,7 +157,9 @@ export default function CreateMatchPage() {
   const perPerson = totalFee > 0 ? Math.ceil(totalFee / people / 100) * 100 : 0;
 
   const levelOptions = [
-    { label: "누구나 (초보 환영)", value: "누구나" },
+    { label: "누구나 (실력 상관없음)", value: "누구나" },
+    { label: "초보 환영 (서브 못 넣어도, 공이 좀 가도 OK)", value: "초보 환영" },
+    { label: "초보 전용 (NTRP 0.5 ~ 2.0)", value: "0.5-2.0" },
     { label: `비슷한 실력 (${minLevel} ~ ${maxLevel})`, value: `${minLevel}-${maxLevel}` },
     { label: `조금 더 잘 치는 분 (${currentLevel} ~ ${maxLevel})`, value: `${currentLevel}-${maxLevel}` },
     { label: `조금 더 초보인 분 (${minLevel} ~ ${currentLevel})`, value: `${minLevel}-${currentLevel}` },

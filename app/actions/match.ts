@@ -1,5 +1,6 @@
 // app/actions/match.ts
 "use server"
+import { ntrpFromLabel } from "@/lib/ntrpLevels";
 import { MatchStatus } from "@prisma/client"
 import { prisma } from "@/lib/tournamentData"
 import { requireUser } from "@/lib/serverAuth"
@@ -140,14 +141,12 @@ export async function joinMatchRoom(accessToken: string | null, matchId: string)
         const minLevel = parseFloat(levels[0]); // 예: 1.5
         const maxLevel = parseFloat(levels[1]); // 예: 2.5
         
-        // 내 점수 가져오기 (평가 3회 미만이라 점수가 없으면 가입 불가로 막거나, 기본 2.0으로 쳐줌)
-        // 여기서는 평가 3회 이상인 '진짜 점수'만 인정하는 빡빡한 룰을 적용해 봅니다.
-        if (user.ntrpCount < 3 || !user.ntrpScore) {
-           return { success: false, error: "레벨 제한이 있는 방은 NTRP 검증(평가 3회 이상)이 완료된 후 참여할 수 있습니다." };
-        }
+        // 평가 3회 이상이면 '진짜 점수', 아직이면 본인이 고른 구력(NTRP)을 기준으로 (초보도 초보방에 들어갈 수 있게)
+        const verified = user.ntrpCount >= 3 && !!user.ntrpScore;
+        const raw = verified ? Number(user.ntrpScore) : (ntrpFromLabel(user.tennisLevel) ?? 2.0);
 
         // 비교할 때도 남들에게 보여지는 '0.5 단위 반올림 점수'를 기준으로 비교합니다.
-        const myDisplayScore = Math.round(Number(user.ntrpScore) * 2) / 2;
+        const myDisplayScore = Math.round(raw * 2) / 2;
 
         if (myDisplayScore < minLevel || myDisplayScore > maxLevel) {
           return { 

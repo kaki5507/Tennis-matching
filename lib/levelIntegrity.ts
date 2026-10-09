@@ -5,14 +5,7 @@
 import { prisma } from "@/lib/tournamentData"
 import { sendPushToUser } from "@/lib/push"
 
-// 자기신고 구력(문자열)을 숫자로 환산하는 표 (profile 페이지의 선택지와 반드시 일치시켜야 함)
-const LEVEL_BUCKETS: { label: string; value: number }[] = [
-  { label: "테린이", value: 1.5 },
-  { label: "NTRP 2.0", value: 2.0 },
-  { label: "NTRP 2.5", value: 2.5 },
-  { label: "NTRP 3.0", value: 3.0 },
-  { label: "NTRP 3.5", value: 3.5 },
-]
+import { ntrpFromLabel, nearestNtrpLabel } from "@/lib/ntrpLevels"
 
 // 최소 이만큼 평가가 쌓여야 "믿을 만한 실력 데이터"로 보고 자동조정을 검토합니다.
 const MIN_EVAL_COUNT_FOR_PENALTY = 20
@@ -24,22 +17,10 @@ const MISMATCH_THRESHOLD = 1.0
 const BAN_AFTER_MISMATCH_COUNT = 5
 
 function selfDeclaredValue(tennisLevel: string): number | null {
-  const bucket = LEVEL_BUCKETS.find((b) => b.label === tennisLevel)
-  return bucket ? bucket.value : null // "NTRP 3.5 이상"처럼 매핑 안 되는 자유입력값은 검사를 건너뜀
+  return ntrpFromLabel(tennisLevel) // 알 수 없는 자유입력값은 null → 검사를 건너뜀
 }
 
-function nearestBucketLabel(score: number): string {
-  let closest = LEVEL_BUCKETS[0]
-  let minDiff = Math.abs(score - closest.value)
-  for (const bucket of LEVEL_BUCKETS) {
-    const diff = Math.abs(score - bucket.value)
-    if (diff < minDiff) {
-      closest = bucket
-      minDiff = diff
-    }
-  }
-  return closest.label
-}
+const nearestBucketLabel = nearestNtrpLabel
 
 /**
  * 한 유저의 최신 NTRP 평가 데이터를, 본인이 신고한 구력과 비교합니다.

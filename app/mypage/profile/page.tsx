@@ -1,6 +1,7 @@
 // app/mypage/profile/page.tsx
 "use client";
 
+import { NTRP_OPTIONS, normalizeLevelLabel } from "@/lib/ntrpLevels";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ export default function ProfileEditPage() {
     email: "",
     nickname: "",
     gender: "MALE",
-    tennisLevel: "테린이",
+    tennisLevel: "NTRP 1.0",
     preferredPos: "ANY" as Position, 
   });
 
@@ -62,7 +63,7 @@ export default function ProfileEditPage() {
           email: result.user.email,
           nickname: result.user.nickname || "",
           gender: result.user.gender || "MALE",
-          tennisLevel: result.user.tennisLevel || "테린이",
+          tennisLevel: normalizeLevelLabel(result.user.tennisLevel),
           // 불러온 값도 안전하게 Position 타입으로 지정
           preferredPos: (result.user.preferredPos as Position) || "ANY",
         });
@@ -173,12 +174,17 @@ export default function ProfileEditPage() {
           <div className="space-y-2">
             <Label>테니스 구력 (레벨)</Label>
             <select name="tennisLevel" value={formData.tennisLevel} onChange={handleChange} className="flex h-10 w-full rounded-md border border-slate-200 surface px-3 py-2 text-sm outline-none focus-ok">
-              <option value="테린이">테린이 (1년 미만)</option>
-              <option value="NTRP 2.0">NTRP 2.0 (초급)</option>
-              <option value="NTRP 2.5">NTRP 2.5 (초중급)</option>
-              <option value="NTRP 3.0">NTRP 3.0 (중급)</option>
-              <option value="NTRP 3.5">NTRP 3.5 이상 (고수)</option>
+              {NTRP_OPTIONS.map((o) => (
+                <option key={o.label} value={o.label}>
+                  {o.label}{o.value >= 4.5 ? " 이상" : ""} · {o.name} ({o.short})
+                </option>
+              ))}
             </select>
+            {(() => {
+              const sel = NTRP_OPTIONS.find((o) => o.label === formData.tennisLevel);
+              return sel ? <p className="text-xs text-slate-500 leading-relaxed">{sel.desc}</p> : null;
+            })()}
+            <p className="text-[11px] text-slate-400">처음엔 솔직하게 골라주세요. 경기 후 상대방 평가로 실제 실력이 반영돼요.</p>
           </div>
 
           <div className="flex gap-4 pt-4">
