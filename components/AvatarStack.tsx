@@ -8,16 +8,16 @@ import { useState } from "react";
 export interface StackUser {
   id: string;
   nickname: string | null;
+  level?: number; // 레벨에 따라 테두리가 달라져요 (lib/levels.ts)
 }
 
 function Avatar({ user }: { user: StackUser }) {
   const [failed, setFailed] = useState(false);
   const initial = (user.nickname || "?").charAt(0).toUpperCase();
+  const lv = Math.min(Math.max(user.level ?? 1, 1), 7);
   return (
-    <span
-      className="relative inline-flex w-7 h-7 rounded-full ring-2 ring-white bg-ok-soft text-ok text-[11px] font-bold items-center justify-center overflow-hidden shrink-0"
-      title={user.nickname ?? "익명"}
-    >
+    <span className={`lv-ring lv-${lv}`} title={`${user.nickname ?? "익명"} · Lv.${lv}`}>
+    <span className="relative inline-flex w-7 h-7 rounded-full bg-ok-soft text-ok text-[11px] font-bold items-center justify-center overflow-hidden shrink-0">
       {initial}
       {!failed && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -29,6 +29,7 @@ function Avatar({ user }: { user: StackUser }) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       )}
+    </span>
     </span>
   );
 }
@@ -48,7 +49,7 @@ export default function AvatarStack({
   const extra = users.length - shown.length;
   return (
     <div className="flex items-center gap-2.5">
-      <div className="flex -space-x-2" aria-hidden>
+      <div className="flex -space-x-2.5" aria-hidden>
         {shown.map((u) => (
           <Avatar key={u.id} user={u} />
         ))}

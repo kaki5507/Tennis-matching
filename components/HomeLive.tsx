@@ -8,6 +8,7 @@ import { prisma } from "@/lib/tournamentData";
 import EmptyState from "@/components/EmptyState";
 import AvatarStack from "@/components/AvatarStack";
 import { seatInfo } from "@/lib/matchDisplay";
+import { getLevelMap } from "@/lib/badgeData";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
 const fetchLive = unstable_cache(async () => {
@@ -42,6 +43,7 @@ async function loadLive() {
 export default async function HomeLive() {
   const data = await loadLive();
   if (!data) return null;
+  const lvMap = await getLevelMap(data.upcoming.flatMap((m) => [m.host?.id ?? "", ...m.participants.map((p) => p.user.id)]));
 
   const stats = [
     { label: "모집 중인 방", value: data.openMatches, href: "/matches" },
@@ -127,8 +129,8 @@ export default async function HomeLive() {
                 <div className="flex items-center justify-between mt-4 text-xs text-ink-muted">
                   <AvatarStack
                     users={[
-                      ...(m.host ? [{ id: m.host.id, nickname: m.host.nickname }] : []),
-                      ...m.participants.map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                      ...(m.host ? [{ id: m.host.id, nickname: m.host.nickname, level: lvMap[m.host.id] }] : []),
+                      ...m.participants.map((p) => ({ id: p.user.id, nickname: p.user.nickname, level: lvMap[p.user.id] })),
                     ]}
                     joined={seatInfo(m.gameType, m.participants.length, m.recruitCount).joined}
                     capacity={seatInfo(m.gameType, m.participants.length, m.recruitCount).capacity}

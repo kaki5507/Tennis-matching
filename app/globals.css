@@ -634,3 +634,14 @@ html, body { overscroll-behavior-y: none; }
   text-align: left;
   min-width: 0;
 }
+
+/* ---- 레벨 테두리 (아바타 바깥 링). 레벨이 오를수록 화려해져요 ---- */
+.lv-ring { display: inline-flex; padding: 2px; border-radius: 9999px; background: #fff; flex-shrink: 0; }
+.lv-ring.lv-2 { background: #4caf50; }
+.lv-ring.lv-3 { background: #2f80ed; }
+.lv-ring.lv-4 { background: linear-gradient(135deg, #7c3aed, #c084fc); }
+.lv-ring.lv-5 { background: linear-gradient(135deg, #f5c542, #b8860b, #f5c542); box-shadow: 0 0 6px rgba(245, 197, 66, .6); }
+.lv-ring.lv-6 { background: linear-gradient(120deg, #22d3ee, #6366f1, #22d3ee, #6366f1); background-size: 300% 300%; animation: lv-shift 3s linear infinite; box-shadow: 0 0 8px rgba(99, 102, 241, .55); }
+.lv-ring.lv-7 { background: linear-gradient(120deg, #ff5f6d, #ffc371, #7cf29a, #4facfe, #c471f5, #ff5f6d); background-size: 400% 400%; animation: lv-shift 2.5s linear infinite; box-shadow: 0 0 10px rgba(196, 113, 245, .6); }
+@keyframes lv-shift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) { .lv-ring.lv-6, .lv-ring.lv-7 { animation: none; } }

@@ -441,6 +441,7 @@ model PageView {
   @@index([createdAt])
   @@index([visitorId])
   @@index([createdAt, visitorId])
+  @@index([userId])
   @@map("page_views")
 }
 

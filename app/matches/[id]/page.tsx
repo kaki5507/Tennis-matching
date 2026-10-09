@@ -10,6 +10,7 @@ import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
 import ShareButton from "./ShareButton";
 import { dayLabel, seatInfo } from "@/lib/matchDisplay";
+import { getLevelMap } from "@/lib/badgeData";
 import MatchChatWrapper from "./MatchChatWrapper";
 import CourtMap from "@/components/CourtMap";
 
@@ -40,6 +41,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const accepted = match.participants.filter((p) => p.status === "ACCEPTED").length;
   const waiting = match.participants.filter((p) => p.status === "PENDING").length;
   const seat = seatInfo(match.gameType, accepted, match.recruitCount);
+  const lvMap = await getLevelMap([match.host?.id ?? "", ...match.participants.map((p) => p.user.id)]);
   const statusBadge =
     match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
 
@@ -100,8 +102,8 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
               <p className="text-sm text-slate-500 mb-1">참여 현황</p>
               <AvatarStack
                 users={[
-                  ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname }] : []),
-                  ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                  ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname, level: lvMap[match.host.id] }] : []),
+                  ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname, level: lvMap[p.user.id] })),
                 ]}
                 joined={seat.joined}
                 capacity={seat.capacity}

@@ -4,6 +4,8 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getUserRecord } from "@/app/actions/record";
+import { getUserBadges, type BadgeView } from "@/app/actions/badges";
+import BadgeShowcase from "@/components/BadgeShowcase";
 import TennisLoader from "@/components/TennisLoader";
 import TrophyCase from "@/components/TrophyCase";
 import { singleKind } from "@/lib/gender";
@@ -91,6 +93,7 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
   const [tMatches, setTMatches] = useState<TournamentMatchRecord[]>([]);
   const [tSummary, setTSummary] = useState<TournamentSummary | null>(null);
   const [onlyWins, setOnlyWins] = useState(false);
+  const [badges, setBadges] = useState<BadgeView | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -98,6 +101,8 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
     let isMounted = true;
 
     const load = async () => {
+      // 레벨/칭호는 전적과 따로 불러와서 전적 화면을 늦추지 않아요
+      getUserBadges(id).then((b) => { if (isMounted && b.success) setBadges(b.data); });
       const result = await getUserRecord(id);
       if (!isMounted) return;
 
@@ -142,15 +147,23 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
       {/* 프로필 헤더 */}
       <div className="surface p-6 rounded-2xl shadow-sm mb-6">
         <div className="flex items-center gap-4">
-          <div
-            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 ${
-              { M: "ring-m", F: "ring-f" }[singleKind(user.gender) as "M" | "F"] ?? "ring-none"
-            } tint text-court`}
-          >
-            {(user.nickname || "?").charAt(0).toUpperCase()}
+          <div className={badges && badges.level >= 2 ? `lv-ring lv-${badges.level} !p-1` : ""}>
+            <div
+              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 ${
+                badges && badges.level >= 2 ? "bg-white" : ({ M: "ring-m", F: "ring-f" }[singleKind(user.gender) as "M" | "F"] ?? "ring-none")
+              } tint text-court`}
+            >
+              {(user.nickname || "?").charAt(0).toUpperCase()}
+            </div>
           </div>
           <div>
-            <h1 className="text-2xl heading">{user.nickname || "테니스인"}</h1>
+            <h1 className="text-2xl heading">
+              {user.nickname || "테니스인"}
+              {badges && <span className="ml-2 align-middle text-xs font-bold px-2 py-0.5 rounded-full chip-on">Lv.{badges.level} {badges.levelName}</span>}
+            </h1>
+            {badges && badges.weekly.length > 0 && (
+              <p className="text-xs font-bold text-amber-700 mt-1">{badges.weekly.map((w) => `${w.emoji} ${w.name}`).join(" · ")}</p>
+            )}
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500 mt-1">
               {user.tennisLevel && <span>🎾 구력: {user.tennisLevel}</span>}
               {user.preferredPos && <span>🤾 선호 위치: {user.preferredPos}</span>}
@@ -195,6 +208,14 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
       </div>
+
+      {/* 레벨 · 칭호 */}
+      {badges && (
+        <div className="surface p-6 rounded-2xl shadow-sm mb-6">
+          <h2 className="text-lg heading mb-4">🎖 레벨 · 칭호</h2>
+          <BadgeShowcase badges={badges} />
+        </div>
+      )}
 
       {/* 전적 요약 */}
       <div className="surface p-6 rounded-2xl shadow-sm mb-6">

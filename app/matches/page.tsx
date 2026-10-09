@@ -7,6 +7,7 @@ import CourtThumb from "@/components/CourtThumb";
 import AvatarStack from "@/components/AvatarStack";
 import LevelFilterToggle from "@/components/LevelFilterToggle";
 import { dayLabel, isPast, seatInfo } from "@/lib/matchDisplay";
+import { getLevelMap } from "@/lib/badgeData";
 
 // 이 화면은 서버에서 그려져 내려옵니다. (로그인 정보는 서버에서 알 수 없으므로 내 레벨 필터는 주소의 lv 값으로 받습니다)
 const GAME_TYPES = ["단식", "복식", "혼합복식", "랠리(연습)"] as const;
@@ -42,6 +43,8 @@ export default async function MatchesPage({
     const [min, max] = levels.map(parseFloat);
     return level >= min && level <= max;
   });
+
+  const lvMap = await getLevelMap(matches.flatMap((m) => [m.hostId, ...m.participants.map((p) => p.user.id)]));
 
   const hrefWith = (next: { type?: string | null }) => {
     const p = new URLSearchParams();
@@ -190,8 +193,8 @@ export default async function MatchesPage({
                     <div className="flex justify-between items-center text-xs text-slate-500 mb-2">
                       <AvatarStack
                         users={[
-                          ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname }] : []),
-                          ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname })),
+                          ...(match.host ? [{ id: match.host.id, nickname: match.host.nickname, level: lvMap[match.host.id] }] : []),
+                          ...match.participants.filter((p) => p.status === "ACCEPTED").map((p) => ({ id: p.user.id, nickname: p.user.nickname, level: lvMap[p.user.id] })),
                         ]}
                         joined={seat.joined}
                         capacity={seat.capacity}
