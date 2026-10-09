@@ -34,3 +34,27 @@ export async function requireAdmin(accessToken: string | null | undefined): Prom
   adminCache.set(t.id, { ok, exp: Date.now() + 30_000 })
   return ok ? { ok: true, userId: t.id } : { ok: false, error: "관리자만 접근할 수 있습니다." }
 }
+
+// 빈 코트 "지금 갱신" 권한: 관리자 또는 코트 담당자(COURT_MANAGER). 통계/회원관리 등은 관리자만.
+const managerCache = new Map<string, { role: "ADMIN" | "COURT_MANAGER" | null; exp: number }>()
+
+export type CourtManagerCheck = { ok: true; userId: string; isAdmin: boolean } | { ok: false; error: string }
+
+export async function requireCourtManager(accessToken: string | null | undefined): Promise<CourtManagerCheck> {
+  const t = await verifyToken(accessToken)
+  if (!t.ok) return { ok: false, error: t.error }
+  let hit = managerCache.get(t.id)
+  if (!hit || hit.exp <= Date.now()) {
+    const user = await prisma.user.findUnique({
+      where: { id: t.id },
+      select: { role: true, deletedAt: true, isBanned: true },
+    })
+    const valid = !!user && !user.deletedAt && !user.isBanned
+    const role = valid && (user!.role === "ADMIN" || user!.role === "COURT_MANAGER") ? user!.role : null
+    if (managerCache.size > 200) managerCache.clear()
+    hit = { role, exp: Date.now() + 30_000 }
+    managerCache.set(t.id, hit)
+  }
+  if (!hit.role) return { ok: false, error: "권한이 없습니다." }
+  return { ok: true, userId: t.id, isAdmin: hit.role === "ADMIN" }
+}

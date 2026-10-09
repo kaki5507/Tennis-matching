@@ -21,6 +21,7 @@ enum Position {
 enum Role {
   USER
   ADMIN
+  COURT_MANAGER
 }
 
 enum TournamentFormat {

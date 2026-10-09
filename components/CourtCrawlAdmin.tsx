@@ -8,11 +8,9 @@ import { RefreshCw } from "lucide-react";
 import { getCrawlAdmin, runCrawlNow, setCrawlEnabled, type CrawlAdminView } from "@/app/actions/adminCourtCrawl";
 import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
-import { useIsAdmin } from "@/lib/useIsAdmin";
 
 export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => void }) {
   const { userId } = useAuthUser();
-  const isAdmin = useIsAdmin(userId);
   const [view, setView] = useState<CrawlAdminView | null>(null);
   const [busy, setBusy] = useState<"toggle" | "run" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -23,12 +21,13 @@ export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => vo
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!userId) return;
+    // 관리자/코트 담당자가 아니면 서버가 거절 → 패널이 안 보임
     // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
-  }, [isAdmin, load]);
+  }, [userId, load]);
 
-  if (!isAdmin || !view) return null;
+  if (!userId || !view) return null;
 
   const toggle = async () => {
     setBusy("toggle");
@@ -53,16 +52,16 @@ export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => vo
   };
 
   return (
-    <section className="admin-panel rounded-2xl p-4 mb-4" aria-label="관리자: 빈 코트 수집 제어">
+    <section className="admin-panel rounded-2xl p-4 mb-4" aria-label="빈 코트 수집 제어">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-extrabold">🛠 관리자 · 빈 코트 수집</p>
+          <p className="text-sm font-extrabold">🛠 빈 코트 수집</p>
           <p className="text-xs text-ink-muted mt-0.5">
             정기 수집(매시 정각, 오전 9시~밤 11시) {view.enabled ? "켜짐" : "꺼짐"}
           </p>
         </div>
-        {/* 좌우로 밀어서 켜고 끄는 스위치 */}
-        <button
+        {/* 좌우로 밀어서 켜고 끄는 스위치 (관리자만) */}
+        {view.canToggle && <button
           type="button"
           role="switch"
           aria-checked={view.enabled}
@@ -72,7 +71,7 @@ export default function CourtCrawlAdmin({ onRefreshed }: { onRefreshed: () => vo
           className={`relative w-14 h-8 rounded-full shrink-0 transition-colors disabled:opacity-60 ${view.enabled ? "bg-ok" : "bg-line"}`}
         >
           <span className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-chalk shadow transition-transform ${view.enabled ? "translate-x-6" : ""}`} />
-        </button>
+        </button>}
       </div>
 
       <button

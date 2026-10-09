@@ -28,7 +28,7 @@ export interface AdminUserRow {
   levelMismatchCount: number
   isBanned: boolean
   identityVerified: boolean // 본인인증을 거친 계정인지 (임시 가입이면 false)
-  role: "USER" | "ADMIN"
+  role: "USER" | "ADMIN" | "COURT_MANAGER"
   createdAt: string
   deletedAt: string | null
 }
@@ -83,7 +83,7 @@ function buildUserWhere(q: string, filter: UserFilter): Prisma.UserWhereInput {
   if (filter === "active") where.deletedAt = null
   if (filter === "banned") where.isBanned = true
   if (filter === "deleted") where.deletedAt = { not: null }
-  if (filter === "admin") where.role = "ADMIN"
+  if (filter === "admin") where.role = { in: ["ADMIN", "COURT_MANAGER"] }
   if (filter === "mismatch") where.levelMismatchCount = { gt: 0 }
   return where
 }
@@ -219,6 +219,26 @@ export async function setUserBan(accessToken: string | null, userId: string, ban
   }
 }
 
+/** 코트 담당자 지정/해제 (관리자 전용). 관리자 본인/다른 관리자의 권한은 바꿀 수 없습니다. */
+export async function setUserRole(accessToken: string | null, userId: string, manager: boolean) {
+  const auth = await requireAdmin(accessToken)
+  if (!auth.ok) return { success: false as const, error: auth.error }
+  if (!UUID_RE.test(userId)) return { success: false as const, error: "잘못된 회원 ID입니다." }
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, nickname: true } })
+  if (!target) return { success: false as const, error: "회원을 찾을 수 없습니다." }
+  if (target.role === "ADMIN") return { success: false as const, error: "관리자의 권한은 바꿀 수 없습니다." }
+  await prisma.user.update({ where: { id: userId }, data: { role: manager ? "COURT_MANAGER" : "USER" } })
+  await logAdminAction({
+    adminId: auth.userId,
+    action: "USER_ROLE_SET",
+    targetType: "user",
+    targetId: userId,
+    targetLabel: target.nickname,
+    detail: manager ? "코트 담당자 지정" : "코트 담당자 해제",
+  })
+  return { success: true as const }
+}
+
 // ---- CSV 내보내기 -----------------------------------------------------------
 
 const EXPORT_LIMIT = 10000
@@ -272,7 +292,7 @@ export async function exportUsersCsv(accessToken: string | null, params: { q?: s
         u.levelMismatchCount,
         u.deletedAt ? "탈퇴" : u.isBanned ? "정지" : "활성",
         u.identityVerified ? "완료" : "미인증(임시 가입)",
-        u.role === "ADMIN" ? "관리자" : "일반",
+        u.role === "ADMIN" ? "관리자" : u.role === "COURT_MANAGER" ? "코트 담당" : "일반",
         kst(u.deletedAt),
         u.id,
       ]

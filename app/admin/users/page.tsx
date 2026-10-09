@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { searchUsers, getUserDetail, setUserBan, exportUsersCsv, type AdminUserRow, type UserFilter } from "@/app/actions/adminUsers";
+import { searchUsers, getUserDetail, setUserBan, setUserRole, exportUsersCsv, type AdminUserRow, type UserFilter } from "@/app/actions/adminUsers";
 import TennisLoader from "@/components/TennisLoader";
 
 const FILTERS: { value: UserFilter; label: string }[] = [
@@ -34,6 +34,7 @@ function StatusBadges({ u }: { u: AdminUserRow }) {
   return (
     <span className="inline-flex gap-1 flex-wrap">
       {u.role === "ADMIN" && <span className="chip-on text-[10px] font-bold px-2 py-0.5 rounded-full">관리자</span>}
+      {u.role === "COURT_MANAGER" && <span className="chip-on text-[10px] font-bold px-2 py-0.5 rounded-full">코트 담당</span>}
       {u.isBanned && <span className="badge-live text-[10px] font-bold px-2 py-0.5 rounded-full">정지</span>}
       {!u.identityVerified && <span className="badge-idle text-[10px] font-bold px-2 py-0.5 rounded-full">미인증</span>}
       {u.deletedAt && <span className="badge-lose text-[10px] font-bold px-2 py-0.5 rounded-full">탈퇴</span>}
@@ -154,6 +155,20 @@ export default function AdminUsersPage() {
     load(token, q, filter, page);
   };
 
+  const toggleRole = async (id: string, manager: boolean) => {
+    if (!token) return;
+    setBusy(true);
+    const res = await setUserRole(token, id, manager);
+    setBusy(false);
+    if (!res.success) {
+      setMessage(res.error);
+      return;
+    }
+    setMessage(manager ? "코트 담당자로 지정했습니다." : "코트 담당자를 해제했습니다.");
+    setDetail(await getUserDetail(token, id));
+    load(token, q, filter, page);
+  };
+
   if (status === "checking") {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16">
@@ -243,6 +258,16 @@ export default function AdminUsersPage() {
               <Link href={`/users/${d.user.id}`} className="btn-outline-court text-sm font-medium px-4 py-2 rounded-lg border">
                 공개 프로필 보기
               </Link>
+              {d.user.role !== "ADMIN" && !d.user.isBanned && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => toggleRole(d.user.id, d.user.role !== "COURT_MANAGER")}
+                  className="btn-outline-court text-sm font-medium px-4 py-2 rounded-lg border disabled:opacity-60"
+                >
+                  {d.user.role === "COURT_MANAGER" ? "코트 담당 해제" : "코트 담당 지정"}
+                </button>
+              )}
               {d.user.role !== "ADMIN" && !d.user.isBanned && (
                 <>
                   <input

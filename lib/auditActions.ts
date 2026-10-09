@@ -4,6 +4,7 @@
 
 export const AUDIT_ACTIONS = {
   USER_BAN: { label: "회원 정지", group: "회원", tone: "danger" },
+  USER_ROLE_SET: { label: "권한 변경", group: "회원", tone: "ok" },
   USER_UNBAN: { label: "정지 해제", group: "회원", tone: "ok" },
   USER_VIEW: { label: "회원 상세 조회", group: "조회", tone: "info" },
   USER_SEARCH: { label: "회원 검색", group: "조회", tone: "info" },
