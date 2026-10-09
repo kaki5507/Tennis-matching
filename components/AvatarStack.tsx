@@ -3,7 +3,7 @@
 // components/AvatarStack.tsx
 // 참여자 프로필을 겹쳐서 보여주고 "현재/정원"을 함께 표시합니다. 사진이 없으면 닉네임 첫 글자 원.
 
-import { useState } from "react";
+import UserAvatar from "@/components/UserAvatar";
 
 export interface StackUser {
   id: string;
@@ -12,24 +12,10 @@ export interface StackUser {
 }
 
 function Avatar({ user }: { user: StackUser }) {
-  const [failed, setFailed] = useState(false);
-  const initial = (user.nickname || "?").charAt(0).toUpperCase();
   const lv = Math.min(Math.max(user.level ?? 1, 1), 7);
   return (
     <span className={`lv-ring lv-${lv}`} title={`${user.nickname ?? "익명"} · Lv.${lv}`}>
-    <span className="relative inline-flex w-7 h-7 rounded-full bg-ok-soft text-ok text-[11px] font-bold items-center justify-center overflow-hidden shrink-0">
-      {initial}
-      {!failed && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={`/api/avatar/${user.id}`}
-          alt=""
-          loading="lazy"
-          onError={() => setFailed(true)}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      )}
-    </span>
+      <UserAvatar id={user.id} nickname={user.nickname} className="w-7 h-7" />
     </span>
   );
 }

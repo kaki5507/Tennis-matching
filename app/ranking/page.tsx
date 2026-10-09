@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { getRankRows, type RankRow } from "@/lib/rankingData";
 import { getWeeklyWinners } from "@/lib/badgeData";
+import UserAvatar from "@/components/UserAvatar";
 import { levelDef } from "@/lib/levels";
 import { WEEKLY_TITLES } from "@/lib/titles";
 
@@ -145,11 +146,7 @@ export default async function RankingPage({
                       <Link href={`/users/${x.id}`} className="row-link flex items-center gap-3 px-3 py-3">
                         <span className="w-8 text-center font-display text-lg shrink-0">{rank <= 3 ? MEDAL[rank - 1] : rank}</span>
                         <span className={`lv-ring lv-${x.level}`}>
-                          <span className="relative inline-flex w-9 h-9 rounded-full bg-ok-soft text-ok text-sm font-bold items-center justify-center overflow-hidden">
-                            {x.nickname.charAt(0).toUpperCase()}
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={`/api/avatar/${x.id}`} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                          </span>
+                          <UserAvatar id={x.id} nickname={x.nickname} className="w-9 h-9" />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block font-bold text-slate-900 truncate">{x.nickname}</span>

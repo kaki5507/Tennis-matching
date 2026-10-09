@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getUserRecord } from "@/app/actions/record";
 import { getUserBadges, type BadgeView } from "@/app/actions/badges";
+import UserAvatar from "@/components/UserAvatar";
 import BadgeShowcase from "@/components/BadgeShowcase";
 import TennisLoader from "@/components/TennisLoader";
 import TrophyCase from "@/components/TrophyCase";
@@ -149,11 +150,11 @@ export default function UserRecordPage({ params }: { params: Promise<{ id: strin
         <div className="flex items-center gap-4">
           <div className={badges && badges.level >= 2 ? `lv-ring lv-${badges.level} !p-1` : ""}>
             <div
-              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 ${
-                badges && badges.level >= 2 ? "bg-white" : ({ M: "ring-m", F: "ring-f" }[singleKind(user.gender) as "M" | "F"] ?? "ring-none")
-              } tint text-court`}
+              className={`rounded-full ${
+                badges && badges.level >= 2 ? "" : ({ M: "ring-m", F: "ring-f" }[singleKind(user.gender) as "M" | "F"] ?? "ring-none")
+              }`}
             >
-              {(user.nickname || "?").charAt(0).toUpperCase()}
+              <UserAvatar id={id} nickname={user.nickname} className="w-16 h-16" />
             </div>
           </div>
           <div>
