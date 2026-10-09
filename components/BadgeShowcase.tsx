@@ -21,8 +21,14 @@ export default function BadgeShowcase({ badges }: { badges: BadgeView }) {
               <div className="h-full bg-court rounded-full" style={{ width: `${Math.round(badges.next.progress * 100)}%` }} />
             </div>
             <p className="text-xs text-slate-500 mt-1.5">
-              다음 {badges.next.emoji} {badges.next.name}까지 경험치 {badges.next.xpLeft}
-              {badges.next.mannerLeft > 0 ? ` · 매너 온도 ${badges.next.mannerLeft.toFixed(1)}도 더 필요` : ""}
+              다음 {badges.next.emoji} {badges.next.name}까지 ·{" "}
+              {[
+                badges.next.xpLeft > 0 && `경험치 ${badges.next.xpLeft.toLocaleString()}`,
+                badges.next.playedLeft > 0 && `경기 ${badges.next.playedLeft}판`,
+                badges.next.visitLeft > 0 && `방문 ${badges.next.visitLeft}일`,
+                badges.next.mannerLeft > 0 && `매너 ${badges.next.mannerLeft.toFixed(1)}도`,
+              ].filter(Boolean).join(" · ") || "조건 달성!"}
+              {" "}더 필요
             </p>
           </>
         ) : (

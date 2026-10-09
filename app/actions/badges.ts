@@ -14,7 +14,7 @@ export interface BadgeView {
   levelName: string
   levelEmoji: string
   xp: number
-  next: { name: string; emoji: string; xpLeft: number; mannerLeft: number; progress: number } | null
+  next: { name: string; emoji: string; xpLeft: number; playedLeft: number; visitLeft: number; mannerLeft: number; progress: number } | null
   titles: { id: string; emoji: string; name: string; desc: string; hidden: boolean; earned: boolean }[]
   weekly: { key: WeeklyKey; emoji: string; name: string; desc: string; count: number }[]
   weekLabel: string
@@ -33,7 +33,7 @@ export async function getUserBadges(userId: string) {
       levelName: def.name,
       levelEmoji: def.emoji,
       xp: xpOf(level),
-      next: nx ? { name: nx.next.name, emoji: nx.next.emoji, xpLeft: nx.xpLeft, mannerLeft: nx.mannerLeft, progress: nx.progress } : null,
+      next: nx ? { name: nx.next.name, emoji: nx.next.emoji, xpLeft: nx.xpLeft, playedLeft: nx.playedLeft, visitLeft: nx.visitLeft, mannerLeft: nx.mannerLeft, progress: nx.progress } : null,
       titles: TITLES.map((t) => ({ id: t.id, emoji: t.emoji, name: t.name, desc: t.desc, hidden: !!t.hidden, earned: got.has(t.id) })),
       weekly: weekly.winners
         .filter((w) => w.userId === userId)
