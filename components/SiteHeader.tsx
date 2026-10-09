@@ -15,6 +15,7 @@ const NAV = [
   { href: "/courts", label: "빈 코트" },
   { href: "/matches", label: "매칭" },
   { href: "/tournaments", label: "대회" },
+  { href: "/ranking", label: "랭킹" },
   { href: "/history", label: "기록실" },
 ];
 

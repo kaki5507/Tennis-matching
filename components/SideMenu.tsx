@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
+import { CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, Crown, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
@@ -16,6 +16,7 @@ const ITEMS = [
   { href: "/matches", label: "방 찾기", Icon: Search },
   { href: "/matches/create", label: "방 만들기", Icon: PlusCircle },
   { href: "/tournaments", label: "대회", Icon: Trophy },
+  { href: "/ranking", label: "랭킹", Icon: Crown },
   { href: "/history", label: "기록실", Icon: History },
   { href: "/notifications", label: "알림", Icon: Bell },
   { href: "/mypage", label: "마이페이지", Icon: User },
@@ -112,6 +113,9 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
                 </Link>
                 <Link href="/tournaments" className="chip-off flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold drawer-hover">
                   <Trophy className="w-[18px] h-[18px]" /> 대회
+                </Link>
+                <Link href="/ranking" className="chip-off flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold drawer-hover">
+                  <Crown className="w-[18px] h-[18px]" /> 랭킹
                 </Link>
                 <Link href="/history" className="chip-off flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold drawer-hover">
                   <History className="w-[18px] h-[18px]" /> 기록실

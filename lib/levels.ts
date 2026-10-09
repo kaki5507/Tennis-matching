@@ -20,15 +20,15 @@ export interface LevelDef {
   ringHint: string;
 }
 
-// 경험치만 채워서는 못 올라가요. 경기 수 · 방문일 · 매너 온도를 모두 채워야 합니다. (레전드는 1년 이상 꾸준히 + 300판)
+// 경험치만 채워서는 못 올라가요. 경기 수 · 방문일을 모두 채워야 합니다. (매너 온도는 레벨에 반영하지 않아요) (레전드는 1년 이상 꾸준히 + 300판)
 export const LEVELS: LevelDef[] = [
   { level: 1, name: "새싹", emoji: "🌱", minXp: 0, minPlayed: 0, minVisitDays: 0, minManner: 0, ringHint: "기본 테두리" },
   { level: 2, name: "루키", emoji: "🎾", minXp: 50, minPlayed: 3, minVisitDays: 0, minManner: 0, ringHint: "초록 테두리" },
-  { level: 3, name: "레귤러", emoji: "🏸", minXp: 200, minPlayed: 10, minVisitDays: 7, minManner: 36.5, ringHint: "파란 테두리" },
-  { level: 4, name: "베테랑", emoji: "🛡️", minXp: 600, minPlayed: 30, minVisitDays: 30, minManner: 38, ringHint: "보라 테두리" },
-  { level: 5, name: "에이스", emoji: "⭐", minXp: 1500, minPlayed: 70, minVisitDays: 90, minManner: 40, ringHint: "금색 테두리" },
-  { level: 6, name: "마스터", emoji: "💎", minXp: 3500, minPlayed: 150, minVisitDays: 180, minManner: 42, ringHint: "반짝이는 테두리" },
-  { level: 7, name: "레전드", emoji: "👑", minXp: 8000, minPlayed: 300, minVisitDays: 365, minManner: 44, ringHint: "무지개 테두리" },
+  { level: 3, name: "레귤러", emoji: "🏸", minXp: 200, minPlayed: 10, minVisitDays: 7, minManner: 0, ringHint: "파란 테두리" },
+  { level: 4, name: "베테랑", emoji: "🛡️", minXp: 600, minPlayed: 30, minVisitDays: 30, minManner: 0, ringHint: "보라 테두리" },
+  { level: 5, name: "에이스", emoji: "⭐", minXp: 1500, minPlayed: 70, minVisitDays: 90, minManner: 0, ringHint: "금색 테두리" },
+  { level: 6, name: "마스터", emoji: "💎", minXp: 3500, minPlayed: 150, minVisitDays: 180, minManner: 0, ringHint: "반짝이는 테두리" },
+  { level: 7, name: "레전드", emoji: "👑", minXp: 8000, minPlayed: 300, minVisitDays: 365, minManner: 0, ringHint: "무지개 테두리" },
 ];
 
 /** 경기 1판 10점, 방문 1일 1점, 대회 참가 1회 20점 */
