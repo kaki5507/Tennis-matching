@@ -59,7 +59,7 @@ export default function PostForm({
       ? await updatePost(token, edit.id, { title, content, pinned })
       : await createPost(token, { category, title, content, pinned });
     if (!r.success) {
-      setError(r.error);
+      setError(r.error ?? "저장에 실패했어요. 잠시 후 다시 시도해주세요.");
       setBusy(false);
       return;
     }
