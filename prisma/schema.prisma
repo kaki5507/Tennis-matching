@@ -18,6 +18,11 @@ enum Position {
   ANY
 }
 
+enum PostCategory {
+  NOTICE // 공지사항 (관리자만 작성)
+  FREE // 자유게시판
+}
+
 enum Role {
   USER
   ADMIN
@@ -104,6 +109,8 @@ model User {
   messages            Message[] // [NEW] 내가 쓴 채팅들
 
   matchComments MatchComment[] // 내가 쓴 댓글들
+  posts         Post[] // 내가 쓴 게시글
+  postComments  PostComment[] // 게시글에 단 댓글
 
   ntrpScore  Decimal?    @map("ntrp_score") @db.Decimal(3, 1) // 예: 2.5, 3.2 (소수점 1자리)
   ntrpCount  Int         @default(0) @map("ntrp_count") // 이 유저가 평가받은 총 횟수
@@ -491,4 +498,38 @@ model MaintenanceSetting {
   updatedAt DateTime  @default(now()) @map("updated_at")
 
   @@map("maintenance_settings")
+}
+
+// 공지사항 / 자유게시판 글
+model Post {
+  id        String       @id @default(uuid()) @db.Uuid
+  category  PostCategory
+  title     String
+  content   String       @db.Text
+  pinned    Boolean      @default(false) // 목록 맨 위 고정
+  viewCount Int          @default(0) @map("view_count")
+  authorId  String       @map("author_id") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  deletedAt DateTime?    @map("deleted_at") // 삭제는 숨김 처리
+
+  author   User          @relation(fields: [authorId], references: [id])
+  comments PostComment[]
+
+  @@index([category, pinned, createdAt])
+  @@map("posts")
+}
+
+model PostComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("post_comments")
 }

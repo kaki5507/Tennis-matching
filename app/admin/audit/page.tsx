@@ -29,6 +29,7 @@ function targetHref(r: AuditRow): string | null {
   if (!r.targetId) return null;
   if (r.targetType === "user") return `/admin/users?q=${r.targetId}`;
   if (r.targetType === "tournament") return `/tournaments/${r.targetId}`;
+  if (r.targetType === "post") return `/board/${r.targetId}`;
   return null;
 }
 

@@ -8,7 +8,7 @@ import type { AuditAction } from "@/lib/auditActions"
 export interface AuditInput {
   adminId: string
   action: AuditAction
-  targetType?: "user" | "tournament" | "match"
+  targetType?: "user" | "tournament" | "match" | "post"
   targetId?: string
   targetLabel?: string | null
   detail?: string | null

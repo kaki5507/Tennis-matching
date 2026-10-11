@@ -16,6 +16,7 @@ const NAV = [
   { href: "/matches", label: "매칭" },
   { href: "/tournaments", label: "대회" },
   { href: "/ranking", label: "랭킹" },
+  { href: "/board", label: "게시판" },
   { href: "/history", label: "기록실" },
 ];
 

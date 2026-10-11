@@ -5,6 +5,8 @@
 export const AUDIT_ACTIONS = {
   USER_BAN: { label: "회원 정지", group: "회원", tone: "danger" },
   USER_ROLE_SET: { label: "권한 변경", group: "회원", tone: "ok" },
+  BOARD_NOTICE_CREATE: { label: "공지 등록", group: "게시판", tone: "ok" },
+  BOARD_POST_DELETE: { label: "게시글 삭제", group: "게시판", tone: "danger" },
   USER_UNBAN: { label: "정지 해제", group: "회원", tone: "ok" },
   USER_VIEW: { label: "회원 상세 조회", group: "조회", tone: "info" },
   USER_SEARCH: { label: "회원 검색", group: "조회", tone: "info" },
@@ -24,9 +26,9 @@ export const AUDIT_ACTIONS = {
 } as const
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS
-export type AuditGroup = "회원" | "조회" | "대회" | "시스템"
+export type AuditGroup = "회원" | "조회" | "대회" | "게시판" | "시스템"
 
-export const AUDIT_GROUPS: AuditGroup[] = ["회원", "대회", "조회", "시스템"]
+export const AUDIT_GROUPS: AuditGroup[] = ["회원", "대회", "게시판", "조회", "시스템"]
 
 export function actionLabel(code: string): string {
   return (AUDIT_ACTIONS as Record<string, { label: string }>)[code]?.label ?? code

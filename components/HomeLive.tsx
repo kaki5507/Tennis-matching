@@ -9,10 +9,11 @@ import EmptyState from "@/components/EmptyState";
 import AvatarStack from "@/components/AvatarStack";
 import { seatInfo } from "@/lib/matchDisplay";
 import { getLevelMap } from "@/lib/badgeData";
+import { getLatestNotice } from "@/app/actions/board";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
 const fetchLive = unstable_cache(async () => {
-    const [openMatches, members, completed, tournaments, upcoming] = await Promise.all([
+    const [openMatches, members, completed, tournaments, upcoming, notice] = await Promise.all([
       prisma.match.count({ where: { status: "OPEN", deletedAt: null } }),
       prisma.user.count(),
       prisma.match.count({ where: { status: "COMPLETED", deletedAt: null } }),
@@ -27,8 +28,9 @@ const fetchLive = unstable_cache(async () => {
         orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
         take: 4,
       }),
+      getLatestNotice(),
     ]);
-    return { openMatches, members, completed, tournaments, upcoming };
+    return { openMatches, members, completed, tournaments, upcoming, notice };
 }, ["home-live"], { revalidate: 30 });
 
 async function loadLive() {
@@ -54,6 +56,17 @@ export default async function HomeLive() {
 
   return (
     <>
+      {/* 최신 공지 한 줄 */}
+      {data.notice && (
+        <section className="max-w-6xl mx-auto px-4 pt-4">
+          <Link href={`/board/${data.notice.id}`} className="surface rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm hover:bg-black/5 transition-colors">
+            <span className="shrink-0">📢</span>
+            <span className="font-bold text-slate-800 truncate">{data.notice.title}</span>
+            <span className="ml-auto shrink-0 text-xs text-slate-400 whitespace-nowrap">공지 ›</span>
+          </Link>
+        </section>
+      )}
+
       {/* 서비스 현황 */}
       <section className="max-w-6xl mx-auto px-4 pt-5 pb-2">
         <div className="surface rounded-2xl grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 border-line">
