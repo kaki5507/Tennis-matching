@@ -5,13 +5,15 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthUser } from "@/lib/useAuthUser";
 import HeroCourt from "@/components/HeroCourt";
-import { Search, PlusCircle, CalendarClock, Trophy, History, User } from "lucide-react";
+import { Search, PlusCircle, CalendarClock, Trophy, History, User, Crown, Megaphone } from "lucide-react";
 
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
   { href: "/matches/create", label: "방 만들기", sub: "내가 방장", Icon: PlusCircle, cls: "sc-clay" },
   { href: "/courts", label: "빈 코트 찾기", sub: "내일·7일·이번 달 확인", Icon: CalendarClock, cls: "sc-grass" },
   { href: "/tournaments", label: "대회", sub: "대진표·결과", Icon: Trophy, cls: "sc-sky" },
+  { href: "/ranking", label: "랭킹", sub: "레벨·온도·승률", Icon: Crown, cls: "sc-clay" },
+  { href: "/board", label: "게시판", sub: "공지·자유게시판", Icon: Megaphone, cls: "sc-sky" },
   { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
   { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
 ];
