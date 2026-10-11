@@ -9,7 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import AvatarStack from "@/components/AvatarStack";
 import { seatInfo } from "@/lib/matchDisplay";
 import { getLevelMap } from "@/lib/badgeData";
-import { getLatestNotice } from "@/app/actions/board";
+import { getLatestNotices } from "@/app/actions/board";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
 const fetchLive = unstable_cache(async () => {
@@ -28,7 +28,7 @@ const fetchLive = unstable_cache(async () => {
         orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
         take: 4,
       }),
-      getLatestNotice(),
+      getLatestNotices(3),
     ]);
     return { openMatches, members, completed, tournaments, upcoming, notice };
 }, ["home-live"], { revalidate: 30 });
@@ -56,14 +56,29 @@ export default async function HomeLive() {
 
   return (
     <>
-      {/* 최신 공지 한 줄 */}
-      {data.notice && (
+      {/* 공지사항 (최근 3개, 고정 공지 우선) */}
+      {data.notice.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 pt-4">
-          <Link href={`/board/${data.notice.id}`} className="surface rounded-xl px-4 py-2.5 flex items-center gap-2 text-sm hover:bg-black/5 transition-colors">
-            <span className="shrink-0">📢</span>
-            <span className="font-bold text-slate-800 truncate">{data.notice.title}</span>
-            <span className="ml-auto shrink-0 text-xs text-slate-400 whitespace-nowrap">공지 ›</span>
-          </Link>
+          <div className="surface rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 pt-2.5 pb-1">
+              <p className="text-sm font-extrabold text-slate-800">📢 공지사항</p>
+              <Link href="/board?c=notice" className="text-xs font-bold text-court">더보기 ›</Link>
+            </div>
+            <ul>
+              {data.notice.map((n) => (
+                <li key={n.id}>
+                  <Link href={`/board/${n.id}`} className="flex items-center gap-2 px-4 py-1.5 text-sm hover:bg-black/5 transition-colors">
+                    {n.pinned && <span className="shrink-0 text-xs">📌</span>}
+                    <span className="truncate text-slate-700">{n.title}</span>
+                    <span className="ml-auto shrink-0 text-[11px] text-slate-400 whitespace-nowrap">
+                      {new Date(n.createdAt).toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric" })}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div className="h-1" />
+          </div>
         </section>
       )}
 

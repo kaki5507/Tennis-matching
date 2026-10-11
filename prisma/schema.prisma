@@ -533,3 +533,40 @@ model PostComment {
   @@index([postId, createdAt])
   @@map("post_comments")
 }
+
+// ---- 방문 통계 사전 집계 (lib/visitRollup.ts 가 raw SQL 로만 사용) ----
+model VisitRollupDay {
+  day DateTime @db.Date
+  pv  Int
+  uv  Int
+
+  @@id([day])
+  @@map("visit_rollup_days")
+}
+
+model VisitDayVisitor {
+  day     DateTime @db.Date
+  visitor String
+
+  @@id([day, visitor])
+  @@map("visit_day_visitors")
+}
+
+model VisitRollupHour {
+  day  DateTime @db.Date
+  hour Int      @db.SmallInt
+  pv   Int
+
+  @@id([day, hour])
+  @@map("visit_rollup_hours")
+}
+
+model VisitRollupPage {
+  day    DateTime @db.Date
+  path   String
+  device String
+  pv     Int
+
+  @@id([day, path, device])
+  @@map("visit_rollup_pages")
+}

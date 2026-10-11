@@ -231,16 +231,17 @@ export async function deletePostComment(accessToken: string | null, commentId: s
   return { success: true as const }
 }
 
-/** 메인 화면용: 가장 최근(고정 우선) 공지 한 개 */
-export async function getLatestNotice() {
+/** 메인 화면용: 최근(고정 우선) 공지 몇 개 */
+export async function getLatestNotices(take = 3) {
   try {
-    const p = await prisma.post.findFirst({
+    const rows = await prisma.post.findMany({
       where: { category: "NOTICE", deletedAt: null },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-      select: { id: true, title: true, createdAt: true },
+      take,
+      select: { id: true, title: true, pinned: true, createdAt: true },
     })
-    return p ? { id: p.id, title: p.title, createdAt: p.createdAt.toISOString() } : null
+    return rows.map((p) => ({ id: p.id, title: p.title, pinned: p.pinned, createdAt: p.createdAt.toISOString() }))
   } catch {
-    return null
+    return []
   }
 }
