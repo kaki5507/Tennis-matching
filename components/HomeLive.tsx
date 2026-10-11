@@ -57,13 +57,14 @@ export default async function HomeLive() {
   return (
     <>
       {/* 공지사항 (최근 3개, 고정 공지 우선) */}
-      {data.notice.length > 0 && (
+      {(
         <section className="max-w-6xl mx-auto px-4 pt-4">
           <div className="surface rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 pt-2.5 pb-1">
               <p className="text-sm font-extrabold text-slate-800">📢 공지사항</p>
               <Link href="/board?c=notice" className="text-xs font-bold text-court">더보기 ›</Link>
             </div>
+            {data.notice.length === 0 && <p className="px-4 py-2 text-sm text-slate-400">아직 등록된 공지가 없어요.</p>}
             <ul>
               {data.notice.map((n) => (
                 <li key={n.id}>
