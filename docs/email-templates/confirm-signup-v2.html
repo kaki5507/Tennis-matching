@@ -1,0 +1,161 @@
+<!-- Supabase > Authentication > Emails > Confirm signup 의 Message body 에 그대로 붙여넣으세요.
+     제목(Subject) 추천: [테니스매칭] 이메일 인증을 완료하면 바로 시작할 수 있어요
+     {{ .ConfirmationURL }} 은 Supabase가 인증 링크로 바꿔 주는 자리라 지우면 안 됩니다. -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#eef3f8;">버튼 한 번이면 가입이 끝나요. 오늘 칠 파트너를 바로 찾아보세요 🎾</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef3f8" style="background:#eef3f8;">
+  <tr>
+    <td align="center" style="padding:28px 12px 36px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+
+        <!-- 로고 -->
+        <tr>
+          <td align="center" style="padding:0 0 18px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;">
+            <span style="font-size:24px;font-weight:800;letter-spacing:-0.5px;color:#2a4a74;">테니스</span><span style="display:inline-block;margin-left:4px;padding:2px 8px;border-radius:9px;background:#d0653f;color:#ffffff;font-size:22px;font-weight:800;letter-spacing:-0.5px;">매칭</span>
+            <table role="presentation" align="center" width="150" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;">
+              <tr>
+                <td width="50" height="3" bgcolor="#5b87b9" style="height:3px;line-height:3px;font-size:0;">&nbsp;</td>
+                <td width="50" height="3" bgcolor="#4f9a62" style="height:3px;line-height:3px;font-size:0;">&nbsp;</td>
+                <td width="50" height="3" bgcolor="#d0653f" style="height:3px;line-height:3px;font-size:0;">&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 카드 -->
+        <tr>
+          <td style="background:#ffffff;border-radius:22px;border:1px solid #d8e2ec;overflow:hidden;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+              <!-- 히어로: 하드코트 블루 + 코트 라인 + 마스코트 -->
+              <tr>
+                <td bgcolor="#2a4a74" align="center" style="background:#2a4a74;padding:30px 24px 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:360px;">
+                    <tr>
+                      <td align="center" style="font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;color:#ffffff;">
+                        <div style="font-size:13px;font-weight:700;color:#dde43a;letter-spacing:0.2px;">WELCOME TO THE COURT</div>
+                        <div style="font-size:28px;line-height:1.3;font-weight:800;letter-spacing:-0.8px;margin-top:8px;">
+                          실력 맞는 파트너,<br>오늘 코트에서 만나요
+                        </div>
+                        <div style="font-size:14px;line-height:1.6;color:#c9d8ea;margin-top:10px;">
+                          이메일 인증만 마치면 가입이 끝나요.
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- 코트 라인 + 공 (표와 테두리로 그린 미니 코트: 대부분의 메일 앱에서 보임) -->
+                  <table role="presentation" align="center" width="280" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">
+                    <tr>
+                      <td height="64" bgcolor="#5b87b9" style="background:#5b87b9;border:2px solid #ffffff;border-bottom:0;border-radius:10px 10px 0 0;font-size:0;line-height:0;">
+                        <table role="presentation" width="100%" height="64" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td width="25%" style="border-right:2px solid #ffffff;font-size:0;">&nbsp;</td>
+                            <td width="25%" style="border-right:2px solid #ffffff;font-size:0;">&nbsp;</td>
+                            <td width="25%" style="border-right:2px solid #ffffff;font-size:0;">&nbsp;</td>
+                            <td width="25%" align="right" valign="top" style="font-size:0;padding:10px 14px 0 0;">
+                              <span style="display:inline-block;width:18px;height:18px;border-radius:9px;background:#dde43a;border:2px solid #ffffff;"></span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- 본문 -->
+              <tr>
+                <td style="padding:30px 30px 8px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;color:#1c2a40;">
+                  <div style="font-size:18px;font-weight:800;letter-spacing:-0.3px;">반가워요! 🎾</div>
+                  <div style="font-size:15px;line-height:1.75;color:#44546a;margin-top:8px;">
+                    아래 버튼을 눌러 이메일을 인증해 주세요.<br>
+                    인증이 끝나면 바로 로그인해서 방을 찾거나 만들 수 있어요.
+                  </div>
+                </td>
+              </tr>
+
+              <!-- 버튼 (사이트의 클레이 버튼과 같은 모양) -->
+              <tr>
+                <td align="center" style="padding:20px 30px 6px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center" bgcolor="#d0653f" style="background:#d0653f;border-radius:14px;border-bottom:4px solid #a84e2c;">
+                        <a href="{{ .ConfirmationURL }}" target="_blank" style="display:block;padding:15px 40px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;font-size:17px;font-weight:800;letter-spacing:-0.2px;color:#ffffff;text-decoration:none;">
+                          이메일 인증하고 시작하기
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- 가입하면 할 수 있는 일 -->
+              <tr>
+                <td style="padding:26px 30px 6px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#eef3f8" style="background:#eef3f8;border-radius:16px;">
+                    <tr>
+                      <td style="padding:16px 18px 6px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;font-size:13px;font-weight:800;color:#2a4a74;">
+                        가입하면 이런 걸 할 수 있어요
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:4px 18px 16px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;font-size:14px;line-height:1.5;color:#1c2a40;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td width="34" valign="top" style="padding:7px 0;font-size:20px;">🔍</td>
+                            <td valign="top" style="padding:7px 0;"><b>방 찾기</b><br><span style="color:#5d6b80;font-size:13px;">내 실력·시간에 맞는 매칭에 바로 신청</span></td>
+                          </tr>
+                          <tr>
+                            <td width="34" valign="top" style="padding:7px 0;font-size:20px;">🏟️</td>
+                            <td valign="top" style="padding:7px 0;"><b>빈 코트 확인</b><br><span style="color:#5d6b80;font-size:13px;">부천 테니스장 예약 가능 시간을 한눈에</span></td>
+                          </tr>
+                          <tr>
+                            <td width="34" valign="top" style="padding:7px 0;font-size:20px;">🏆</td>
+                            <td valign="top" style="padding:7px 0;"><b>대회 · 랭킹</b><br><span style="color:#5d6b80;font-size:13px;">경기할수록 레벨이 오르고 칭호가 쌓여요</span></td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- 버튼이 안 눌릴 때 -->
+              <tr>
+                <td style="padding:18px 30px 28px;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;font-size:12px;line-height:1.7;color:#8794a8;">
+                  버튼이 눌리지 않으면 아래 주소를 복사해서 브라우저에 붙여넣어 주세요.<br>
+                  <a href="{{ .ConfirmationURL }}" target="_blank" style="color:#34649d;word-break:break-all;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+                </td>
+              </tr>
+
+              <!-- 3색 코트 띠 -->
+              <tr>
+                <td style="font-size:0;line-height:0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="34%" height="5" bgcolor="#5b87b9" style="height:5px;font-size:0;line-height:0;">&nbsp;</td>
+                      <td width="33%" height="5" bgcolor="#4f9a62" style="height:5px;font-size:0;line-height:0;">&nbsp;</td>
+                      <td width="33%" height="5" bgcolor="#d0653f" style="height:5px;font-size:0;line-height:0;">&nbsp;</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 푸터 -->
+        <tr>
+          <td align="center" style="padding:20px 16px 0;font-family:'Pretendard','Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',Arial,sans-serif;font-size:12px;line-height:1.7;color:#8794a8;">
+            본인이 가입하지 않았다면 이 메일은 무시하셔도 돼요.<br>
+            인증 링크는 일정 시간이 지나면 만료됩니다.<br>
+            <a href="https://tennis-matching-mu.vercel.app" target="_blank" style="color:#8794a8;text-decoration:underline;">테니스매칭</a> · 부천 테니스 파트너 매칭
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
