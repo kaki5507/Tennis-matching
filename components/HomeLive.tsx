@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import AvatarStack from "@/components/AvatarStack";
 import { seatInfo, isPast, kstToday } from "@/lib/matchDisplay";
 import { getLevelMap } from "@/lib/badgeData";
+import { getRankRows } from "@/lib/rankingData";
 import { getLatestNotices } from "@/app/actions/board";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
@@ -26,7 +27,8 @@ const fetchLive = unstable_cache(async () => {
         orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
         take: 100,
       }),
-      prisma.user.count(),
+      // 랭킹 화면과 같은 기준(이메일 인증 완료, 정지·탈퇴 제외)으로 센다
+      getRankRows().then((r) => r.length),
       prisma.match.count({ where: { status: "COMPLETED", deletedAt: null } }),
       prisma.tournament.count(),
       getLatestNotices(3),

@@ -21,10 +21,21 @@ export interface RankRow {
 
 export const getRankRows = unstable_cache(
   async (): Promise<RankRow[]> => {
-    const users = await prisma.user.findMany({
+    const allUsers = await prisma.user.findMany({
       where: { deletedAt: null, isBanned: false },
       select: { id: true, nickname: true, mannerScore: true },
     })
+    // 이메일 인증까지 끝낸 회원만 (Supabase auth.users 와 같은 DB). 조회가 안 되면 걸러내지 않고 그대로 보여줍니다.
+    let verified: Set<string> | null = null
+    try {
+      const rows = await prisma.$queryRaw<{ id: string }[]>(
+        Prisma.sql`SELECT id::text AS id FROM auth.users WHERE email_confirmed_at IS NOT NULL`,
+      )
+      verified = new Set(rows.map((r) => r.id))
+    } catch (e) {
+      console.error("[ranking] 이메일 인증 여부 조회 실패 — 전체 회원으로 표시:", e)
+    }
+    const users = verified ? allUsers.filter((u) => verified.has(u.id)) : allUsers
     if (users.length === 0) return []
     const [played, tours, teams, results, visits] = await Promise.all([
       prisma.matchParticipant.groupBy({
@@ -80,6 +91,6 @@ export const getRankRows = unstable_cache(
       }
     })
   },
-  ["rank-rows-v1"],
+  ["rank-rows-v2"],
   { revalidate: 300 },
 )
