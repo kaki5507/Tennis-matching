@@ -3,7 +3,7 @@
 import { showAlert } from "@/lib/dialog";
 import { checkNickname } from "@/app/actions/nickname";
 import { signUpWithoutEmailVerification } from "@/app/actions/testSignup";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,9 @@ export default function SignupPage() {
   // 로딩 상태 및 에러 메시지
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const submittingRef = useRef(false); // state 는 비동기라 빠르게 두 번 누르면 뚫림 → ref 로 즉시 막음
+  const [done, setDone] = useState(false); // 가입 성공 후 화면 이동 중에는 버튼을 계속 잠금
+  const errorBoxRef = useRef<HTMLDivElement>(null);
 
   // [NEW] 본인인증 시작 (재가입 방지의 핵심 단계)
   const handleVerifyIdentity = async () => {
@@ -146,6 +149,7 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault(); // 폼 제출 시 새로고침 방지
+    if (submittingRef.current || done) return; // 이미 처리 중이면 두 번째 클릭은 무시
     setErrorMsg("");
 
     // 0. 본인인증 완료 여부 확인 (재가입 방지의 최소 조건)
@@ -179,6 +183,7 @@ export default function SignupPage() {
       return;
     }
 
+    submittingRef.current = true;
     setIsLoading(true);
 
     try {
@@ -194,11 +199,13 @@ export default function SignupPage() {
             .resend({ type: "signup", email, options: { emailRedirectTo: `${window.location.origin}/login` } })
             .catch(() => {});
           showAlert("회원가입이 완료되었습니다!\n인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)");
+          setDone(true);
           router.push("/");
           return;
         }
         if (fast.success) {
           const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+          setDone(true);
           if (loginError) {
             showAlert("회원가입이 완료되었습니다! 로그인해주세요.");
             router.push("/login");
@@ -260,6 +267,7 @@ export default function SignupPage() {
           ? "회원가입이 완료되었습니다! 로그인해주세요."
           : "회원가입이 완료되었습니다!\n입력하신 이메일로 인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)"
       );
+      setDone(true);
       router.push("/login");
 
     } catch (error: unknown) { // any 대신 unknown 사용
@@ -270,15 +278,28 @@ export default function SignupPage() {
             "서버와 연결하지 못했어요. 잠시 후 다시 시도해 주세요. 만약 인증 메일이 이미 도착했다면 가입은 처리된 것일 수 있어요. 메일함을 확인하고 로그인해 보세요."
           );
         } else {
-          setErrorMsg(error.message);
+          const wait = error.message.match(/after (\d+) seconds?/i);
+          if (wait) {
+            setErrorMsg(`요청이 너무 잦아요. ${wait[1]}초 뒤에 다시 눌러주세요. (이미 인증 메일이 갔다면 메일함·스팸함을 먼저 확인해 보세요)`);
+          } else if (/rate limit|too many/i.test(error.message)) {
+            setErrorMsg("요청이 너무 많아요. 잠시 후 다시 시도해주세요. (이미 인증 메일이 갔다면 메일함·스팸함을 먼저 확인해 보세요)");
+          } else {
+            setErrorMsg(error.message);
+          }
         }
       } else {
         setErrorMsg("가입 중 오류가 발생했습니다.");
       }
     } finally {
+      submittingRef.current = false;
       setIsLoading(false);
     }
   };
+
+  // 오류가 생기면 가입하기 버튼 바로 위의 안내 칸으로 화면을 옮겨서 바로 보이게 함
+  useEffect(() => {
+    if (errorMsg) errorBoxRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [errorMsg]);
 
   return (
     <div className="min-h-screen flex items-center justify-center tint px-4 py-12">
@@ -287,13 +308,6 @@ export default function SignupPage() {
           <h1 className="text-2xl heading mb-2">반갑습니다! 🎾</h1>
           <p className="text-slate-500">딱 맞는 테니스 파트너를 찾아드릴게요.</p>
         </div>
-
-        {/* 에러가 있으면 보여주는 빨간 박스 */}
-        {errorMsg && (
-          <div className="mb-6 p-3 alert-danger text-sm rounded-lg text-center">
-            {errorMsg}
-          </div>
-        )}
 
         {/* [NEW] 본인인증 단계 */}
         <div className="mb-6">
@@ -471,8 +485,12 @@ export default function SignupPage() {
           {allRequiredAgreed && !verifiedId && (
             <p className="text-xs text-warn font-bold text-center">위의 &quot;본인인증&quot; 또는 &quot;본인인증 없이 가입하기(임시)&quot;를 먼저 눌러주세요.</p>
           )}
-          <Button type="submit" disabled={isLoading || !verifiedId || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
-            {isLoading ? "가입 처리 중..." : "가입하기"}
+          {/* 에러는 "가입하기" 버튼 바로 위에 보여줘서 누른 자리에서 바로 확인 */}
+          <div ref={errorBoxRef} aria-live="assertive" role="alert">
+            {errorMsg && <div className="p-3 alert-danger text-sm rounded-lg text-center font-bold">{errorMsg}</div>}
+          </div>
+          <Button type="submit" disabled={isLoading || done || !verifiedId || !allRequiredAgreed} className="w-full btn-clay h-12 text-lg">
+            {isLoading ? "가입 처리 중..." : done ? "가입 완료! 이동 중..." : "가입하기"}
           </Button>
         </form>
 
