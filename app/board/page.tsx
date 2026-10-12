@@ -42,7 +42,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
         <h1 className="text-2xl heading mb-1">📋 게시판</h1>
         <p className="text-sm text-ink-muted mb-4">{tab.desc}</p>
 
-        <div className="flex gap-2 mb-3">
+        <div className="flex gap-2 mb-3 overflow-x-auto">
           {BOARD_TABS.map((t) => (
             <Link key={t.key} href={`/board?c=${t.key}`} className={`rounded-full px-4 py-2 text-sm font-bold whitespace-nowrap ${t.key === tab.key ? "chip-on" : "chip-off"}`}>
               {t.emoji} {t.label}
@@ -63,7 +63,7 @@ export default async function BoardPage({ searchParams }: { searchParams: Promis
           <div className="surface rounded-2xl p-8 text-center text-sm text-slate-400">게시글을 불러오지 못했어요. 잠시 후 다시 시도해주세요.</div>
         ) : posts.length === 0 ? (
           <div className="surface rounded-2xl p-10 text-center text-sm text-slate-400">
-            {q ? "검색 결과가 없어요." : tab.key === "notice" ? "아직 공지사항이 없어요." : "첫 글을 남겨보세요!"}
+            {q ? "검색 결과가 없어요." : tab.key === "notice" ? "아직 공지사항이 없어요." : tab.key === "suggest" ? "첫 건의를 남겨보세요! 😀" : "첫 글을 남겨보세요!"}
           </div>
         ) : (
           <ul className="surface rounded-2xl divide-y divide-line overflow-hidden">

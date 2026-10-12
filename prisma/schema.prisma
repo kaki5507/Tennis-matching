@@ -21,6 +21,7 @@ enum Position {
 enum PostCategory {
   NOTICE // 공지사항 (관리자만 작성)
   FREE // 자유게시판
+  SUGGEST // 건의함 (기능 요청·불편 사항, 로그인한 회원 누구나 작성)
 }
 
 enum Role {

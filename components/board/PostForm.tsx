@@ -10,7 +10,7 @@ import { createPost, updatePost } from "@/app/actions/board";
 import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
-import { CONTENT_MAX, TITLE_MAX, type BoardCategory } from "@/lib/board";
+import { CONTENT_MAX, TITLE_MAX, keyOfCategory, type BoardCategory } from "@/lib/board";
 
 export default function PostForm({
   category,
@@ -29,7 +29,7 @@ export default function PostForm({
   const [error, setError] = useState<string | null>(null);
 
   const isNotice = category === "NOTICE";
-  const backHref = `/board?c=${isNotice ? "notice" : "free"}`;
+  const backHref = `/board?c=${keyOfCategory(category)}`;
 
   if (!ready) return <div className="surface rounded-2xl p-8 text-center text-sm text-slate-400">확인 중...</div>;
   if (!userId) {
@@ -76,7 +76,7 @@ export default function PostForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={TITLE_MAX}
-          placeholder={isNotice ? "공지 제목" : "제목을 입력하세요"}
+          placeholder={isNotice ? "공지 제목" : category === "SUGGEST" ? "건의 제목 (예: 알림톡으로 빈 코트 알림 받고 싶어요)" : "제목을 입력하세요"}
           className="h-11 w-full rounded-xl border border-line px-3 text-sm bg-chalk"
         />
       </div>
@@ -88,7 +88,7 @@ export default function PostForm({
           onChange={(e) => setContent(e.target.value)}
           maxLength={CONTENT_MAX}
           rows={12}
-          placeholder={isNotice ? "회원들에게 알릴 내용을 적어주세요." : "테니스 이야기를 자유롭게 나눠보세요. 서로 존중해 주세요 🎾"}
+          placeholder={isNotice ? "회원들에게 알릴 내용을 적어주세요." : category === "SUGGEST" ? "어떤 점이 불편한지, 어떤 기능이 있으면 좋을지 자세히 적어주세요. 쓰는 상황을 같이 알려주시면 더 도움이 돼요." : "테니스 이야기를 자유롭게 나눠보세요. 서로 존중해 주세요 🎾"}
           className="w-full rounded-xl border border-line px-3 py-2.5 text-sm bg-chalk leading-relaxed"
         />
         <p className="text-right text-[11px] text-slate-400 mt-1">{content.length.toLocaleString()} / {CONTENT_MAX.toLocaleString()}</p>

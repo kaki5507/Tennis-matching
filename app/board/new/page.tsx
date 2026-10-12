@@ -10,7 +10,7 @@ export default async function NewPostPage({ searchParams }: { searchParams: Prom
   return (
     <div className="min-h-screen page-bg py-6 px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-xl heading mb-4">{category === "NOTICE" ? "📢 공지 쓰기" : "✏️ 자유게시판 글쓰기"}</h1>
+        <h1 className="text-xl heading mb-4">{category === "NOTICE" ? "📢 공지 쓰기" : category === "SUGGEST" ? "💡 건의하기" : "✏️ 자유게시판 글쓰기"}</h1>
         <PostForm category={category} />
       </div>
     </div>

@@ -5,14 +5,15 @@
 import Link from "next/link";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
+import type { BoardKey } from "@/lib/board";
 
-export default function WriteButton({ tab }: { tab: "notice" | "free" }) {
+export default function WriteButton({ tab }: { tab: BoardKey }) {
   const { userId } = useAuthUser();
   const isAdmin = useIsAdmin(userId);
   if (tab === "notice" && !isAdmin) return null;
   return (
     <Link href={userId ? `/board/new?c=${tab}` : "/login"} className="btn-clay h-10 px-5 rounded-xl text-sm font-bold inline-flex items-center shrink-0">
-      ✏️ {tab === "notice" ? "공지 쓰기" : "글쓰기"}
+      ✏️ {tab === "notice" ? "공지 쓰기" : tab === "suggest" ? "건의하기" : "글쓰기"}
     </Link>
   );
 }

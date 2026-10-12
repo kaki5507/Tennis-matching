@@ -1,7 +1,7 @@
 // app/actions/board.ts
 // 공지사항 / 자유게시판. 읽기는 누구나(로그인 없이), 쓰기는 로그인한 본인 명의로만.
 //  - 공지사항: 관리자만 작성/수정/고정
-//  - 자유게시판: 로그인한 회원 누구나 작성, 본인 글만 수정/삭제 (관리자는 모든 글 삭제 가능)
+//  - 자유게시판 / 건의함: 로그인한 회원 누구나 작성, 본인 글만 수정/삭제 (관리자는 모든 글 삭제 가능)
 // 글 내용은 항상 "글자"로만 화면에 그려지므로(HTML 해석 안 함) 스크립트가 들어와도 실행되지 않습니다.
 
 "use server"
@@ -114,7 +114,7 @@ function validate(title: string, content: string) {
 export async function createPost(accessToken: string | null, input: { category: BoardCategory; title: string; content: string; pinned?: boolean }) {
   const v = validate(input.title, input.content)
   if ("error" in v) return { success: false as const, error: v.error }
-  if (input.category !== "NOTICE" && input.category !== "FREE") return { success: false as const, error: "잘못된 게시판입니다." }
+  if (input.category !== "NOTICE" && input.category !== "FREE" && input.category !== "SUGGEST") return { success: false as const, error: "잘못된 게시판입니다." }
 
   let authorId: string
   let pinned = false
@@ -128,7 +128,7 @@ export async function createPost(accessToken: string | null, input: { category: 
     if (!auth.ok) return { success: false as const, error: auth.error }
     authorId = auth.userId
     // 도배 방지: 같은 사람이 30초 안에 연속으로 올릴 수 없음
-    const last = await prisma.post.findFirst({ where: { authorId, category: "FREE" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
+    const last = await prisma.post.findFirst({ where: { authorId, category: input.category }, orderBy: { createdAt: "desc" }, select: { createdAt: true } })
     if (last && Date.now() - last.createdAt.getTime() < 30_000) {
       return { success: false as const, error: "글은 30초에 한 번만 올릴 수 있어요. 잠시 후 다시 시도해주세요." }
     }

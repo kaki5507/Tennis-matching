@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getPost } from "@/app/actions/board";
 import PostActions from "@/components/board/PostActions";
 import PostComments from "@/components/board/PostComments";
-import { keyOfCategory } from "@/lib/board";
+import { keyOfCategory, labelOfCategory } from "@/lib/board";
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,7 +15,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen page-bg py-6 px-4">
       <div className="max-w-3xl mx-auto">
-        <Link href={`/board?c=${key}`} className="text-sm font-bold text-court">← {post.category === "NOTICE" ? "공지사항" : "자유게시판"}</Link>
+        <Link href={`/board?c=${key}`} className="text-sm font-bold text-court">← {labelOfCategory(post.category)}</Link>
 
         <article className="surface rounded-2xl p-5 sm:p-6 mt-3">
           <h1 className="text-xl sm:text-2xl heading break-words">

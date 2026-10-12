@@ -10,7 +10,7 @@ import { deletePost, setPostPinned } from "@/app/actions/board";
 import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
-import type { BoardCategory } from "@/lib/board";
+import { keyOfCategory, type BoardCategory } from "@/lib/board";
 
 export default function PostActions({ id, authorId, category, pinned }: { id: string; authorId: string; category: BoardCategory; pinned: boolean }) {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function PostActions({ id, authorId, category, pinned }: { id: st
     setBusy(true);
     const r = await deletePost(await getAccessToken(), id);
     if (r.success) {
-      router.push(`/board?c=${category === "FREE" ? "free" : "notice"}`);
+      router.push(`/board?c=${keyOfCategory(category)}`);
       router.refresh();
     } else {
       setMsg(r.error);
