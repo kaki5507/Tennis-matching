@@ -2,6 +2,7 @@
 
 // 글 상세의 수정 / 삭제 / 고정 버튼. 본인 글이거나 관리자일 때만 보입니다 (실제 권한 검사는 서버가 다시 합니다).
 
+import { showConfirm } from "@/lib/dialog";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,7 +25,7 @@ export default function PostActions({ id, authorId, category, pinned }: { id: st
   if (!canEdit && !canDelete) return null;
 
   const remove = async () => {
-    if (!confirm("이 글을 삭제할까요? 되돌릴 수 없어요.")) return;
+    if (!await showConfirm("이 글을 삭제할까요? 되돌릴 수 없어요.", { danger: true, title: "글 삭제" })) return;
     setBusy(true);
     const r = await deletePost(await getAccessToken(), id);
     if (r.success) {

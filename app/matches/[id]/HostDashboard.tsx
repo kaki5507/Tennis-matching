@@ -1,6 +1,7 @@
 // app/matches/[id]/HostDashboard.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export default function HostDashboard({
     if (r.success) {
       setEditing(false);
       router.refresh();
-    } else alert(r.error);
+    } else showAlert(r.error);
   };
 
   // 💡 2. 수락/거절 후 신청자 목록만 다시 불러오는 전용 함수
@@ -137,7 +138,7 @@ export default function HostDashboard({
       await reloadApplicants(); // 👈 useCallback 없이 안전하게 다시 불러오기
       router.refresh();
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     setIsLoading(false);
   };
@@ -150,7 +151,7 @@ export default function HostDashboard({
     if (result.success) {
       await reloadApplicants();
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     setIsLoading(false);
   };
@@ -165,10 +166,10 @@ export default function HostDashboard({
     setIsLoading(true);
     const result = await completeMatchAction(await getAccessToken(), matchId);
     if (result.success) {
-      alert("경기가 완료되었습니다! 동료 평가를 진행해 주세요.");
+      showAlert("경기가 완료되었습니다! 동료 평가를 진행해 주세요.");
       router.refresh(); 
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     setIsLoading(false);
   };

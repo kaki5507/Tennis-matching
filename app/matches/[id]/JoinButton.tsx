@@ -1,6 +1,7 @@
 // app/matches/[id]/JoinButton.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
   // 2. 참여 신청 로직
   const handleJoin = async () => {
     if (!userId) {
-      alert("로그인이 필요합니다.");
+      showAlert("로그인이 필요합니다.");
       router.push("/login");
       return;
     }
@@ -64,13 +65,13 @@ export default function JoinButton({ matchId }: { matchId: string }) {
     const res = await joinMatchRoom(await getAccessToken(), matchId);
     
     if (res.success) {
-      alert("참여 신청이 완료되었습니다! 방장의 수락을 기다려주세요.");
+      showAlert("참여 신청이 완료되었습니다! 방장의 수락을 기다려주세요.");
       // 🌟 DB를 다시 부르지 않고, 화면 상태를 즉시 '참여중'으로 바꿔버림 (최적화)
       setIsParticipating(true);
       setPartStatus("PENDING"); 
       router.refresh(); // 방장 대시보드 리스트 동기화용
     } else {
-      alert(res.error);
+      showAlert(res.error);
     }
     setIsLoading(false);
   };
@@ -89,13 +90,13 @@ export default function JoinButton({ matchId }: { matchId: string }) {
     const res = await cancelMatchApplication(await getAccessToken(), matchId);
     
     if (res.success) {
-      alert("참여 신청이 취소되었습니다.");
+      showAlert("참여 신청이 취소되었습니다.");
       // 🌟 화면 상태를 즉시 '미참여'로 롤백
       setIsParticipating(false);
       setPartStatus("");
       router.refresh(); 
     } else {
-      alert(res.error);
+      showAlert(res.error);
     }
     setIsLoading(false);
   };

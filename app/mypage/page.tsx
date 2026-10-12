@@ -1,6 +1,7 @@
 // app/mypage/page.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -53,7 +54,7 @@ export default function MyPage() {
     const fetchMyData = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
-        alert("로그인이 필요합니다.");
+        showAlert("로그인이 필요합니다.");
         router.push("/login");
         return;
       }

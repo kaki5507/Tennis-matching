@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -88,7 +89,7 @@ export default function CreateTournamentPage() {
       return;
     }
 
-    alert(`대회가 개설됐어요! 조건에 맞는 ${result.notifiedCount ?? 0}명에게 알림을 보냈습니다.`);
+    showAlert(`대회가 개설됐어요! 조건에 맞는 ${result.notifiedCount ?? 0}명에게 알림을 보냈습니다.`);
     router.push(`/tournaments/${result.tournamentId}`);
   };
 

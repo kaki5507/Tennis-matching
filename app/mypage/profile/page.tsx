@@ -1,6 +1,7 @@
 // app/mypage/profile/page.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { NTRP_OPTIONS, normalizeLevelLabel } from "@/lib/ntrpLevels";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +41,7 @@ export default function ProfileEditPage() {
     try {
       setPhoto(await fileToAvatarDataUrl(file));
     } catch (err) {
-      alert(err instanceof Error ? err.message : "사진을 처리하지 못했어요.");
+      showAlert(err instanceof Error ? err.message : "사진을 처리하지 못했어요.");
     }
   };
 
@@ -48,7 +49,7 @@ export default function ProfileEditPage() {
     const fetchUser = async () => {
       const { data: authData } = await supabase.auth.getUser();
       if (!authData.user) {
-        alert("로그인이 필요합니다.");
+        showAlert("로그인이 필요합니다.");
         router.push("/login");
         return;
       }
@@ -92,11 +93,11 @@ export default function ProfileEditPage() {
     });
     
     if (result.success) {
-      alert("프로필이 성공적으로 저장되었습니다! 🎾");
+      showAlert("프로필이 성공적으로 저장되었습니다! 🎾");
       router.push("/mypage");
       router.refresh();
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     
     setIsLoading(false);

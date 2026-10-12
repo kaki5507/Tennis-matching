@@ -1,5 +1,6 @@
 "use client";
 
+import { showConfirm } from "@/lib/dialog";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAccessToken } from "@/lib/authToken";
@@ -49,7 +50,7 @@ export default function AdminMaintenancePage() {
   }, [load]);
 
   const apply = async (enabled: boolean) => {
-    if (enabled && !confirm("점검 모드를 켜면 일반 사용자는 모든 화면에서 점검 안내만 보게 됩니다. 켤까요?")) return;
+    if (enabled && !await showConfirm("점검 모드를 켜면 일반 사용자는 모든 화면에서 점검 안내만 보게 됩니다. 켤까요?")) return;
     setBusy(true);
     setNotice(null);
     const token = await getAccessToken();

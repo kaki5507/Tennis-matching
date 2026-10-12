@@ -3,6 +3,7 @@
 // 비밀번호 재설정 화면. 메일의 링크를 누르고 들어오면 Supabase 가 임시 세션(복구 세션)을 만들어 주고,
 // 여기서 새 비밀번호를 저장합니다.
 
+import { showAlert } from "@/lib/dialog";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -44,7 +45,7 @@ export default function ResetPasswordPage() {
     setIsLoading(false);
     if (error) return setErrorMsg(error.message);
     await supabase.auth.signOut();
-    alert("비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.");
+    showAlert("비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.");
     router.push("/login");
   };
 

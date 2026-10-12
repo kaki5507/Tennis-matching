@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert, showConfirm } from "@/lib/dialog";
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -82,17 +83,17 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   }, [id]);
 
   const handleRegister = async () => {
-    if (!userId) return alert("로그인이 필요합니다.");
+    if (!userId) return showAlert("로그인이 필요합니다.");
     setIsSubmitting(true);
     const result = await registerForTournament(await getAccessToken(), id);
-    if (!result.success) alert(result.error);
+    if (!result.success) showAlert(result.error);
     await load();
     setIsSubmitting(false);
   };
 
   const handleCancel = async () => {
     if (!userId) return;
-    if (!confirm("대회 신청을 취소하시겠어요?")) return;
+    if (!await showConfirm("대회 신청을 취소하시겠어요?", { danger: true, okText: "신청 취소", cancelText: "유지" })) return;
     setIsSubmitting(true);
     await cancelTournamentRegistration(await getAccessToken(), id);
     await load();
@@ -104,18 +105,18 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!userId) return;
     setIsSubmitting(true);
     const result = await updateTournamentStatus(await getAccessToken(), id, status);
-    if (!result.success) alert(result.error);
+    if (!result.success) showAlert(result.error);
     await load();
     setIsSubmitting(false);
   };
 
   // [NEW] 관리자: 결과 확정
   const handleRecordResult = async () => {
-    if (!userId || !resultForm.championId) return alert("우승자를 선택해주세요.");
-    if (!confirm("결과를 확정하면 대회가 '종료' 처리되고, 전체 참가자에게 알림이 갑니다. 계속할까요?")) return;
+    if (!userId || !resultForm.championId) return showAlert("우승자를 선택해주세요.");
+    if (!await showConfirm("결과를 확정하면 대회가 '종료' 처리되고, 전체 참가자에게 알림이 갑니다. 계속할까요?")) return;
     setIsSubmitting(true);
     const result = await recordTournamentResult(await getAccessToken(), id, resultForm);
-    if (!result.success) alert(result.error);
+    if (!result.success) showAlert(result.error);
     await load();
     setIsSubmitting(false);
   };
@@ -124,10 +125,10 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   const handleGenerateBracket = async () => {
     if (!userId || !tournament) return;
     const pendingNote = pendingTeamCount > 0 ? `\n(파트너가 아직 수락하지 않은 ${pendingTeamCount}팀은 대진표에서 제외되고 신청이 취소돼요.)` : "";
-    if (!confirm(`${entrantCount}${unit}으로 대진표를 만들까요?\n${isDoubles ? "두 선수 NTRP 합" : "NTRP"}이 높은 순으로 시드가 배정되고, 신청이 마감되며 참가자 전원에게 알림이 갑니다.${pendingNote}`)) return;
+    if (!await showConfirm(`${entrantCount}${unit}으로 대진표를 만들까요?\n${isDoubles ? "두 선수 NTRP 합" : "NTRP"}이 높은 순으로 시드가 배정되고, 신청이 마감되며 참가자 전원에게 알림이 갑니다.${pendingNote}`)) return;
     setIsSubmitting(true);
     const result = await generateBracket(await getAccessToken(), id);
-    if (!result.success) alert(result.error);
+    if (!result.success) showAlert(result.error);
     await load();
     setIsSubmitting(false);
   };
@@ -135,10 +136,10 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
   // [NEW] 관리자: 대진표 초기화
   const handleResetBracket = async () => {
     if (!userId) return;
-    if (!confirm("대진표를 초기화할까요? (결과가 입력된 경기가 있으면 초기화할 수 없어요)")) return;
+    if (!await showConfirm("대진표를 초기화할까요? (결과가 입력된 경기가 있으면 초기화할 수 없어요)", { danger: true, okText: "초기화" })) return;
     setIsSubmitting(true);
     const result = await resetBracket(await getAccessToken(), id);
-    if (!result.success) alert(result.error);
+    if (!result.success) showAlert(result.error);
     await load();
     setIsSubmitting(false);
   };
@@ -148,9 +149,9 @@ export default function TournamentDetailPage({ params }: { params: Promise<{ id:
     if (!userId) return;
     const result = await setMatchWinner(await getAccessToken(), matchId, winnerId, score);
     if (!result.success) {
-      alert(result.error);
+      showAlert(result.error);
     } else if (result.completed) {
-      alert("🏆 모든 경기가 끝났어요! 1~3위가 확정되고 참가자 전원에게 결과 알림을 보냈습니다.");
+      showAlert("🏆 모든 경기가 끝났어요! 1~3위가 확정되고 참가자 전원에게 결과 알림을 보냈습니다.");
     }
     await load();
   };

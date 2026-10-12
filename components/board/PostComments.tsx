@@ -2,6 +2,7 @@
 
 // 게시글 댓글. 읽기는 누구나, 쓰기는 로그인한 회원, 삭제는 본인 또는 관리자.
 
+import { showConfirm } from "@/lib/dialog";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { addPostComment, deletePostComment, listPostComments } from "@/app/actions/board";
@@ -43,7 +44,7 @@ export default function PostComments({ postId }: { postId: string }) {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("댓글을 삭제할까요?")) return;
+    if (!await showConfirm("댓글을 삭제할까요?", { danger: true })) return;
     const r = await deletePostComment(await getAccessToken(), id);
     if (r.success) await load();
     else setError(r.error);

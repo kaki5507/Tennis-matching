@@ -1,5 +1,6 @@
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -52,7 +53,7 @@ export default function CreateMatchPage() {
     const fetchAuthAndProfile = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
-        alert("로그인이 필요한 서비스입니다.");
+        showAlert("로그인이 필요한 서비스입니다.");
         router.push("/login");
         return;
       }
@@ -85,13 +86,13 @@ export default function CreateMatchPage() {
 
     // [NEW] 테니스장 선택 필수
     if (!selectedCourt || !selectedCourt.address) {
-      alert("테니스장을 검색해서 선택해주세요.");
+      showAlert("테니스장을 검색해서 선택해주세요.");
       return;
     }
 
     // [NEW] 직접 입력한 시작 시간 형식 검증 (HH:MM)
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(formData.startTime)) {
-      alert("시작 시간은 '19:00'처럼 HH:MM 형식으로 입력해주세요.");
+      showAlert("시작 시간은 '19:00'처럼 HH:MM 형식으로 입력해주세요.");
       return;
     }
 
@@ -108,7 +109,7 @@ export default function CreateMatchPage() {
     // [NEW] 선택한 장소를 courts 테이블에서 찾거나 새로 생성
     const courtResult = await findOrCreateCourt(await getAccessToken(), selectedCourt);
     if (!courtResult.success || !courtResult.courtId) {
-      alert(courtResult.error ?? "테니스장 정보를 저장하지 못했습니다.");
+      showAlert(courtResult.error ?? "테니스장 정보를 저장하지 못했습니다.");
       setIsLoading(false);
       return;
     }
@@ -116,11 +117,11 @@ export default function CreateMatchPage() {
     const result = await createMatchRoom(await getAccessToken(), { ...formData, costPerPerson: perPerson, recruitCount: formData.recruitCount, courtId: courtResult.courtId });
 
     if (result.success) {
-      alert("매칭 방이 성공적으로 만들어졌습니다! 🎾");
+      showAlert("매칭 방이 성공적으로 만들어졌습니다! 🎾");
       // 🌟 [수정] 메인 화면 대신, 방금 만든 방의 상세 페이지로 바로 꽂아줍니다!
       router.push(`/matches/${result.matchId}`); 
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     
     setIsLoading(false);

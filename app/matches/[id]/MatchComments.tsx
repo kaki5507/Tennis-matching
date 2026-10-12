@@ -1,6 +1,7 @@
 // app/matches/[id]/MatchComments.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -67,7 +68,7 @@ export default function MatchComments({ matchId }: { matchId: string }) {
     e.preventDefault();
     
     if (!currentUserId) {
-      alert("로그인이 필요한 서비스입니다.");
+      showAlert("로그인이 필요한 서비스입니다.");
       router.push("/login");
       return;
     }
@@ -82,7 +83,7 @@ export default function MatchComments({ matchId }: { matchId: string }) {
       await loadComments(); // 최신 댓글 다시 불러오기
       router.refresh();
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     setIsLoading(false);
   };

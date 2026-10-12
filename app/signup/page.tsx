@@ -1,5 +1,6 @@
 "use client"; // 상태 관리(useState)를 쓰기 위해 맨 위에 추가!
 
+import { showAlert } from "@/lib/dialog";
 import { checkNickname } from "@/app/actions/nickname";
 import { signUpWithoutEmailVerification } from "@/app/actions/testSignup";
 import { useEffect, useState } from "react";
@@ -192,17 +193,17 @@ export default function SignupPage() {
           void supabase.auth
             .resend({ type: "signup", email, options: { emailRedirectTo: `${window.location.origin}/login` } })
             .catch(() => {});
-          alert("회원가입이 완료되었습니다!\n인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)");
+          showAlert("회원가입이 완료되었습니다!\n인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)");
           router.push("/");
           return;
         }
         if (fast.success) {
           const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
           if (loginError) {
-            alert("회원가입이 완료되었습니다! 로그인해주세요.");
+            showAlert("회원가입이 완료되었습니다! 로그인해주세요.");
             router.push("/login");
           } else {
-            alert("회원가입이 완료되었습니다! 환영합니다 🎾");
+            showAlert("회원가입이 완료되었습니다! 환영합니다 🎾");
             router.push("/");
             router.refresh();
           }
@@ -254,7 +255,7 @@ export default function SignupPage() {
 
       // 4. 모든 것이 성공하면 로그인 페이지로 이동!
       // 세션이 없으면 이메일 인증이 필요한 설정 → 메일의 링크를 눌러야 로그인할 수 있음
-      alert(
+      showAlert(
         data.session
           ? "회원가입이 완료되었습니다! 로그인해주세요."
           : "회원가입이 완료되었습니다!\n입력하신 이메일로 인증 메일을 보냈어요. 메일의 링크를 누른 뒤 로그인해주세요. (안 보이면 스팸함도 확인해 주세요)"

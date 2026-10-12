@@ -645,3 +645,12 @@ html, body { overscroll-behavior-y: none; }
 .lv-ring.lv-7 { background: linear-gradient(120deg, #ff5f6d, #ffc371, #7cf29a, #4facfe, #c471f5, #ff5f6d); background-size: 400% 400%; animation: lv-shift 2.5s linear infinite; box-shadow: 0 0 10px rgba(196, 113, 245, .6); }
 @keyframes lv-shift { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
 @media (prefers-reduced-motion: reduce) { .lv-ring.lv-6, .lv-ring.lv-7 { animation: none; } }
+
+/* 사이트 전용 알림/확인 팝업 (components/DialogHost.tsx) */
+@keyframes dialog-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes dialog-fade { from { opacity: 0; } to { opacity: 1; } }
+.dialog-backdrop { animation: dialog-fade 0.12s ease-out; }
+.dialog-card { animation: dialog-pop 0.16s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .dialog-backdrop, .dialog-card { animation: none; }
+}

@@ -3,6 +3,7 @@ import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import PageViewTracker from "@/components/PageViewTracker";
+import DialogHost from "@/components/DialogHost";
 import SiteHeader from "@/components/SiteHeader";
 import MaintenanceGate from "@/components/MaintenanceGate";
 import { getMaintenanceState } from "@/lib/maintenance";
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <PageViewTracker />
+        <DialogHost />
         <MaintenanceGate initial={maintenance} header={<SiteHeader />}>
           {children}
         </MaintenanceGate>

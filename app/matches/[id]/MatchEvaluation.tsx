@@ -1,6 +1,7 @@
 // app/matches/[id]/MatchEvaluation.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -93,11 +94,11 @@ export default function MatchEvaluation({ matchId }: { matchId: string }) {
     const result = await submitEvaluations(await getAccessToken(), matchId, evaluationsPayload);
 
     if (result.success) {
-      alert("평가가 완료되었습니다! 소중한 피드백 감사합니다. 🎾");
+      showAlert("평가가 완료되었습니다! 소중한 피드백 감사합니다. 🎾");
       setIsSubmitted(true);
       router.refresh();
     } else {
-      alert(result.error);
+      showAlert(result.error);
     }
     
     setIsLoading(false);

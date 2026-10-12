@@ -8,6 +8,7 @@
 //  - registered          : 신청 완료 + 취소
 //  - ineligible / guest  : 이유 안내
 
+import { showConfirm } from "@/lib/dialog";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { searchPartnerCandidates, createTeam, respondToTeamInvite } from "@/app/actions/tournamentTeam";
@@ -99,8 +100,8 @@ export default function TeamRegistration({ tournamentId, userId, viewer, viewerP
         <button
           type="button"
           disabled={isBusy}
-          onClick={() => {
-            if (confirm("팀 신청을 취소할까요? 파트너의 신청도 함께 취소돼요.")) {
+          onClick={async () => {
+            if (await showConfirm("팀 신청을 취소할까요? 파트너의 신청도 함께 취소돼요.", { danger: true, okText: "신청 취소", cancelText: "유지" })) {
               run(async () => cancelTournamentRegistration(await getAccessToken(), tournamentId));
             }
           }}

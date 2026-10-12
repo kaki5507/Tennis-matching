@@ -1,6 +1,7 @@
 // app/matches/[id]/MatchChatRoom.tsx
 "use client";
 
+import { showAlert } from "@/lib/dialog";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,7 +95,7 @@ export default function MatchChatRoom({ matchId, currentUserId }: MatchChatRoomP
       setMessage(""); 
       await fetchChatsForAction(); 
     } else {
-      alert(res.error);
+      showAlert(res.error);
     }
     setIsSending(false);
   };

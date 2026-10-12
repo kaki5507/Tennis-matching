@@ -3,6 +3,7 @@
 // app/tournaments/[id]/bracket/page.tsx
 // 대진표만 크게 보는 전용 화면. 진행 중인 대회는 30초마다 자동으로 새로고침됩니다.
 
+import { showAlert } from "@/lib/dialog";
 import { useCallback, useEffect, useState, use } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -76,9 +77,9 @@ export default function BracketPage({ params }: { params: Promise<{ id: string }
     if (!userId) return;
     const result = await setMatchWinner(await getAccessToken(), matchId, winnerId, score);
     if (!result.success) {
-      alert(result.error);
+      showAlert(result.error);
     } else if (result.completed) {
-      alert("🏆 모든 경기가 끝났어요! 1~3위가 확정되고 참가자 전원에게 결과 알림을 보냈습니다.");
+      showAlert("🏆 모든 경기가 끝났어요! 1~3위가 확정되고 참가자 전원에게 결과 알림을 보냈습니다.");
     }
     await load();
   };
