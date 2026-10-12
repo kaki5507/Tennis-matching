@@ -7,29 +7,35 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/tournamentData";
 import EmptyState from "@/components/EmptyState";
 import AvatarStack from "@/components/AvatarStack";
-import { seatInfo } from "@/lib/matchDisplay";
+import { seatInfo, isPast, kstToday } from "@/lib/matchDisplay";
 import { getLevelMap } from "@/lib/badgeData";
 import { getLatestNotices } from "@/app/actions/board";
 
 // 30초 캐시: 방문자가 많아도 DB는 30초에 한 번만 조회합니다. (실패하면 캐시하지 않고 예외를 그대로 던집니다)
 const fetchLive = unstable_cache(async () => {
-    const [openMatches, members, completed, tournaments, upcoming, notice] = await Promise.all([
-      prisma.match.count({ where: { status: "OPEN", deletedAt: null } }),
-      prisma.user.count(),
-      prisma.match.count({ where: { status: "COMPLETED", deletedAt: null } }),
-      prisma.tournament.count(),
+    const today = new Date(`${kstToday()}T00:00:00Z`);
+    const [openList, members, completed, tournaments, notice] = await Promise.all([
+      // 오늘 이후 날짜의 모집 중인 방만 가져온 뒤, 오늘 이미 시작 시각이 지난 방은 아래에서 걸러냅니다.
       prisma.match.findMany({
-        where: { status: "OPEN", deletedAt: null },
+        where: { status: "OPEN", deletedAt: null, matchDate: { gte: today } },
         include: {
           court: true,
           host: { select: { id: true, nickname: true } },
           participants: { where: { status: "ACCEPTED" }, select: { user: { select: { id: true, nickname: true } } } },
         },
         orderBy: [{ matchDate: "asc" }, { startTime: "asc" }],
-        take: 4,
+        take: 100,
       }),
+      prisma.user.count(),
+      prisma.match.count({ where: { status: "COMPLETED", deletedAt: null } }),
+      prisma.tournament.count(),
       getLatestNotices(3),
     ]);
+    const live = openList.filter(
+      (m) => !isPast(m.matchDate.toISOString().slice(0, 10), m.startTime.toISOString().slice(11, 16)),
+    );
+    const openMatches = live.length;
+    const upcoming = live.slice(0, 4);
     return { openMatches, members, completed, tournaments, upcoming, notice };
 }, ["home-live"], { revalidate: 30 });
 
@@ -49,7 +55,7 @@ export default async function HomeLive() {
 
   const stats = [
     { label: "모집 중인 방", value: data.openMatches, href: "/matches" },
-    { label: "함께하는 회원", value: data.members, href: null },
+    { label: "함께하는 회원", value: data.members, href: "/ranking" },
     { label: "치러진 경기", value: data.completed, href: "/history" },
     { label: "열린 대회", value: data.tournaments, href: "/tournaments" },
   ];

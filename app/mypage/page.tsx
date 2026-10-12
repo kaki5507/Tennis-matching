@@ -12,6 +12,7 @@ import NotificationOptIn from "./NotificationOptIn";
 import CourtWatchList from "./CourtWatchList";
 import TennisLoader from "@/components/TennisLoader";
 import { getAccessToken } from "@/lib/authToken";
+import { isPast } from "@/lib/matchDisplay";
 
 interface CourtData {
   name: string;
@@ -95,12 +96,16 @@ export default function MyPage() {
     );
   }
 
+  const matchExpired = (m: MatchData) =>
+    (m.status === "OPEN" || m.status === "FULL") &&
+    isPast(new Date(m.matchDate).toISOString().slice(0, 10), new Date(m.startTime).toISOString().slice(11, 16));
+
   const renderMatchCard = (match: MatchData) => (
     <div key={match.id} className="surface p-5 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4  transition-colors">
       <div>
         <div className="flex gap-2 items-center mb-1">
-          <span className={`text-xs font-bold px-2 py-1 rounded-md ${match.status === "OPEN" ? "badge-ok" : "bg-slate-100 text-slate-500"}`}>
-            {match.status === "OPEN" ? "모집중" : "마감됨"}
+          <span className={`text-xs font-bold px-2 py-1 rounded-md ${match.status === "OPEN" && !matchExpired(match) ? "badge-ok" : "bg-slate-100 text-slate-500"}`}>
+            {match.status === "COMPLETED" ? "경기 완료" : matchExpired(match) ? "기간 지남" : match.status === "OPEN" ? "모집중" : "마감됨"}
           </span>
           <span className="text-slate-500 text-sm font-medium">{match.gameType}</span>
         </div>

@@ -9,7 +9,7 @@ import HostDashboard from "./HostDashboard";
 import MatchComments from "./MatchComments";
 import MatchEvaluation from "./MatchEvaluation";
 import ShareButton from "./ShareButton";
-import { dayLabel, seatInfo } from "@/lib/matchDisplay";
+import { dayLabel, seatInfo, isPast } from "@/lib/matchDisplay";
 import { getLevelMap } from "@/lib/badgeData";
 import MatchChatWrapper from "./MatchChatWrapper";
 import CourtMap from "@/components/CourtMap";
@@ -42,8 +42,11 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
   const waiting = match.participants.filter((p) => p.status === "PENDING").length;
   const seat = seatInfo(match.gameType, accepted, match.recruitCount);
   const lvMap = await getLevelMap([match.host?.id ?? "", ...match.participants.map((p) => p.user.id)]);
-  const statusBadge =
-    match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
+  const timeStr = match.startTime.toISOString().slice(11, 16);
+  const expired = (match.status === "OPEN" || match.status === "FULL") && isPast(dateStr, timeStr);
+  const statusBadge = expired
+    ? "⏱ 경기 시간 지남"
+    : match.status === "OPEN" ? "🟢 모집중" : match.status === "COMPLETED" ? "🏁 경기 완료" : match.status === "CANCELED" ? "⚪ 취소됨" : "🔴 마감됨";
 
   return (
     <div className="min-h-screen page-bg py-6 sm:py-12 px-3 sm:px-4">
