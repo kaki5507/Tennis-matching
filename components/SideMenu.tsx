@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, Crown, Megaphone, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Home, CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, Crown, Megaphone, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
@@ -83,6 +83,10 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
           </div>
 
           <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
+            <Link href="/" className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold mb-1 ${pathname === "/" ? "chip-on" : "chip-off drawer-hover"}`}>
+              <Home className="w-[18px] h-[18px]" />
+              홈
+            </Link>
             {userId && (
               <Link href="/courts" className="drawer-feature flex items-center gap-3 rounded-xl p-3 mb-2">
                 <span className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
