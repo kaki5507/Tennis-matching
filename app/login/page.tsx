@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
+import SocialLoginButtons from "@/components/SocialLoginButtons";
 import { getEmailBypassMode, confirmEmailForTest } from "@/app/actions/testSignup";
 
 export default function LoginPage() {
@@ -22,6 +23,14 @@ export default function LoginPage() {
   const [infoMsg, setInfoMsg] = useState("");
   const [needsConfirm, setNeedsConfirm] = useState(false); // 이메일 인증이 안 된 계정
   const [emailBypass, setEmailBypass] = useState(false); // 테스트 단계: 이메일 인증 건너뛰기 가능
+  // 간편로그인에서 돌려보낸 경우의 안내
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get("social");
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (r === "exists") setErrorMsg("이미 가입된 이메일이에요. 가입할 때 쓴 이메일과 비밀번호로 로그인해 주세요.");
+    else if (r === "error") setErrorMsg("간편로그인을 완료하지 못했어요. 다시 시도해 주세요.");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
   useEffect(() => {
     getEmailBypassMode().then((m) => setEmailBypass(m.emailBypass)).catch(() => {});
   }, []);
@@ -129,6 +138,8 @@ const handleLogin = async (e: React.SyntheticEvent) => {
             {infoMsg}
           </div>
         )}
+
+        <div className="mb-6"><SocialLoginButtons onError={setErrorMsg} /></div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">

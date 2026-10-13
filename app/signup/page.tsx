@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { createUserInDB } from "@/app/actions/auth";
 import { completeIdentityVerification, devBypassIdentityVerification, getSignupMode } from "@/app/actions/verification";
+import SocialLoginButtons from "@/components/SocialLoginButtons";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
@@ -308,6 +309,8 @@ export default function SignupPage() {
           <h1 className="text-2xl heading mb-2">반갑습니다! 🎾</h1>
           <p className="text-slate-500">딱 맞는 테니스 파트너를 찾아드릴게요.</p>
         </div>
+
+        <div className="mb-6"><SocialLoginButtons onError={setErrorMsg} /></div>
 
         {/* [NEW] 본인인증 단계 */}
         <div className="mb-6">
