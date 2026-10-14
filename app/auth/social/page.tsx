@@ -35,7 +35,7 @@ export default function SocialCallbackPage() {
   const started = useRef(false);
 
   const leaveToLogin = useCallback(
-    async (reason: "exists" | "error") => {
+    async (reason: "exists" | "error" | "banned") => {
       await supabase.auth.signOut().catch(() => {});
       router.replace(`/login?social=${reason}`);
     },
@@ -77,6 +77,8 @@ export default function SocialCallbackPage() {
         setPhase("profile");
       } else if (res.status === "BLOCKED_EMAIL") {
         await leaveToLogin("exists");
+      } else if (res.status === "BLOCKED_BANNED") {
+        await leaveToLogin("banned");
       } else {
         setError(res.error);
         setPhase("error");
@@ -105,7 +107,11 @@ export default function SocialCallbackPage() {
         privacyAgreed: privacy,
         marketingAgreed: marketing,
       });
-      if (!r.success) return setError(r.error);
+      if (!r.success) {
+        // 이용 제한 계정이면 로그인 상태가 남지 않도록 로그아웃하고 안내
+        if ("banned" in r && r.banned) return void (await leaveToLogin("banned"));
+        return setError(r.error);
+      }
       router.replace("/");
       router.refresh();
     } finally {

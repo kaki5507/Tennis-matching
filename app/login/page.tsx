@@ -28,6 +28,7 @@ export default function LoginPage() {
     const r = new URLSearchParams(window.location.search).get("social");
     /* eslint-disable react-hooks/set-state-in-effect */
     if (r === "exists") setErrorMsg("이미 가입된 이메일이에요. 가입할 때 쓴 이메일과 비밀번호로 로그인해 주세요.");
+    else if (r === "banned") setErrorMsg("이용이 제한된 계정이라 가입할 수 없어요.");
     else if (r === "error") setErrorMsg("간편로그인을 완료하지 못했어요. 다시 시도해 주세요.");
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);

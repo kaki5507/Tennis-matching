@@ -22,6 +22,7 @@ export type SocialStatus =
   | { status: "EXISTS" }
   | { status: "NEEDS_PROFILE"; email: string; suggestedNickname: string }
   | { status: "BLOCKED_EMAIL" }
+  | { status: "BLOCKED_BANNED" }
   | { status: "ERROR"; error: string }
 
 type Ctx =
@@ -70,6 +71,12 @@ export async function checkSocialLogin(accessToken: string | null): Promise<Soci
       return { status: "BLOCKED_EMAIL" }
     }
 
+    // 이용 제한(블랙리스트)된 이메일이면 가입 화면까지 보내지 않고 바로 막음
+    if (await prisma.bannedIdentity.findUnique({ where: { ciDi: await unverifiedIdentityFor(ctx.email) } })) {
+      if (viaSocial) await getSupabaseAdmin()?.auth.admin.deleteUser(ctx.id).catch(() => {})
+      return { status: "BLOCKED_BANNED" }
+    }
+
     const meta = (ctx.auth?.user_metadata ?? {}) as Record<string, unknown>
     const raw = String(meta.nickname ?? meta.name ?? meta.full_name ?? ctx.email.split("@")[0] ?? "")
     return { status: "NEEDS_PROFILE", email: ctx.email, suggestedNickname: normalizeNickname(raw).slice(0, 20) }
@@ -104,7 +111,7 @@ export async function createSocialProfile(
     // 이메일 기반 식별값 → 같은 이메일 중복 가입과 정지 회원의 재가입을 막음 (이메일 가입과 같은 규칙)
     const ciDi = await unverifiedIdentityFor(ctx.email)
     if (await prisma.bannedIdentity.findUnique({ where: { ciDi } })) {
-      return { success: false as const, error: "이용이 제한된 계정입니다. 재가입이 불가합니다." }
+      return { success: false as const, banned: true as const, error: "이용이 제한된 계정입니다. 재가입이 불가합니다." }
     }
     if (await prisma.user.findFirst({ where: { OR: [{ ciDi }, { email: { equals: ctx.email, mode: "insensitive" } }], deletedAt: null, NOT: { id: ctx.id } } })) {
       return { success: false as const, error: "이미 가입된 이메일이에요. 이메일로 로그인해 주세요." }
