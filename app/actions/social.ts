@@ -9,6 +9,7 @@
 import type { User as AuthUser } from "@supabase/supabase-js"
 import { prisma } from "@/lib/tournamentData"
 import { verifyToken } from "@/lib/serverAuth"
+import { supabase } from "@/lib/supabase"
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin"
 import { getMaintenanceState, MAINTENANCE_BLOCK_MESSAGE } from "@/lib/maintenance"
 import { normalizeNickname, nicknameFormatError, NICKNAME_TAKEN_MESSAGE } from "@/lib/nickname"
@@ -31,12 +32,11 @@ async function loadCtx(accessToken: string | null): Promise<Ctx> {
   const t = await verifyToken(accessToken)
   if (!t.ok) return { ok: false, error: t.error }
   if (!t.email) return { ok: false, error: "이메일 정보를 받아오지 못했어요. 제공업체에서 이메일 제공에 동의했는지 확인해 주세요." }
-  const admin = getSupabaseAdmin()
-  let auth: AuthUser | null = null
-  if (admin) {
-    const { data } = await admin.auth.admin.getUserById(t.id)
-    auth = data.user ?? null
-  }
+  // 로그인 토큰으로 직접 조회 → 어떤 제공업체(이메일/구글/카카오)로 가입·로그인했는지 알 수 있음.
+  // (관리자 키가 없어도 동작하도록 일반 키로 조회. 관리자 키는 아래 "방금 만든 소셜 계정 정리"에만 선택적으로 사용)
+  const { data, error } = await supabase.auth.getUser(accessToken ?? undefined)
+  if (error || !data.user) return { ok: false, error: "로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요." }
+  const auth: AuthUser = data.user
   return { ok: true, id: t.id, email: t.email, auth }
 }
 
@@ -87,8 +87,8 @@ export async function createSocialProfile(
   try {
     const ctx = await loadCtx(accessToken)
     if (!ctx.ok) return { success: false as const, error: ctx.error }
-    // 관리자 키가 없으면 제공업체를 확인할 수 없으므로 열지 않음 (이메일 가입 계정이 이 경로로 본인인증을 건너뛰는 것을 막기 위함)
-    if (!ctx.auth) return { success: false as const, error: "간편로그인을 지금은 사용할 수 없어요." }
+    // 제공업체를 확인할 수 없으면 열지 않음 (이메일 가입 계정이 이 경로로 본인인증을 건너뛰는 것을 막기 위함)
+    if (!ctx.auth) return { success: false as const, error: "로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요." }
     if (!SOCIAL.has(latestProvider(ctx.auth) ?? "") || hasEmailIdentity(ctx.auth)) {
       return { success: false as const, error: "간편로그인으로 로그인한 계정만 사용할 수 있어요." }
     }
