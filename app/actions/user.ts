@@ -12,7 +12,7 @@ export async function getMyMatches(accessToken: string | null) {
 
     // 1. 내가 방장(Host)인 방 목록 가져오기
     const hostedMatches = await prisma.match.findMany({
-      where: { hostId: userId },
+      where: { hostId: userId, deletedAt: null }, // 삭제한 방은 숨김
       include: { court: true }, // 코트장 정보 포함
       orderBy: { matchDate: 'desc' }
     });
@@ -20,7 +20,7 @@ export async function getMyMatches(accessToken: string | null) {
     // 2. 내가 참여 신청한(Participant) 방 목록 가져오기
     // (만약 Prisma에 MatchParticipant를 위 안내대로 추가하셨다면 정상 작동합니다)
     const participatedRecords = await prisma.matchParticipant.findMany({
-      where: { userId: userId },
+      where: { userId: userId, match: { deletedAt: null } }, // 방장이 삭제한 방은 숨김
       include: { 
         match: {
           include: { court: true } // 매칭 방 안의 코트장 정보까지 싹 포함

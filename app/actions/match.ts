@@ -348,3 +348,42 @@ export async function updateMatchRoom(accessToken: string | null, matchId: strin
     return { success: false, error: "방 정보를 수정하지 못했습니다." }
   }
 }
+
+/**
+ * 방장이 자기 방을 삭제(취소)합니다. 모집 중(OPEN)이거나 마감(FULL)된 방만 가능하고,
+ * 이미 끝난 경기(COMPLETED)는 기록이 남아야 하므로 지울 수 없어요.
+ * 신청자/참가자에게는 취소 알림이 갑니다. 방은 숨김 처리(deletedAt)되어 목록과 메인에서 사라집니다.
+ */
+export async function deleteMatchRoom(accessToken: string | null, matchId: string) {
+  try {
+    const auth = await requireUser(accessToken)
+    if (!auth.ok) return { success: false as const, error: auth.error }
+
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: { hostId: true, status: true, deletedAt: true, matchDate: true, startTime: true, court: { select: { name: true } } },
+    })
+    if (!match || match.deletedAt || match.hostId !== auth.userId) return { success: false as const, error: "권한이 없습니다. (방장만 가능)" }
+    if (match.status === "COMPLETED") return { success: false as const, error: "이미 끝난 경기는 삭제할 수 없어요. 기록으로 남아요." }
+
+    const people = await prisma.matchParticipant.findMany({
+      where: { matchId, status: { in: ["ACCEPTED", "PENDING"] } },
+      select: { userId: true },
+    })
+
+    await prisma.match.update({
+      where: { id: matchId },
+      data: { status: MatchStatus.CANCELED, deletedAt: new Date() },
+    })
+
+    const when = `${match.matchDate.toISOString().slice(5, 10).replace("-", "/")} ${match.startTime.toISOString().slice(11, 16)}`
+    await sendPushToUsers(
+      people.map((p) => p.userId),
+      { title: "매칭이 취소됐어요", body: `${match.court?.name ?? "테니스장"} ${when} 매칭을 방장이 삭제했어요. 다른 매칭을 찾아보세요.`, url: "/matches" }
+    )
+    return { success: true as const, notified: people.length }
+  } catch (error) {
+    console.error("방 삭제 에러:", error)
+    return { success: false as const, error: "방 삭제에 실패했습니다. 잠시 후 다시 시도해주세요." }
+  }
+}

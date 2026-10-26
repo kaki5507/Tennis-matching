@@ -1,7 +1,7 @@
 // app/matches/[id]/JoinButton.tsx
 "use client";
 
-import { showAlert } from "@/lib/dialog";
+import { showAlert, showConfirm } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ export default function JoinButton({ matchId }: { matchId: string }) {
       ? "🚨 이미 방장이 참여를 수락한 상태입니다.\n\n지금 취소하면 다른 참여자들에게 피해를 줄 수 있습니다. 정말 취소하시겠습니까?" 
       : "참여 신청을 취소하시겠습니까?";
     
-    if (!window.confirm(confirmMsg)) return;
+    if (!(await showConfirm(confirmMsg, { danger: true, okText: "신청 취소", cancelText: "유지" }))) return;
 
     setIsLoading(true);
     const res = await cancelMatchApplication(await getAccessToken(), matchId);

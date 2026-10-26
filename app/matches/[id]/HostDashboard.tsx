@@ -1,7 +1,7 @@
 // app/matches/[id]/HostDashboard.tsx
 "use client";
 
-import { showAlert } from "@/lib/dialog";
+import { showAlert, showConfirm } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { getMatchApplications, confirmPayment } from "@/app/actions/participant";
-import { updateParticipantStatus, completeMatchAction, updateMatchRoom } from "@/app/actions/match";
+import { updateParticipantStatus, completeMatchAction, updateMatchRoom, deleteMatchRoom } from "@/app/actions/match";
 import Link from "next/link";
 import EmptyState from "@/components/EmptyState";
 import { getAccessToken } from "@/lib/authToken";
@@ -57,7 +57,7 @@ export default function HostDashboard({
   const handleSaveEdit = async () => {
     const [d, t] = form.dateTime.split("T");
     const cost = parseInt(form.cost) || 0;
-    if (cost >= 50_000 && !window.confirm(`1인당 참가비 ${cost.toLocaleString()}원이 맞나요?\n보통 1인당 비용은 이보다 훨씬 적어요.`)) return;
+    if (cost >= 50_000 && !(await showConfirm(`1인당 참가비 ${cost.toLocaleString()}원이 맞나요?\n보통 1인당 비용은 이보다 훨씬 적어요.`))) return;
     setIsLoading(true);
     const r = await updateMatchRoom(await getAccessToken(), matchId, { matchDate: d, startTime: (t ?? "").slice(0, 5), costPerPerson: form.cost, description: form.description });
     setIsLoading(false);
@@ -156,11 +156,34 @@ export default function HostDashboard({
     setIsLoading(false);
   };
 
+  // 방 삭제 (모집 중/마감 상태의 방장만)
+  const handleDeleteMatch = async () => {
+    if (!hostId) return;
+    const joined = applicants.filter((a) => a.status === "ACCEPTED").length;
+    const pending = applicants.filter((a) => a.status === "PENDING").length;
+    const people = joined + pending;
+    const ok = await showConfirm(
+      `이 방을 삭제할까요?\n${people > 0 ? `참가 확정 ${joined}명, 신청 대기 ${pending}명에게 취소 알림이 가요.\n` : ""}삭제하면 되돌릴 수 없어요.`,
+      { danger: true, title: "방 삭제", okText: "방 삭제", cancelText: "취소" },
+    );
+    if (!ok) return;
+    setIsLoading(true);
+    const result = await deleteMatchRoom(await getAccessToken(), matchId);
+    if (result.success) {
+      showAlert("방을 삭제했어요.");
+      router.push("/matches");
+      router.refresh();
+    } else {
+      showAlert(result.error);
+      setIsLoading(false);
+    }
+  };
+
   // 경기 완료 처리
   const handleCompleteMatch = async () => {
     if (!hostId) return;
     
-    const isConfirm = window.confirm("경기를 완료 처리하시겠습니까?\n완료 후에는 참가자들 간의 동료 평가(NTRP)가 시작됩니다.");
+    const isConfirm = await showConfirm("경기를 완료 처리하시겠습니까?\n완료 후에는 참가자들 간의 동료 평가(NTRP)가 시작됩니다.", { title: "경기 완료", okText: "완료 처리" });
     if (!isConfirm) return;
 
     setIsLoading(true);
@@ -248,15 +271,28 @@ export default function HostDashboard({
           👑 방장 대시보드
         </h3>
         
-        {/* 경기 완료 버튼 */}
         {currentStatus !== "COMPLETED" && currentStatus !== "CANCELED" && (
-          <Button 
-            onClick={handleCompleteMatch} 
-            disabled={isLoading}
-            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-sm"
-          >
-            🏁 경기 완료 (평가 시작)
-          </Button>
+          <div className="flex w-full sm:w-auto flex-col-reverse sm:flex-row gap-2">
+            {/* 방 삭제 버튼 (모집 중/마감 상태) */}
+            <Button
+              type="button"
+              onClick={handleDeleteMatch}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full sm:w-auto border-2 text-danger hover:text-danger"
+              style={{ borderColor: "var(--danger)" }}
+            >
+              🗑 방 삭제
+            </Button>
+            {/* 경기 완료 버튼 */}
+            <Button
+              onClick={handleCompleteMatch}
+              disabled={isLoading}
+              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white shadow-sm"
+            >
+              🏁 경기 완료 (평가 시작)
+            </Button>
+          </div>
         )}
       </div>
 

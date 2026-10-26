@@ -1,6 +1,6 @@
 "use client";
 
-import { showAlert } from "@/lib/dialog";
+import { showAlert, showConfirm } from "@/lib/dialog";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -101,7 +101,7 @@ export default function CreateMatchPage() {
     const ball = parseInt(formData.ballFee) || 0;
     if (court >= 100_000 || ball >= 100_000) {
       const label = court >= 100_000 ? `코트비 ${court.toLocaleString()}원` : `공값 ${ball.toLocaleString()}원`;
-      if (!window.confirm(`${label}이 맞나요?\n보통 코트비는 10만원을 넘지 않아요. 금액을 다시 확인해 주세요.`)) return;
+      if (!(await showConfirm(`${label}이 맞나요?\n보통 코트비는 10만원을 넘지 않아요. 금액을 다시 확인해 주세요.`))) return;
     }
 
     setIsLoading(true);
