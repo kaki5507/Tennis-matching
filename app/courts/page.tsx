@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { RefreshCw, Bell, Clock } from "lucide-react";
+import { RefreshCw, Clock, Moon } from "lucide-react";
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts";
 import { getCourtRange } from "@/app/actions/courtNow";
 import type { CourtRangeResult, RangeKey } from "@/lib/courtToday";
@@ -13,6 +13,7 @@ import { getAccessToken } from "@/lib/authToken";
 import { useAuthUser } from "@/lib/useAuthUser";
 import TennisMascot from "@/components/TennisMascot";
 import { dayKind } from "@/lib/koHolidays";
+import { isAfterWork } from "@/lib/afterWork";
 import CourtCrawlAdmin from "@/components/CourtCrawlAdmin";
 
 const RANGES: { key: RangeKey; label: string; hint: string }[] = [
@@ -36,10 +37,13 @@ function ago(iso: string, now: number) {
   return h < 24 ? `${h}시간 ${min % 60}분 전` : `${Math.floor(h / 24)}일 전`;
 }
 
-function TimeChip({ t }: { t: string }) {
+function TimeChip({ t, night }: { t: string; night?: boolean }) {
   return (
-    <span className={`${isAm(t) ? "time-am" : "time-pm"} inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full`}>
-      <Clock className="w-3 h-3" /> {t}
+    <span
+      className={`${night ? "time-night" : isAm(t) ? "time-am" : "time-pm"} inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full`}
+      title={night ? "평일 저녁 20~22시 · 퇴근 후 치기 좋은 시간" : undefined}
+    >
+      {night ? <Moon className="w-3 h-3" /> : <Clock className="w-3 h-3" />} {t}
     </span>
   );
 }
@@ -163,7 +167,8 @@ export default function CourtsPage() {
         <div className="flex items-center gap-2 mt-4 text-xs text-ink-muted">
           <span className="time-am px-2 py-0.5 rounded-full font-bold">오전</span>
           <span className="time-pm px-2 py-0.5 rounded-full font-bold">오후</span>
-          <span>시간대 색으로 구분해요</span>
+          <span className="time-night px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1"><Moon className="w-3 h-3" />퇴근 후</span>
+          <span>평일 20~22시</span>
           <span className="off-day-head px-2 py-0.5 rounded-full font-bold ml-auto">🔥 쉬는 날</span>
         </div>
 
@@ -185,10 +190,16 @@ export default function CourtsPage() {
                 {byDate.map(([date, d]) => {
                   const k = dayKind(date);
                   const off = k.kind !== "weekday";
+                  const nightCount = d.courts.reduce((n, c) => n + c.times.filter((t) => isAfterWork(date, t)).length, 0);
                   return (
                   <li key={date} className={`surface rounded-2xl overflow-hidden ${off ? "off-day-card" : ""}`}>
                     <div className={`px-4 py-2 font-extrabold text-sm flex items-center justify-between gap-2 ${off ? "off-day-head" : "bg-court-solid"}`}>
                       <span>{d.label}</span>
+                      {!off && nightCount > 0 && (
+                        <span className="text-[11px] font-extrabold bg-white/95 text-ok rounded-full px-2.5 py-0.5 inline-flex items-center gap-1">
+                          <Moon className="w-3 h-3" /> 퇴근 후 가능 {nightCount}
+                        </span>
+                      )}
                       {off && (
                         <span className="text-[11px] font-extrabold bg-white/95 text-clay rounded-full px-2.5 py-0.5">
                           🔥 {k.kind === "holiday" ? `공휴일 · ${k.name}` : "주말"} · 경쟁 치열
@@ -200,7 +211,7 @@ export default function CourtsPage() {
                         <li key={c.name} className="px-4 py-3">
                           <div className="text-sm font-bold text-ink mb-1.5">{c.name}</div>
                           <div className="flex flex-wrap gap-1.5">
-                            {c.times.map((t) => <TimeChip key={t} t={t} />)}
+                            {c.times.map((t) => <TimeChip key={t} t={t} night={isAfterWork(date, t)} />)}
                           </div>
                         </li>
                       ))}

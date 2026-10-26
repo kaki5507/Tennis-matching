@@ -613,6 +613,8 @@
 /* 시간대 칩: 오전 = 따뜻한 노랑, 오후 = 하늘빛 */
 .time-am { background: var(--warn-soft); color: var(--warn); }
 .time-pm { background: var(--info-soft); color: var(--info); }
+/* 평일 저녁 20~22시 "퇴근 후" 시간대 */
+.time-night { background: var(--ok-soft); color: var(--ok); box-shadow: inset 0 0 0 1.5px var(--ok); }
 /* 모바일에서 맨 위를 당겨도 헤더가 겹쳐 보이지 않도록 바운스 제거 */
 html, body { overscroll-behavior-y: none; }
 
