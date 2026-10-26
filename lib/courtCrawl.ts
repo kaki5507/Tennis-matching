@@ -5,9 +5,10 @@
 // 키 형식: "YYYY-MM-DD_09:00~11:00"
 
 import { prisma } from "@/lib/tournamentData"
-import { fetchAvailableSlots } from "@/lib/bucheonScraper"
+import { fetchAvailableSlots, type YearMonth } from "@/lib/bucheonScraper"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
 import { sendPushToUsers } from "@/lib/push"
+import { NEXT_MONTH_FROM_DAY } from "@/lib/courtToday"
 
 export const CRAWL_OPEN_HOUR = 9 // 한국 시간 이 시각부터
 export const CRAWL_CLOSE_HOUR = 23 // 23시 정각 실행까지 포함
@@ -39,7 +40,12 @@ export async function runCourtCrawl(opts: { trigger: "cron" | "admin"; respectSw
   if (opts.respectHours && (hour < CRAWL_OPEN_HOUR || hour > CRAWL_CLOSE_HOUR)) return empty("수집 시간대(09~23시) 밖")
   if (opts.respectSwitch && !(await getCrawlSetting()).enabled) return empty("관리자가 크롤링을 꺼 둔 상태")
 
-  const monthPrefix = `${kst.getUTCFullYear()}-${String(kst.getUTCMonth() + 1).padStart(2, "0")}`
+  const pad2 = (n: number) => String(n).padStart(2, "0")
+  const monthPrefix = `${kst.getUTCFullYear()}-${pad2(kst.getUTCMonth() + 1)}`
+  // 25일부터는 다음 달도 수집 (12월이면 다음 해 1월)
+  const withNext = kst.getUTCDate() >= NEXT_MONTH_FROM_DAY
+  const next: YearMonth = kst.getUTCMonth() === 11 ? { year: kst.getUTCFullYear() + 1, month: 1 } : { year: kst.getUTCFullYear(), month: kst.getUTCMonth() + 2 }
+  const nextPrefix = `${next.year}-${pad2(next.month)}`
   const results: Record<string, number> = {}
   let ok = 0
   let failed = 0
@@ -51,6 +57,18 @@ export async function runCourtCrawl(opts: { trigger: "cron" | "admin"; respectSw
       const keys = [...new Set(slots.map((s) => `${monthPrefix}-${s.date}_${s.time}`))]
 
       const snapshot = await prisma.courtAvailabilitySnapshot.findUnique({ where: { facilityId: court.facilityId } })
+
+      // 다음 달 (25일 이후). 이번 달 수집은 이미 성공했으므로, 다음 달이 실패해도 전체를 실패로 보지 않고
+      // 직전에 저장해 둔 다음 달 정보를 그대로 유지합니다 (그래야 "새로 생긴 자리" 알림이 잘못 나가지 않아요).
+      if (withNext) {
+        try {
+          const nextSlots = await fetchAvailableSlots(court.facilityId, next)
+          for (const k of new Set(nextSlots.map((s) => `${nextPrefix}-${s.date}_${s.time}`))) keys.push(k)
+        } catch (e) {
+          console.error(`[${court.name}] 다음 달 확인 실패 (직전 저장본 유지):`, e)
+          for (const k of snapshot?.availableKeys ?? []) if (k.startsWith(`${nextPrefix}-`)) keys.push(k)
+        }
+      }
       // 예전 형식("DD_시간")으로 저장된 키도 같은 슬롯으로 취급 (가짜 알림 방지)
       const previousKeys = new Set((snapshot?.availableKeys ?? []).map((k) => (/^\d{2}_/.test(k) ? `${monthPrefix}-${k}` : k)))
       const newlyAvailable = keys.filter((k) => !previousKeys.has(k))

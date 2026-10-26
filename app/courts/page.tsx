@@ -19,11 +19,13 @@ import CourtCrawlAdmin from "@/components/CourtCrawlAdmin";
 const RANGES: { key: RangeKey; label: string; hint: string }[] = [
   { key: "tomorrow", label: "내일", hint: "내일 가능한 시간" },
   { key: "week", label: "7일", hint: "내일부터 7일" },
-  { key: "month", label: "이번 달", hint: "이번 달 남은 날" },
+  { key: "month", label: "이번 달", hint: "이번 달 남은 날 (25일부터는 다음 달까지)" },
 ];
 
 const fmt = (iso: string) => new Date(iso).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
 const isAm = (t: string) => Number(t.slice(0, 2)) < 12;
+
+type FilterKey = "am" | "pm" | "night" | "off";
 
 type Bucket = { results: CourtRangeResult[]; updatedAt: string | null; rangeLabel: string; truncated: boolean; loaded: boolean };
 const EMPTY: Bucket = { results: [], updatedAt: null, rangeLabel: "", truncated: false, loaded: false };
@@ -56,6 +58,15 @@ export default function CourtsPage() {
   const [loading, setLoading] = useState<RangeKey | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // 누른 필터들. 시간 필터(오전/오후/퇴근 후)는 하나라도 맞으면 보이고(합집합), "쉬는 날"은 날짜를 추가로 좁힙니다.
+  const [filters, setFilters] = useState<Set<FilterKey>>(new Set());
+  const toggle = (k: FilterKey) =>
+    setFilters((prev) => {
+      const n = new Set(prev);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
 
   // "N분 전" 표시를 30초마다 갱신
   useEffect(() => {
@@ -94,8 +105,22 @@ export default function CourtsPage() {
         map.set(d.date, e);
       }
     }
-    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [bucket.results]);
+    const timeFilters = (["am", "pm", "night"] as const).filter((k) => filters.has(k));
+    const onlyOff = filters.has("off");
+    const matchTime = (date: string, t: string) =>
+      timeFilters.length === 0 ||
+      timeFilters.some((k) => (k === "am" ? isAm(t) : k === "pm" ? !isAm(t) : isAfterWork(date, t)));
+
+    const out: [string, { label: string; courts: { name: string; times: string[] }[] }][] = [];
+    for (const [date, d] of [...map.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      if (onlyOff && dayKind(date).kind === "weekday") continue;
+      const courts = d.courts
+        .map((c) => ({ name: c.name, times: c.times.filter((t) => matchTime(date, t)) }))
+        .filter((c) => c.times.length > 0);
+      if (courts.length > 0) out.push([date, { label: d.label, courts }]);
+    }
+    return out;
+  }, [bucket.results, filters]);
 
   const checkedCount = bucket.results.filter((r) => r.ok).length;
 
@@ -163,13 +188,43 @@ export default function CourtsPage() {
 
         {error && <p className="alert-danger rounded-xl p-3 text-sm mt-3">{error}</p>}
 
-        {/* 시간 색 안내 */}
-        <div className="flex items-center gap-2 mt-4 text-xs text-ink-muted">
-          <span className="time-am px-2 py-0.5 rounded-full font-bold">오전</span>
-          <span className="time-pm px-2 py-0.5 rounded-full font-bold">오후</span>
-          <span className="time-night px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1"><Moon className="w-3 h-3" />퇴근 후</span>
-          <span>평일 20~22시</span>
-          <span className="off-day-head px-2 py-0.5 rounded-full font-bold ml-auto">🔥 쉬는 날</span>
+        {/* 필터: 누르면 그 조건만 보여요 (여러 개 선택 가능) */}
+        <div className="mt-4" role="group" aria-label="보기 조건">
+          <div className="flex flex-wrap items-center gap-2">
+            {([
+              { k: "am", cls: "time-am", label: "오전", icon: null },
+              { k: "pm", cls: "time-pm", label: "오후", icon: null },
+              { k: "night", cls: "time-night", label: "퇴근 후", icon: <Moon className="w-3 h-3" /> },
+              { k: "off", cls: "off-day-head", label: "🔥 쉬는 날", icon: null },
+            ] as { k: FilterKey; cls: string; label: string; icon: React.ReactNode }[]).map((f) => {
+              const on = filters.has(f.k);
+              return (
+                <button
+                  key={f.k}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggle(f.k)}
+                  className={`${f.cls} px-3 py-1.5 rounded-full text-xs font-extrabold inline-flex items-center gap-1 transition-opacity ${
+                    filters.size === 0 || on ? "" : "opacity-40"
+                  } ${on ? "ring-2 ring-offset-1 ring-court" : ""}`}
+                >
+                  {on && <span aria-hidden>✓</span>}
+                  {f.icon}
+                  {f.label}
+                </button>
+              );
+            })}
+            {filters.size > 0 && (
+              <button type="button" onClick={() => setFilters(new Set())} className="text-xs font-bold underline text-court ml-1">
+                전체 보기
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-ink-muted mt-2">
+            {filters.size === 0
+              ? "눌러서 골라 볼 수 있어요. 퇴근 후는 평일 20~22시, 쉬는 날은 주말·공휴일이에요."
+              : "선택한 조건만 보여요. 오전·오후·퇴근 후는 하나라도 맞으면 보이고, 쉬는 날은 그중 주말·공휴일만 남겨요."}
+          </p>
         </div>
 
         {/* 날짜별 정리 */}
@@ -179,11 +234,11 @@ export default function CourtsPage() {
               {bucket.rangeLabel} · {checkedCount}곳 조회 · 가능한 날 <b className="text-court">{byDate.length}일</b>
             </p>
             {bucket.truncated && range !== "tomorrow" && (
-              <p className="text-xs text-warn mb-2">예약 사이트 달력이 이번 달만 보여서, 다음 달 날짜는 빠져 있어요.</p>
+              <p className="text-xs text-warn mb-2">다음 달 날짜는 매월 25일부터 보여드려요.</p>
             )}
             {byDate.length === 0 ? (
               <div className="surface rounded-2xl p-5 text-sm text-ink-muted text-center">
-                {bucket.updatedAt ? "조회한 범위에 가능한 시간대가 없어요." : "아직 수집 전이에요. 첫 수집이 끝나면 여기에 나타나요."}
+                {bucket.updatedAt ? (filters.size > 0 ? "선택한 조건에 맞는 시간대가 없어요. 조건을 풀어 보세요." : "조회한 범위에 가능한 시간대가 없어요.") : "아직 수집 전이에요. 첫 수집이 끝나면 여기에 나타나요."}
               </div>
             ) : (
               <ul className="space-y-3">

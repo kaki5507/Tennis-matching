@@ -11,6 +11,7 @@
 // 다시 예약가능으로 바뀌는 순간을 잡아내는 용도입니다. 그래서 '다음 달'
 // 캘린더로 넘어갈 필요 없이, 기본으로 보이는 화면(이번 달)만 주기적으로
 // 비교하면 충분합니다.
+// (다만 사용자가 "다음 달" 빈 자리도 보고 싶어 해서, 매월 25일 이후에는 다음 달 화면도 같은 방식으로 함께 읽습니다.)
 
 import * as cheerio from "cheerio";
 
@@ -21,7 +22,23 @@ export interface AvailableSlot {
   time: string; // "10:00~12:00"
 }
 
-function buildUrl(facilityId: string) {
+/** 조회할 달. 없으면 사이트의 기본 화면(이번 달) */
+export interface YearMonth {
+  year: number;
+  month: number; // 1~12
+}
+
+function buildUrl(facilityId: string, ym?: YearMonth) {
+  // 다른 달: 사이트 달력이 쓰는 sch_year / sch_month 로 직접 지정 (예: 다음 달)
+  if (ym) {
+    const q = new URLSearchParams({
+      lending_info_seq: facilityId,
+      inst_cate: "0103",
+      sch_year: String(ym.year),
+      sch_month: String(ym.month),
+    });
+    return BASE_URL + "?" + q.toString();
+  }
   const params = new URLSearchParams({
     lending_info_seq: facilityId,
     cp: "1",
@@ -33,8 +50,8 @@ function buildUrl(facilityId: string) {
   return BASE_URL + "?" + params.toString();
 }
 
-export async function fetchAvailableSlots(facilityId: string): Promise<AvailableSlot[]> {
-  const url = buildUrl(facilityId);
+export async function fetchAvailableSlots(facilityId: string, ym?: YearMonth): Promise<AvailableSlot[]> {
+  const url = buildUrl(facilityId, ym);
 
   const res = await fetch(url, {
     headers: {
