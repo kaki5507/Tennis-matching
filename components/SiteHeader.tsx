@@ -18,6 +18,7 @@ const NAV = [
   { href: "/ranking", label: "랭킹" },
   { href: "/board", label: "게시판" },
   { href: "/history", label: "기록실" },
+  { href: "/guide", label: "가이드" },
 ];
 
 export default function SiteHeader() {

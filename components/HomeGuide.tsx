@@ -5,6 +5,7 @@
 // 하드코트 / 잔디 / 클레이 세 가지 코트 표면이 탭이 되어, 한 번에 하나만 펼쳐 보여줍니다.
 
 import { useState } from "react";
+import Link from "next/link";
 import TennisMascot from "@/components/TennisMascot";
 
 const TABS = [
@@ -87,6 +88,10 @@ export default function HomeGuide() {
             ))}
           </ul>
         </div>
+        <Link href="/guide" className="flex items-center justify-between gap-3 px-5 py-3 text-sm font-bold text-court border-t border-line chip-off">
+          <span>📖 화면과 함께 보는 자세한 이용 가이드</span>
+          <span aria-hidden>보러 가기</span>
+        </Link>
       </div>
     </section>
   );

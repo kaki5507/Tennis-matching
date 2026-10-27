@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, Crown, Megaphone, History, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Home, CalendarClock, ChevronRight, Menu, X, Search, PlusCircle, Trophy, Crown, Megaphone, History, BookOpen, Bell, User, ShieldCheck, LogOut, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthUser } from "@/lib/useAuthUser";
 import { useIsAdmin } from "@/lib/useIsAdmin";
@@ -19,6 +19,7 @@ const ITEMS = [
   { href: "/ranking", label: "랭킹", Icon: Crown },
   { href: "/board", label: "게시판", Icon: Megaphone },
   { href: "/history", label: "기록실", Icon: History },
+  { href: "/guide", label: "이용 가이드", Icon: BookOpen },
   { href: "/notifications", label: "알림", Icon: Bell },
   { href: "/mypage", label: "마이페이지", Icon: User },
 ];
@@ -127,6 +128,9 @@ export default function SideMenu({ buttonClassName = "" }: { buttonClassName?: s
                 </Link>
                 <Link href="/history" className="chip-off flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold drawer-hover">
                   <History className="w-[18px] h-[18px]" /> 기록실
+                </Link>
+                <Link href="/guide" className="chip-off flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold drawer-hover">
+                  <BookOpen className="w-[18px] h-[18px]" /> 이용 가이드
                 </Link>
               </>
             )}

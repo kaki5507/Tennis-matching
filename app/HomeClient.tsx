@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthUser } from "@/lib/useAuthUser";
 import HeroCourt from "@/components/HeroCourt";
-import { Search, PlusCircle, CalendarClock, Trophy, History, User, Crown, Megaphone } from "lucide-react";
+import { Search, PlusCircle, CalendarClock, Trophy, History, User, Crown, Megaphone, BookOpen } from "lucide-react";
 
 const SHORTCUTS = [
   { href: "/matches", label: "방 찾기", sub: "열린 방 보기", Icon: Search, cls: "sc-hard" },
@@ -15,7 +15,8 @@ const SHORTCUTS = [
   { href: "/ranking", label: "랭킹", sub: "레벨·온도·승률", Icon: Crown, cls: "sc-clay" },
   { href: "/board", label: "게시판", sub: "공지·자유게시판", Icon: Megaphone, cls: "sc-sky" },
   { href: "/history", label: "기록실", sub: "내 경기 기록", Icon: History, cls: "sc-hard" },
-  { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-grass" },
+  { href: "/guide", label: "이용 가이드", sub: "화면으로 보는 사용법", Icon: BookOpen, cls: "sc-grass" },
+  { href: "/mypage", label: "마이페이지", sub: "프로필·설정", Icon: User, cls: "sc-hard" },
 ];
 
 export default function HomeClient({ live, children }: { live?: ReactNode; children?: ReactNode }) {
