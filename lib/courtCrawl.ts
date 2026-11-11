@@ -97,7 +97,7 @@ export async function runCourtCrawl(opts: { trigger: "cron" | "admin"; respectSw
       const groups = new Map<string, { times: string[]; userIds: string[] }>()
       for (const u of prefs) {
         const times = [...u.courtAlertTimes].sort()
-        const g = groups.get(times.join(",")) ?? { times, userIds: [] }
+        const g: { times: string[]; userIds: string[] } = groups.get(times.join(",")) ?? { times, userIds: [] }
         g.userIds.push(u.id)
         groups.set(times.join(","), g)
       }
