@@ -9,6 +9,7 @@ import { fetchAvailableSlots, type YearMonth } from "@/lib/bucheonScraper"
 import { BUCHEON_COURTS } from "@/lib/bucheonCourts"
 import { sendPushToUsers } from "@/lib/push"
 import { NEXT_MONTH_FROM_DAY } from "@/lib/courtToday"
+import { slotMatches, summarizeSlots } from "@/lib/courtAlert"
 
 export const CRAWL_OPEN_HOUR = 9 // 한국 시간 이 시각부터
 export const CRAWL_CLOSE_HOUR = 23 // 23시 정각 실행까지 포함
@@ -86,14 +87,29 @@ export async function runCourtCrawl(opts: { trigger: "cron" | "admin"; respectSw
 
       const watchers = await prisma.courtWatch.findMany({ where: { facilityId: court.facilityId }, select: { userId: true } })
       if (watchers.length === 0) return
-      await sendPushToUsers(
-        watchers.map((w) => w.userId),
-        {
+      // 사람마다 고른 시간대(퇴근 후/저녁/쉬는 날)에 맞는 자리만 알림. 아무것도 안 골랐으면 전부.
+      const prefs = await prisma.user.findMany({
+        where: { id: { in: watchers.map((w) => w.userId) } },
+        select: { id: true, courtAlertTimes: true },
+      })
+      const url = "https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=" + court.facilityId
+      // 같은 설정을 가진 사람끼리 묶어서 한 번에 발송
+      const groups = new Map<string, { times: string[]; userIds: string[] }>()
+      for (const u of prefs) {
+        const times = [...u.courtAlertTimes].sort()
+        const g = groups.get(times.join(",")) ?? { times, userIds: [] }
+        g.userIds.push(u.id)
+        groups.set(times.join(","), g)
+      }
+      for (const g of groups.values()) {
+        const matched = newlyAvailable.filter((k) => slotMatches(k, g.times))
+        if (matched.length === 0) continue
+        await sendPushToUsers(g.userIds, {
           title: `🎾 ${court.name} 예약 가능!`,
-          body: `새로 예약 가능한 시간대가 ${newlyAvailable.length}개 생겼어요. 서둘러 확인해보세요.`,
-          url: "https://reserv.bucheon.go.kr/site/main/lending/lendingDetail?lending_info_seq=" + court.facilityId,
-        }
-      )
+          body: `${summarizeSlots(matched)} 자리가 새로 났어요. 서둘러 확인해보세요.`,
+          url,
+        })
+      }
     } catch (error) {
       console.error(`[${court.name}] 확인 실패:`, error)
       failed++

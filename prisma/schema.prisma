@@ -101,6 +101,7 @@ model User {
   termsAgreedAt   DateTime @map("terms_agreed_at")
   privacyAgreedAt DateTime @map("privacy_agreed_at")
   marketingAgreedAt DateTime? @map("marketing_agreed_at") // 선택 동의 (알림/마케팅 수신용, Phase 2 알림 기능에서 사용)
+  courtAlertTimes String[] @default([]) @map("court_alert_times") // 빈 코트 알림을 받을 시간대(afterwork/evening/off). 비어 있으면 전체
 
   // [Relations - 관계 설정]
   hostedMatches       Match[]            @relation("MatchHost")
