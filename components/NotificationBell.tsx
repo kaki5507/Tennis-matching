@@ -43,11 +43,16 @@ export default function NotificationBell({ className = "" }: { className?: strin
     const timer = setInterval(() => {
       if (document.visibilityState === "visible") refresh();
     }, POLL_MS);
-    const onVisible = () => document.visibilityState === "visible" && refresh();
+    // 앱을 다시 열었을 때(백그라운드 → 화면)는 새 알림이 왔을 수 있으니 바로 갱신
+    const onVisible = () => document.visibilityState === "visible" && refresh(true);
+    // 알림함에서 읽음 처리했을 때 즉시 갱신
+    const onChanged = () => refresh(true);
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("notifications-changed", onChanged);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("notifications-changed", onChanged);
     };
   }, [userId, refresh]);
 

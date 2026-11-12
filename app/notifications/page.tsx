@@ -80,6 +80,7 @@ export default function NotificationsPage() {
     if (!item.isRead) {
       setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n)));
       await markNotificationAsRead(await getAccessToken(), item.id);
+      window.dispatchEvent(new Event("notifications-changed")); // 헤더 종·홈 화면 아이콘 숫자 즉시 갱신
     }
     if (!item.url) return;
     if (isExternal(item.url)) window.open(item.url, "_blank", "noopener,noreferrer");
@@ -90,6 +91,7 @@ export default function NotificationsPage() {
     if (!userId) return;
     setItems((prev) => prev.map((n) => ({ ...n, isRead: true })));
     await markAllNotificationsAsRead(await getAccessToken());
+    window.dispatchEvent(new Event("notifications-changed"));
   };
 
   if (isLoading) {
