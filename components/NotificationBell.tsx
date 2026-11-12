@@ -26,7 +26,13 @@ export default function NotificationBell({ className = "" }: { className?: strin
     if (!force && now - lastFetch.current < MIN_GAP_MS) return;
     lastFetch.current = now;
     const result = await getUnreadNotificationCount(await getAccessToken());
-    if (result.success) setCount(result.count);
+    if (result.success) {
+      setCount(result.count);
+      // 홈 화면 아이콘의 빨간 숫자를 안 읽은 알림 수에 맞춤 (지원하는 기기에서만)
+      const nav = navigator as Navigator & { setAppBadge?: (n: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
+      if (result.count > 0) nav.setAppBadge?.(result.count).catch(() => {});
+      else nav.clearAppBadge?.().catch(() => {});
+    }
   }, []);
 
   // 로그인 직후 한 번 + 주기적 갱신(탭이 숨겨진 동안은 쉼)

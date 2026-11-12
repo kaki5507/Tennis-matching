@@ -21,14 +21,20 @@ self.addEventListener("push", (event) => {
   const body = n.body || d.body || "";
   const url = d.url || (payload.fcmOptions && payload.fcmOptions.link) || "/";
   // push 이벤트에서는 반드시 알림을 띄워야 합니다 (안 띄우면 브라우저가 구독을 끊을 수 있음)
-  event.waitUntil(
+  const jobs = [
     self.registration.showNotification(title, {
       body,
       icon: "/apple-icon.png",
       badge: "/apple-icon.png",
       data: { url },
-    })
-  );
+    }),
+  ];
+  // 홈 화면 아이콘의 빨간 숫자 (지원하는 기기에서만)
+  const count = Number(d.badge);
+  if (self.navigator && self.navigator.setAppBadge && count > 0) {
+    jobs.push(self.navigator.setAppBadge(count).catch(() => {}));
+  }
+  event.waitUntil(Promise.all(jobs));
 });
 
 self.addEventListener("notificationclick", (event) => {

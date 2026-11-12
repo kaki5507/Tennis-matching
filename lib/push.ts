@@ -42,11 +42,13 @@ export async function sendPushToUser(userId: string, input: SendPushInput) {
       console.error("Firebase Admin이 설정되지 않아 푸시를 보낼 수 없습니다.")
       return { success: true, pushed: false, reason: "firebase_not_configured" }
     }
+    // 홈 화면 아이콘에 띄울 숫자(안 읽은 알림 수)
+    const unread = await prisma.notification.count({ where: { userId, isRead: false } })
 
     const response = await messaging.sendEachForMulticast({
       tokens: tokens.map((t) => t.token),
       notification: { title: input.title, body: input.body },
-      data: input.url ? { url: input.url } : undefined,
+      data: { ...(input.url ? { url: input.url } : {}), badge: String(unread) },
       // Urgency high: 휴대폰이 절전 중이어도 바로 전달. TTL: 기기가 꺼져 있으면 최대 6시간까지 보관했다가 전달
       webpush: { headers: { Urgency: "high", TTL: "21600" }, fcmOptions: input.url ? { link: input.url } : undefined },
     })
@@ -60,7 +62,13 @@ export async function sendPushToUser(userId: string, input: SendPushInput) {
       await prisma.deviceToken.deleteMany({ where: { token: { in: invalidTokens } } })
     }
 
-    return { success: true, pushed: response.successCount > 0 }
+    return {
+      success: true,
+      pushed: response.successCount > 0,
+      devices: tokens.length,
+      delivered: response.successCount,
+      errors: response.responses.filter((r) => !r.success).map((r) => r.error?.code ?? "unknown"),
+    }
   } catch (error) {
     console.error("푸시 발송 에러:", error)
     // 알림 발송 실패는 원래 하려던 작업(수락/거절 등)을 막으면 안 되므로 에러를 던지지 않습니다.
