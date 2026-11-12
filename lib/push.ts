@@ -47,7 +47,8 @@ export async function sendPushToUser(userId: string, input: SendPushInput) {
       tokens: tokens.map((t) => t.token),
       notification: { title: input.title, body: input.body },
       data: input.url ? { url: input.url } : undefined,
-      webpush: { fcmOptions: input.url ? { link: input.url } : undefined },
+      // Urgency high: 휴대폰이 절전 중이어도 바로 전달. TTL: 기기가 꺼져 있으면 최대 6시간까지 보관했다가 전달
+      webpush: { headers: { Urgency: "high", TTL: "21600" }, fcmOptions: input.url ? { link: input.url } : undefined },
     })
 
     // 만료되어 더 이상 유효하지 않은 토큰은 정리

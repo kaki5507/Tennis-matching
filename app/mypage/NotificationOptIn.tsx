@@ -66,6 +66,10 @@ export default function NotificationOptIn({ marketingAgreed }: Props) {
         <Bell className="w-4 h-4" />
         {status === "loading" ? "설정 중..." : "이 브라우저에서 알림 받기"}
       </Button>
+      <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+        아이폰은 사파리 공유 버튼의 &quot;홈 화면에 추가&quot;로 만든 아이콘으로 들어와서 켜야 화면이 꺼져 있어도 알림이 와요.
+        PC는 브라우저가 완전히 종료돼 있으면 알림이 오지 않아요.
+      </p>
       {status === "denied" && (
         <p className="text-xs text-danger mt-2">
           알림 권한이 거부되었거나 설정에 실패했어요. 브라우저 알림 설정을 확인해주세요.

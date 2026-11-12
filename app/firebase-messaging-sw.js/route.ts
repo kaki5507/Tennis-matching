@@ -1,42 +1,48 @@
 // app/firebase-messaging-sw.js/route.ts
 //
-// public/ 정적 파일 대신 Route Handler로 서빙하는 이유:
-// 서비스워커는 process.env를 못 읽는데, public/ 정적 파일은 빌드 시점에
-// 값을 채워넣을 방법이 마땅치 않습니다. 대신 여기서 서버가 실행 시점에
-// NEXT_PUBLIC_* 값을 실제로 채워서 자바스크립트를 응답으로 내려줍니다.
-// (NEXT_PUBLIC_* 값들은 어차피 브라우저에 노출되는 "공개" 값이라 안전합니다)
+// 푸시 알림용 서비스워커. 브라우저(탭)가 닫혀 있어도 이 파일이 깨어나서 알림을 띄웁니다.
+//
+// 예전에는 여기서 Firebase SDK 를 외부(gstatic)에서 내려받아 썼는데, 서비스워커가 깨어날 때마다
+// 그 다운로드가 끝나야 알림이 떠서, 느리거나 실패하면 알림이 아예 안 뜨는 문제가 있었습니다.
+// (특히 아이폰은 "푸시를 받았는데 알림을 안 띄운" 일이 반복되면 구독 자체를 끊어 버립니다)
+// 그래서 외부 스크립트 없이 표준 push 이벤트만으로 처리합니다. 토큰 발급은 화면 쪽 Firebase SDK 가 그대로 합니다.
 
 export async function GET() {
-  const config = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "",
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "",
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "",
-  }
-
   const script = `
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
-firebase.initializeApp(${JSON.stringify(config)});
-
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  const { title, body } = payload.notification || {};
-  const url = (payload.data && payload.data.url) || "/";
-
-  self.registration.showNotification(title || "테니스 매칭", {
-    body: body || "",
-    icon: "/icon-192.png",
-    data: { url },
-  });
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (e) { payload = {}; }
+  const n = payload.notification || {};
+  const d = payload.data || {};
+  const title = n.title || d.title || "테니스매칭";
+  const body = n.body || d.body || "";
+  const url = d.url || (payload.fcmOptions && payload.fcmOptions.link) || "/";
+  // push 이벤트에서는 반드시 알림을 띄워야 합니다 (안 띄우면 브라우저가 구독을 끊을 수 있음)
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/apple-icon.png",
+      badge: "/apple-icon.png",
+      data: { url },
+    })
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/";
-  event.waitUntil(clients.openWindow(url));
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      // 같은 사이트 주소면 이미 열린 창을 앞으로 가져오고, 아니면(예약 사이트 등) 새로 엽니다
+      for (const c of list) {
+        if (c.url === new URL(url, self.location.origin).href && "focus" in c) return c.focus();
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });
 `.trim()
 
