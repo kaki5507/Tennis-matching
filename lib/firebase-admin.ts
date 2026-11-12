@@ -33,3 +33,8 @@ export function getMessagingInstance() {
   if (!app) return null
   return getMessaging(app)
 }
+
+/** 비어 있는 서버용 Firebase 환경변수 이름 목록 (값은 절대 내보내지 않고 이름만) */
+export function missingFirebaseAdminEnv(): string[] {
+  return ["FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY"].filter((k) => !process.env[k])
+}

@@ -6,6 +6,7 @@
 import { prisma } from "@/lib/tournamentData"
 import { requireUser } from "@/lib/serverAuth"
 import { sendPushToUser } from "@/lib/push"
+import { missingFirebaseAdminEnv } from "@/lib/firebase-admin"
 
 /**
  * 브라우저에서 발급받은 FCM 토큰을 저장합니다.
@@ -122,7 +123,10 @@ export async function sendTestPushToMe(accessToken: string | null) {
     if (r.pushed) return { success: true, message: `등록된 기기 ${r.devices}대 중 ${r.delivered}대로 보냈어요. 몇 초 안에 도착해요.` }
     if ("reason" in r && r.reason === "not_consented") return { success: false, message: "알림 수신 동의가 꺼져 있어요." }
     if ("reason" in r && r.reason === "no_device") return { success: false, message: "등록된 기기가 없어요. 위의 알림 받기 버튼을 먼저 눌러 주세요." }
-    if ("reason" in r && r.reason === "firebase_not_configured") return { success: false, message: "서버의 푸시 설정(Firebase)이 비어 있어요." }
+    if ("reason" in r && r.reason === "firebase_not_configured") {
+      const missing = missingFirebaseAdminEnv()
+      return { success: false, message: `서버의 푸시 설정이 비어 있어서 휴대폰으로 보내지 못했어요.${missing.length ? ` 비어 있는 값: ${missing.join(", ")}` : ""}` }
+    }
     const codes = "errors" in r && r.errors ? [...new Set(r.errors)].join(", ") : ""
     return { success: false, message: `기기로 전달하지 못했어요. 알림 받기를 다시 눌러 주세요.${codes ? ` (${codes})` : ""}` }
   } catch (error) {
